@@ -1,0 +1,1433 @@
+// =====================================================================
+// SIMS — Strategic Initiative Management System
+// Multi-tenant PostgreSQL schema (Prisma)
+//
+// Design principles
+// 1. MULTI-TENANT: every business table carries `organisationId`.
+//    Isolation is enforced three times:
+//      a) in the NestJS layer (every query is scoped to the signed-in
+//         user's organisation),
+//      b) in PostgreSQL with row-level security (custom migration),
+//      c) with COMPOSITE FOREIGN KEYS on parent → child relations
+//         ([parentId, organisationId] → [id, organisationId]) so a row can
+//         never reference a parent that belongs to another tenant.
+// 2. CONFIGURABLE STRATEGY HIERARCHY: no hard-coded "Pillar" table. Each
+//    plan defines its own levels (FrameworkLevel); every pillar /
+//    perspective / goal / objective is a StrategyElement. KPIs, initiatives
+//    and milestones keep their own tables; their display names come from
+//    the organisation's terminology settings.
+// 3. AUDITABLE: baselines, submitted updates, locked snapshots and audit
+//    events are never overwritten.
+// 4. READ-OPTIMISED ROLLUPS: health, progress and impact scores are
+//    calculated by background jobs and stored on the record, so dashboards
+//    read precomputed numbers instead of aggregating on every request.
+//
+// IDs are UUIDv7 (time-ordered), which keeps B-tree indexes compact and
+// inserts append-only at scale.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------
+
+enum OrganisationSector {
+  PRIVATE
+  PUBLIC
+  NON_PROFIT
+}
+
+enum OrganisationStatus {
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum Role {
+  BOARD
+  CEO
+  STRATEGY_OFFICE
+  EXECUTIVE_SPONSOR
+  INITIATIVE_OWNER
+  TASK_OWNER
+  SYSTEM_ADMIN
+  INTERNAL_AUDIT
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  DEACTIVATED
+}
+
+enum FrameworkTemplate {
+  STRATEGIC_PILLARS
+  BALANCED_SCORECARD
+  OKR
+  PUBLIC_SECTOR_RESULTS
+  CUSTOM
+}
+
+enum PlanStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  ARCHIVED
+}
+
+enum KpiDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+  WITHIN_RANGE
+}
+
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  ANNUALLY
+}
+
+enum InitiativeStatus {
+  DRAFT
+  PROPOSED
+  APPROVED
+  ACTIVE
+  ON_HOLD
+  CLOSED
+  CANCELLED
+}
+
+enum Health {
+  GREEN
+  AMBER
+  RED
+  UNKNOWN
+}
+
+/// Where an initiative's KPIs/benefits stand against target (the "impact" lens).
+enum Trajectory {
+  ON_TRAJECTORY
+  SLIGHTLY_BEHIND
+  OFF_TRAJECTORY
+  NOT_MEASURABLE
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum RiskType {
+  RISK
+  ISSUE
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskStatus {
+  OPEN
+  MITIGATED
+  CLOSED
+}
+
+enum DependencyStatus {
+  ON_TRACK
+  AT_RISK
+  BLOCKED
+  RESOLVED
+}
+
+enum EscalationSource {
+  RISK_ISSUE
+  DEPENDENCY
+  MISSED_UPDATE
+  MISSING_KPI_ACTUALS
+  RESOURCE_CONFLICT
+  MANUAL
+}
+
+enum EscalationStatus {
+  OPEN
+  RESOLVED
+  WITHDRAWN
+}
+
+enum EscalationChangeReason {
+  RAISED
+  AUTO_TIMEOUT
+  CRITICAL_SEVERITY
+  MANUAL
+  DE_ESCALATED
+}
+
+enum PeriodStatus {
+  OPEN
+  OWNER_SUBMISSION
+  STRATEGY_REVIEW
+  SPONSOR_REVIEW
+  LOCKED
+}
+
+enum UpdateStatus {
+  DRAFT
+  SUBMITTED
+  CHALLENGED
+  REVIEWED
+  APPROVED
+}
+
+enum CommentKind {
+  COMMENT
+  CHALLENGE
+  RESPONSE
+}
+
+enum BenefitType {
+  FINANCIAL
+  NON_FINANCIAL
+}
+
+enum ApprovalType {
+  INITIATIVE_APPROVAL
+  BASELINE_CHANGE
+  BUDGET_CHANGE
+  SCOPE_CHANGE
+  MILESTONE_COMPLETION
+  RULESET_CHANGE
+  PLAN_APPROVAL
+  INITIATIVE_CLOSURE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum DecisionOutcome {
+  PENDING
+  APPROVED
+  REJECTED
+  DEFERRED
+}
+
+enum RulesetStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  SUPERSEDED
+  REJECTED
+}
+
+enum ReportTemplate {
+  MONTHLY_MANAGEMENT
+  QUARTERLY_BOARD
+  PILLAR_DEEP_DIVE
+}
+
+enum ReportFormat {
+  PDF
+  PPTX
+  XLSX
+}
+
+enum ReportPackStatus {
+  QUEUED
+  GENERATING
+  READY
+  FAILED
+}
+
+enum CustomFieldEntity {
+  STRATEGY_ELEMENT
+  KPI
+  INITIATIVE
+  MILESTONE
+  RISK_ISSUE
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  CURRENCY
+  DATE
+  SELECT
+  MULTI_SELECT
+  BOOLEAN
+  USER
+}
+
+// ---------------------------------------------------------------------
+// Tenancy, identity and access
+// ---------------------------------------------------------------------
+
+/// A tenant. One row per company, ministry or agency using SIMS.
+model Organisation {
+  id                   String             @id @default(uuid(7)) @db.Uuid
+  name                 String
+  slug                 String             @unique /// workspace address: <slug>.sims.app
+  sector               OrganisationSector
+  country              String
+  currency             String             @default("NGN") /// ISO 4217
+  timezone             String             @default("Africa/Lagos")
+  fiscalYearStartMonth Int                @default(1) /// 1 = January
+  logoUrl              String?
+  status               OrganisationStatus @default(ONBOARDING)
+  /// Last completed onboarding step (0–5), so "Save and finish later" resumes.
+  onboardingStep       Int                @default(0)
+
+  /// Display names for the fixed record types, e.g.
+  /// { "kpi": "Outcome indicator", "initiative": "Project", "milestone": "Activity" }
+  terminology Json @default("{\"kpi\":\"KPI\",\"initiative\":\"Initiative\",\"milestone\":\"Milestone\",\"task\":\"Task\"}")
+
+  /// Single sign-on settings (Entra ID / Google Workspace tenant IDs, allowed email domains).
+  ssoConfig Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription       Subscription?
+  memberships        Membership[]
+  invitations        Invitation[]
+  departments        Department[]
+  plans              StrategicPlan[]
+  frameworkLevels    FrameworkLevel[]
+  strategyElements   StrategyElement[]
+  kpis               Kpi[]
+  kpiTargets         KpiTarget[]
+  kpiActuals         KpiActual[]
+  reportingPeriods   ReportingPeriod[]
+  initiatives        Initiative[]
+  initiativeLinks    InitiativeObjectiveLink[]
+  initiativeKpiLinks InitiativeKpiLink[]
+  milestones         Milestone[]
+  tasks              Task[]
+  dependencies       Dependency[]
+  progressSnapshots  ProgressSnapshot[]
+  risks              RiskIssue[]
+  escalations        Escalation[]
+  escalationChanges  EscalationLevelChange[]
+  decisions          Decision[]
+  statusUpdates      StatusUpdate[]
+  statusUpdateLines  StatusUpdateLine[]
+  comments           Comment[]
+  benefits           Benefit[]
+  benefitProfiles    BenefitProfile[]
+  benefitActuals     BenefitActual[]
+  approvals          Approval[]
+  rulesets           Ruleset[]
+  customFields       CustomFieldDefinition[]
+  documents          Document[]
+  snapshots          ReportSnapshot[]
+  reportPacks        ReportPack[]
+  notifications      Notification[]
+  auditEvents        AuditEvent[]
+}
+
+/// Billing for the SaaS tier. One active subscription per organisation.
+model Subscription {
+  id             String             @id @default(uuid(7)) @db.Uuid
+  organisationId String             @unique @db.Uuid
+  plan           SubscriptionPlan   @default(TRIAL)
+  status         SubscriptionStatus @default(TRIALING)
+  seats          Int                @default(10)
+  trialEndsAt    DateTime?
+  renewsAt       DateTime?
+  externalRef    String? /// payment provider customer/subscription ID
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+}
+
+/// A person. Global across tenants: one login can belong to several organisations
+/// (consultants, group companies, board members on several boards).
+model User {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  /// Stored lower-cased; uniqueness is case-insensitive by convention.
+  email           String    @unique
+  name            String
+  passwordHash    String? /// null when the user signs in only through SSO
+  emailVerifiedAt DateTime?
+  phone           String?
+  avatarUrl       String?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  memberships   Membership[]
+  devices       DeviceToken[]
+  refreshTokens RefreshToken[]
+}
+
+/// Rotating refresh tokens. Only a hash is stored. Tokens issued from the same
+/// sign-in share a `familyId`; reuse of a rotated token revokes the whole family.
+model RefreshToken {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  userId         String    @db.Uuid
+  familyId       String    @db.Uuid
+  tokenHash      String    @unique
+  /// The organisation the session is signed into (users can switch).
+  organisationId String?   @db.Uuid
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  replacedById   String?   @db.Uuid
+  userAgent      String?
+  ipAddress      String?
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+/// A user's place inside one organisation: role, department and reporting line.
+/// Almost every "owner" or "sponsor" field points here, not at User,
+/// so ownership is always scoped to a tenant.
+model Membership {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organisationId String           @db.Uuid
+  userId         String           @db.Uuid
+  roles          Role[]
+  jobTitle       String? /// e.g. "Head, Digital Business" — shown as owner label in the UI
+  departmentId   String?          @db.Uuid
+  managerId      String?          @db.Uuid
+  status         MembershipStatus @default(INVITED)
+  invitedAt      DateTime         @default(now())
+  joinedAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organisation  Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department    Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  manager       Membership?  @relation("ReportingLine", fields: [managerId], references: [id], onDelete: SetNull)
+  directReports Membership[] @relation("ReportingLine")
+
+  approvedPlans         StrategicPlan[]         @relation("PlanApprover")
+  ownedElements         StrategyElement[]       @relation("ElementOwner")
+  sponsoredElements     StrategyElement[]       @relation("ElementSponsor")
+  ownedKpis             Kpi[]                   @relation("KpiOwner")
+  ownedInitiatives      Initiative[]            @relation("InitiativeOwner")
+  sponsoredInitiatives  Initiative[]            @relation("InitiativeSponsor")
+  benefitInitiatives    Initiative[]            @relation("BenefitsOwner")
+  overriddenInitiatives Initiative[]            @relation("HealthOverrider")
+  assignedTasks         Task[]                  @relation("TaskAssignee")
+  ownedRisks            RiskIssue[]             @relation("RiskOwner")
+  raisedEscalations     Escalation[]            @relation("EscalationRaiser")
+  escalationsToDecide   Escalation[]            @relation("EscalationDecider")
+  escalationChanges     EscalationLevelChange[]
+  decisionsToMake       Decision[]              @relation("DecisionRequiredFrom")
+  decisionsMade         Decision[]              @relation("DecisionDecidedBy")
+  submittedUpdates      StatusUpdate[]          @relation("UpdateSubmitter")
+  comments              Comment[]
+  requestedApprovals    Approval[]              @relation("ApprovalRequester")
+  reviewedApprovals     Approval[]              @relation("ApprovalReviewer")
+  sentInvitations       Invitation[]
+  requestedPacks        ReportPack[]
+  notifications         Notification[]
+
+  @@unique([organisationId, userId])
+  @@unique([id, organisationId])
+  @@index([organisationId])
+  @@index([userId])
+}
+
+/// Pending invitation to join an organisation. Only a hash of the token is stored.
+model Invitation {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organisationId String    @db.Uuid
+  email          String
+  roles          Role[]
+  jobTitle       String?
+  departmentId   String?   @db.Uuid
+  tokenHash      String    @unique
+  invitedById    String    @db.Uuid
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  invitedBy    Membership   @relation(fields: [invitedById, organisationId], references: [id, organisationId])
+
+  @@index([organisationId, email])
+}
+
+/// Push-notification tokens for the mobile app (Android / iOS).
+model DeviceToken {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @db.Uuid
+  token      String   @unique
+  platform   String /// "android" | "ios" | "web"
+  lastSeenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Department {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  name           String
+  code           String?
+  parentId       String?  @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  parent       Department?  @relation("DepartmentTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Department[] @relation("DepartmentTree")
+  members      Membership[]
+  initiatives  Initiative[]
+
+  @@unique([organisationId, name])
+  @@index([organisationId])
+}
+
+// ---------------------------------------------------------------------
+// Configurable strategy framework
+// ---------------------------------------------------------------------
+
+/// A strategic plan for a period (e.g. 2026–2030). Each organisation can have
+/// several over time; one is normally APPROVED and current.
+model StrategicPlan {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  organisationId String            @db.Uuid
+  name           String
+  startDate      DateTime          @db.Date
+  endDate        DateTime          @db.Date
+  version        Int               @default(1)
+  status         PlanStatus        @default(DRAFT)
+  template       FrameworkTemplate @default(STRATEGIC_PILLARS)
+  vision         String?
+  mission        String?
+  values         String[]
+  aspiration     String?
+  approvedAt     DateTime?
+  approvedById   String?           @db.Uuid
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organisation Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  approvedBy   Membership?       @relation("PlanApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  levels       FrameworkLevel[]
+  elements     StrategyElement[]
+  initiatives  Initiative[]
+  periods      ReportingPeriod[]
+
+  @@unique([id, organisationId])
+  @@index([organisationId, status])
+}
+
+/// One row per strategy level in a plan, e.g.
+///   Pillars template:   depth 1 "Strategic pillar", depth 2 "Strategic objective"
+///   Balanced Scorecard: depth 1 "Perspective", depth 2 "Strategic objective"
+///   Public sector:      depth 1 "National goal", 2 "Sector outcome", 3 "Programme"
+/// KPIs attach to elements at levels with allowsKpis; initiatives link to any level.
+model FrameworkLevel {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  planId         String   @db.Uuid
+  depth          Int /// 1 = top level
+  label          String /// singular, e.g. "Perspective"
+  pluralLabel    String /// e.g. "Perspectives"
+  codePrefix     String? /// e.g. "P" gives codes P1, P2...
+  allowsKpis     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  plan         StrategicPlan     @relation(fields: [planId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  elements     StrategyElement[]
+
+  @@unique([planId, depth])
+  @@unique([id, organisationId])
+  @@index([organisationId])
+}
+
+/// A node in the strategy tree: a pillar, perspective, goal, outcome, objective...
+/// Its meaning comes from its FrameworkLevel, not from the table name.
+model StrategyElement {
+  id             String  @id @default(uuid(7)) @db.Uuid
+  organisationId String  @db.Uuid
+  planId         String  @db.Uuid
+  levelId        String  @db.Uuid
+  parentId       String? @db.Uuid
+  code           String /// e.g. "O2.1"
+  title          String
+  description    String?
+  ownerId        String? @db.Uuid
+  sponsorId      String? @db.Uuid
+  sortOrder      Int     @default(0)
+  customFields   Json? /// values for CustomFieldDefinition (entity STRATEGY_ELEMENT)
+
+  // Rollups, recalculated by background jobs (null = nothing to measure yet).
+  executionScore Decimal?  @db.Decimal(5, 2) /// weighted verified progress of contributing initiatives
+  impactScore    Decimal?  @db.Decimal(5, 2) /// % of the way from KPI baselines to targets
+  health         Health    @default(UNKNOWN)
+  rolledUpAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organisation    Organisation              @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  plan            StrategicPlan             @relation(fields: [planId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  level           FrameworkLevel            @relation(fields: [levelId, organisationId], references: [id, organisationId])
+  parent          StrategyElement?          @relation("ElementTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children        StrategyElement[]         @relation("ElementTree")
+  owner           Membership?               @relation("ElementOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  sponsor         Membership?               @relation("ElementSponsor", fields: [sponsorId], references: [id], onDelete: SetNull)
+  kpis            Kpi[]
+  initiativeLinks InitiativeObjectiveLink[]
+
+  @@unique([planId, code])
+  @@unique([id, organisationId])
+  @@index([organisationId])
+  @@index([parentId])
+}
+
+/// Organisation-defined extra fields ("Budget code", "Funding source"...).
+/// Values live in the `customFields` JSON column of the target record.
+model CustomFieldDefinition {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  organisationId String            @db.Uuid
+  entity         CustomFieldEntity
+  key            String /// machine name, e.g. "budget_code"
+  label          String
+  type           CustomFieldType
+  options        Json? /// choices for SELECT / MULTI_SELECT
+  required       Boolean           @default(false)
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, entity, key])
+}
+
+// ---------------------------------------------------------------------
+// Measurement (strategic impact lens)
+// ---------------------------------------------------------------------
+
+model Kpi {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organisationId String       @db.Uuid
+  elementId      String       @db.Uuid
+  code           String
+  name           String
+  unit           String /// "%", "NGN", "days", "score"...
+  direction      KpiDirection @default(HIGHER_IS_BETTER)
+  frequency      Frequency    @default(MONTHLY)
+  baseline       Decimal?     @db.Decimal(20, 4)
+  baselineDate   DateTime?    @db.Date
+  target         Decimal?     @db.Decimal(20, 4) /// end-of-plan target
+  /// Lower/upper bound when direction = WITHIN_RANGE.
+  rangeLow       Decimal?     @db.Decimal(20, 4)
+  rangeHigh      Decimal?     @db.Decimal(20, 4)
+  ownerId        String?      @db.Uuid
+  customFields   Json?
+
+  // Latest position, recalculated when an actual is verified.
+  latestValue Decimal?   @db.Decimal(20, 4)
+  latestAt    DateTime?  @db.Date
+  trajectory  Trajectory @default(NOT_MEASURABLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organisation    Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  element         StrategyElement     @relation(fields: [elementId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  owner           Membership?         @relation("KpiOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  targets         KpiTarget[]
+  actuals         KpiActual[]
+  initiativeLinks InitiativeKpiLink[]
+
+  @@unique([organisationId, code])
+  @@unique([id, organisationId])
+  @@index([elementId])
+}
+
+/// Interim targets (e.g. FY2026 = 30%), used to judge trajectory.
+/// Replaces the untyped `annualTargets` JSON column.
+model KpiTarget {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  kpiId          String   @db.Uuid
+  label          String /// "FY2026", "Q3 2026"
+  targetDate     DateTime @db.Date
+  value          Decimal  @db.Decimal(20, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  kpi          Kpi          @relation(fields: [kpiId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@unique([kpiId, targetDate])
+  @@index([organisationId])
+}
+
+model KpiActual {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organisationId String    @db.Uuid
+  kpiId          String    @db.Uuid
+  periodId       String    @db.Uuid
+  value          Decimal   @db.Decimal(20, 4)
+  commentary     String?
+  submittedById  String?   @db.Uuid
+  verifiedById   String?   @db.Uuid
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  kpi          Kpi             @relation(fields: [kpiId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+
+  @@unique([kpiId, periodId])
+  @@index([organisationId, periodId])
+}
+
+// ---------------------------------------------------------------------
+// Delivery (execution lens)
+// ---------------------------------------------------------------------
+
+model Initiative {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  organisationId  String           @db.Uuid
+  planId          String           @db.Uuid
+  code            String /// e.g. "DIG-004"
+  title           String
+  description     String?
+  businessCase    String?
+  scope           String?
+  ownerId         String?          @db.Uuid
+  sponsorId       String?          @db.Uuid
+  benefitsOwnerId String?          @db.Uuid
+  departmentId    String?          @db.Uuid
+  priority        Int              @default(2) /// 1 = highest
+  status          InitiativeStatus @default(DRAFT)
+  isSensitive     Boolean          @default(false) /// restricted visibility; summarised at pillar level in board packs
+
+  // Approved baseline. Changed only through an approved BASELINE_CHANGE.
+  baselineStart  DateTime? @db.Date
+  baselineEnd    DateTime? @db.Date
+  baselineBudget Decimal?  @db.Decimal(20, 2)
+  forecastEnd    DateTime? @db.Date
+  actualEnd      DateTime? @db.Date
+  spentToDate    Decimal?  @db.Decimal(20, 2)
+
+  // Health: calculated by the rules engine; an override needs a reason and expires.
+  calculatedHealth  Health    @default(UNKNOWN)
+  /// The rule results behind calculatedHealth ("Why this status?"),
+  /// e.g. [{ rule: "PP_BEHIND", result: "AMBER", detail: "9 pp behind plan" }].
+  healthReasons     Json?
+  rulesetVersion    Int? /// ruleset that produced calculatedHealth
+  healthOverride    Health?
+  overrideReason    String?
+  overrideById      String?   @db.Uuid
+  overrideAt        DateTime?
+  overrideExpiresAt DateTime?
+  verifiedProgress  Decimal   @default(0) @db.Decimal(5, 2) /// weighted, 0–100
+  plannedProgress   Decimal   @default(0) @db.Decimal(5, 2)
+
+  // Impact lens: rolled up from linked KPIs and benefits (null = not yet measurable).
+  impactScore   Decimal?   @db.Decimal(5, 2)
+  impactSummary String? /// e.g. "Pilot revenue 10% of target"
+  trajectory    Trajectory @default(NOT_MEASURABLE)
+
+  lastUpdateAt         DateTime?
+  lastVerifiedUpdateAt DateTime?
+
+  customFields Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organisation      Organisation              @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  plan              StrategicPlan             @relation(fields: [planId, organisationId], references: [id, organisationId])
+  owner             Membership?               @relation("InitiativeOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  sponsor           Membership?               @relation("InitiativeSponsor", fields: [sponsorId], references: [id], onDelete: SetNull)
+  benefitsOwner     Membership?               @relation("BenefitsOwner", fields: [benefitsOwnerId], references: [id], onDelete: SetNull)
+  overrideBy        Membership?               @relation("HealthOverrider", fields: [overrideById], references: [id], onDelete: SetNull)
+  department        Department?               @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  objectiveLinks    InitiativeObjectiveLink[]
+  kpiLinks          InitiativeKpiLink[]
+  milestones        Milestone[]
+  risks             RiskIssue[]
+  escalations       Escalation[]
+  dependsOn         Dependency[]              @relation("DependencyFrom")
+  dependedOnBy      Dependency[]              @relation("DependencyTo")
+  updates           StatusUpdate[]
+  progressSnapshots ProgressSnapshot[]
+  benefits          Benefit[]
+  decisions         Decision[]
+
+  @@unique([organisationId, code])
+  @@unique([id, organisationId])
+  @@index([organisationId, status, calculatedHealth])
+  @@index([organisationId, ownerId])
+  @@index([organisationId, sponsorId])
+  @@index([organisationId, departmentId])
+  @@index([planId])
+}
+
+/// Many-to-many: an initiative can contribute to several strategy elements.
+model InitiativeObjectiveLink {
+  organisationId     String  @db.Uuid
+  initiativeId       String  @db.Uuid
+  elementId          String  @db.Uuid
+  contributionWeight Decimal @default(100) @db.Decimal(5, 2)
+  isPrimary          Boolean @default(false)
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative      @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  element      StrategyElement @relation(fields: [elementId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@id([initiativeId, elementId])
+  @@index([elementId])
+  @@index([organisationId])
+}
+
+/// Which KPIs an initiative is expected to move, and by how much.
+model InitiativeKpiLink {
+  organisationId String   @db.Uuid
+  initiativeId   String   @db.Uuid
+  kpiId          String   @db.Uuid
+  expectedImpact Decimal? @db.Decimal(20, 4)
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative   @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  kpi          Kpi          @relation(fields: [kpiId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@id([initiativeId, kpiId])
+  @@index([kpiId])
+  @@index([organisationId])
+}
+
+/// Completion % = Σ(weight × verifiedCompletion) ÷ Σ weight
+/// Planned % at a date comes from each milestone's planned window
+/// (baselineStartDate → baselineDate).
+model Milestone {
+  id                 String          @id @default(uuid(7)) @db.Uuid
+  organisationId     String          @db.Uuid
+  initiativeId       String          @db.Uuid
+  title              String
+  weight             Decimal         @db.Decimal(5, 2)
+  isCritical         Boolean         @default(false)
+  evidenceRequired   Boolean         @default(true)
+  baselineStartDate  DateTime?       @db.Date
+  baselineDate       DateTime        @db.Date
+  forecastDate       DateTime?       @db.Date
+  actualDate         DateTime?       @db.Date
+  claimedCompletion  Decimal         @default(0) @db.Decimal(5, 2)
+  verifiedCompletion Decimal         @default(0) @db.Decimal(5, 2)
+  status             MilestoneStatus @default(NOT_STARTED)
+  sortOrder          Int             @default(0)
+  customFields       Json?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  organisation Organisation       @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative         @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  tasks        Task[]
+  updateLines  StatusUpdateLine[]
+
+  @@unique([id, organisationId])
+  @@index([initiativeId])
+  /// "Milestones · next 14 days"
+  @@index([organisationId, forecastDate])
+  @@index([organisationId, baselineDate])
+}
+
+model Task {
+  id             String     @id @default(uuid(7)) @db.Uuid
+  organisationId String     @db.Uuid
+  milestoneId    String     @db.Uuid
+  title          String
+  assigneeId     String?    @db.Uuid
+  dueDate        DateTime?  @db.Date
+  completedAt    DateTime?
+  status         TaskStatus @default(TODO)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  milestone    Milestone    @relation(fields: [milestoneId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  assignee     Membership?  @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([milestoneId])
+  @@index([organisationId, assigneeId, status])
+}
+
+/// "fromInitiative depends on toInitiative"
+model Dependency {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  organisationId   String           @db.Uuid
+  fromInitiativeId String           @db.Uuid
+  toInitiativeId   String           @db.Uuid
+  description      String?
+  isCriticalPath   Boolean          @default(false)
+  status           DependencyStatus @default(ON_TRACK)
+  blockedSince     DateTime?
+  neededBy         DateTime?        @db.Date
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  fromInitiative Initiative   @relation("DependencyFrom", fields: [fromInitiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  toInitiative   Initiative   @relation("DependencyTo", fields: [toInitiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  escalations    Escalation[]
+
+  @@unique([fromInitiativeId, toInitiativeId])
+  @@unique([id, organisationId])
+  @@index([toInitiativeId])
+  @@index([organisationId, status])
+}
+
+/// Point-in-time progress per initiative, written when a period locks
+/// (and by the daily recalculation job). Drives "planned vs actual" charts
+/// and trend sparklines without replaying history.
+model ProgressSnapshot {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  organisationId   String   @db.Uuid
+  initiativeId     String   @db.Uuid
+  periodId         String?  @db.Uuid
+  asOf             DateTime @db.Date
+  plannedProgress  Decimal  @db.Decimal(5, 2)
+  verifiedProgress Decimal  @db.Decimal(5, 2)
+  health           Health
+  impactScore      Decimal? @db.Decimal(5, 2)
+  createdAt        DateTime @default(now())
+
+  organisation Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative       @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  period       ReportingPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  @@unique([initiativeId, asOf])
+  @@index([organisationId, asOf])
+}
+
+// ---------------------------------------------------------------------
+// Risk, escalation and decisions
+// ---------------------------------------------------------------------
+
+model RiskIssue {
+  id             String     @id @default(uuid(7)) @db.Uuid
+  organisationId String     @db.Uuid
+  initiativeId   String?    @db.Uuid /// null = portfolio-level risk
+  type           RiskType
+  title          String
+  description    String?
+  likelihood     Int? /// 1–5 (risks only)
+  impact         Int? /// 1–5
+  severity       Severity
+  ownerId        String?    @db.Uuid
+  mitigation     String?
+  dueDate        DateTime?  @db.Date
+  status         RiskStatus @default(OPEN)
+  closedAt       DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative?  @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+  owner        Membership?  @relation("RiskOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  escalations  Escalation[]
+
+  @@unique([id, organisationId])
+  @@index([organisationId, status, severity])
+  @@index([initiativeId])
+}
+
+/// Anything blocking execution that needs someone more senior to act.
+/// Separate from RiskIssue because escalations also come from missed updates,
+/// missing KPI actuals, blocked dependencies and resource conflicts.
+/// The ladder (L1 owner → L2 sponsor → L3 MD/CEO·EXCO → L4 Board) is driven
+/// by the active Ruleset; every level change is kept in EscalationLevelChange.
+model Escalation {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  organisationId   String           @db.Uuid
+  reference        String /// e.g. "ESC-0042"
+  source           EscalationSource
+  title            String
+  description      String?
+  severity         Severity
+  initiativeId     String?          @db.Uuid
+  riskIssueId      String?          @db.Uuid
+  dependencyId     String?          @db.Uuid
+  level            Int              @default(1) /// 1–4
+  status           EscalationStatus @default(OPEN)
+  raisedById       String?          @db.Uuid /// null = raised automatically
+  /// Who must decide at the current level (a person, or a role when unassigned).
+  decisionFromId   String?          @db.Uuid
+  decisionFromRole Role?
+  raisedAt         DateTime         @default(now())
+  levelChangedAt   DateTime         @default(now())
+  resolvedAt       DateTime?
+  resolution       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  organisation Organisation            @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative?             @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+  riskIssue    RiskIssue?              @relation(fields: [riskIssueId], references: [id], onDelete: SetNull)
+  dependency   Dependency?             @relation(fields: [dependencyId], references: [id], onDelete: SetNull)
+  raisedBy     Membership?             @relation("EscalationRaiser", fields: [raisedById], references: [id], onDelete: SetNull)
+  decisionFrom Membership?             @relation("EscalationDecider", fields: [decisionFromId], references: [id], onDelete: SetNull)
+  changes      EscalationLevelChange[]
+  decisions    Decision[]
+
+  @@unique([organisationId, reference])
+  @@unique([id, organisationId])
+  /// Escalation centre: open items by level, oldest first.
+  @@index([organisationId, status, level, raisedAt])
+  @@index([initiativeId])
+}
+
+/// Append-only history of an escalation's level.
+model EscalationLevelChange {
+  id             String                 @id @default(uuid(7)) @db.Uuid
+  organisationId String                 @db.Uuid
+  escalationId   String                 @db.Uuid
+  fromLevel      Int?
+  toLevel        Int
+  reason         EscalationChangeReason
+  note           String?
+  actorId        String?                @db.Uuid /// null = system
+  createdAt      DateTime               @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  escalation   Escalation   @relation(fields: [escalationId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  actor        Membership?  @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([escalationId])
+  @@index([organisationId])
+}
+
+/// Decisions required from management or the Board, and their outcomes.
+model Decision {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  organisationId String          @db.Uuid
+  initiativeId   String?         @db.Uuid
+  reference      String /// e.g. "CR-0142", "GOV-031"
+  title          String
+  context        String?
+  /// Role that must decide; requiredFromId narrows it to a named person.
+  requiredFrom   Role
+  requiredFromId String?         @db.Uuid
+  /// Set when the decision is a change request awaiting maker-checker approval.
+  approvalId     String?         @unique @db.Uuid
+  escalationId   String?         @db.Uuid
+  dueDate        DateTime?       @db.Date
+  outcome        DecisionOutcome @default(PENDING)
+  outcomeNotes   String?
+  deferredUntil  DateTime?       @db.Date
+  decidedById    String?         @db.Uuid
+  decidedAt      DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organisation       Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative         Initiative?  @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+  requiredFromMember Membership?  @relation("DecisionRequiredFrom", fields: [requiredFromId], references: [id], onDelete: SetNull)
+  decidedBy          Membership?  @relation("DecisionDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+  approval           Approval?    @relation(fields: [approvalId], references: [id], onDelete: SetNull)
+  escalation         Escalation?  @relation(fields: [escalationId], references: [id], onDelete: SetNull)
+
+  @@unique([organisationId, reference])
+  /// "Decisions required": open items by due date.
+  @@index([organisationId, outcome, dueDate])
+}
+
+// ---------------------------------------------------------------------
+// Reporting cycle and updates
+// ---------------------------------------------------------------------
+
+/// One reporting cycle (e.g. "October 2026"). Stage deadlines are copied
+/// from the active ruleset when the period opens, so later rule changes
+/// never move an in-flight cycle.
+model ReportingPeriod {
+  id                  String       @id @default(uuid(7)) @db.Uuid
+  organisationId      String       @db.Uuid
+  planId              String       @db.Uuid
+  name                String /// "October 2026"
+  startDate           DateTime     @db.Date
+  endDate             DateTime     @db.Date
+  status              PeriodStatus @default(OPEN)
+  submissionOpensAt   DateTime?
+  submissionDueAt     DateTime? /// "due Fri 17 Oct, 5:00 pm"
+  strategyReviewDueAt DateTime?
+  sponsorReviewDueAt  DateTime?
+  reportIssueDueAt    DateTime?
+  lockedAt            DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  organisation      Organisation       @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  plan              StrategicPlan      @relation(fields: [planId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  updates           StatusUpdate[]
+  kpiActuals        KpiActual[]
+  benefitActuals    BenefitActual[]
+  progressSnapshots ProgressSnapshot[]
+  snapshots         ReportSnapshot[]
+  reportPacks       ReportPack[]
+
+  @@unique([planId, name])
+  @@unique([id, organisationId])
+  @@index([organisationId, status])
+}
+
+/// An owner's periodic submission. Never edited after APPROVED.
+model StatusUpdate {
+  id                  String       @id @default(uuid(7)) @db.Uuid
+  organisationId      String       @db.Uuid
+  initiativeId        String       @db.Uuid
+  periodId            String       @db.Uuid
+  submittedById       String       @db.Uuid
+  claimedProgress     Decimal      @db.Decimal(5, 2)
+  verifiedProgress    Decimal?     @db.Decimal(5, 2)
+  plannedProgress     Decimal?     @db.Decimal(5, 2)
+  healthAtSubmission  Health
+  progressNarrative   String?
+  varianceExplanation String?
+  recoveryAction      String?
+  nextSteps           String?
+  needsDecision       Boolean      @default(false)
+  status              UpdateStatus @default(DRAFT)
+  submittedAt         DateTime?
+  reviewedAt          DateTime?
+  approvedAt          DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  organisation Organisation       @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative         @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  period       ReportingPeriod    @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  submittedBy  Membership         @relation("UpdateSubmitter", fields: [submittedById, organisationId], references: [id, organisationId])
+  lines        StatusUpdateLine[]
+
+  @@unique([initiativeId, periodId])
+  @@unique([id, organisationId])
+  @@index([organisationId, periodId, status])
+  @@index([submittedById])
+}
+
+/// Per-milestone figures inside an update: what the owner claimed this month,
+/// what was verified last time, and what the Strategy Office verified.
+/// Evidence files are Documents with entityType "StatusUpdateLine".
+model StatusUpdateLine {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  organisationId     String    @db.Uuid
+  updateId           String    @db.Uuid
+  milestoneId        String    @db.Uuid
+  previousVerified   Decimal   @db.Decimal(5, 2)
+  claimedCompletion  Decimal   @db.Decimal(5, 2)
+  verifiedCompletion Decimal?  @db.Decimal(5, 2)
+  forecastDate       DateTime? @db.Date
+  note               String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  update       StatusUpdate @relation(fields: [updateId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  milestone    Milestone    @relation(fields: [milestoneId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@unique([updateId, milestoneId])
+  @@index([milestoneId])
+  @@index([organisationId])
+}
+
+/// Threaded comments on any record: Strategy Office challenges on an update,
+/// owner responses, notes on risks or decisions.
+model Comment {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organisationId String      @db.Uuid
+  entityType     String /// "StatusUpdate", "RiskIssue", "Decision"...
+  entityId       String      @db.Uuid
+  parentId       String?     @db.Uuid
+  authorId       String      @db.Uuid
+  kind           CommentKind @default(COMMENT)
+  body           String
+  resolvedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  author       Membership   @relation(fields: [authorId], references: [id])
+  parent       Comment?     @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[]    @relation("CommentThread")
+
+  @@index([organisationId, entityType, entityId])
+}
+
+/// Frozen data for a locked period, so Board packs never drift.
+model ReportSnapshot {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  periodId       String   @db.Uuid
+  kind           String /// "PERIOD_LOCK" | "QUARTERLY_BOARD" | ...
+  data           Json
+  createdById    String?  @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  packs        ReportPack[]
+
+  @@index([organisationId, periodId])
+}
+
+/// A generated management report or Board pack. Generation runs in a
+/// background job; the UI polls/streams `status`.
+model ReportPack {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organisationId String           @db.Uuid
+  periodId       String           @db.Uuid
+  snapshotId     String?          @db.Uuid
+  template       ReportTemplate
+  title          String /// "Q3 2026 Board pack"
+  audience       String /// "BOARD", "EXCO"...
+  /// Pillar id when template = PILLAR_DEEP_DIVE.
+  scopeElementId String?          @db.Uuid
+  sections       Json /// ordered list of section keys
+  formats        ReportFormat[]
+  narrative      String?
+  status         ReportPackStatus @default(QUEUED)
+  version        String           @default("1.0")
+  fileKeys       Json? /// { "PDF": "<storage key>", "PPTX": "..." }
+  error          String?
+  requestedById  String           @db.Uuid
+  issuedAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  snapshot     ReportSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  requestedBy  Membership      @relation(fields: [requestedById], references: [id])
+
+  @@index([organisationId, createdAt])
+}
+
+// ---------------------------------------------------------------------
+// Benefits realisation
+// ---------------------------------------------------------------------
+
+model Benefit {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organisationId String      @db.Uuid
+  initiativeId   String      @db.Uuid
+  name           String
+  type           BenefitType
+  unit           String
+  expectedValue  Decimal     @db.Decimal(20, 2) /// total over the benefit's life
+  expectedBy     DateTime?   @db.Date
+  /// Rolled up from actuals.
+  realisedToDate Decimal     @default(0) @db.Decimal(20, 2)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organisation Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  initiative   Initiative       @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  profile      BenefitProfile[]
+  actuals      BenefitActual[]
+
+  @@unique([id, organisationId])
+  @@index([initiativeId])
+  @@index([organisationId])
+}
+
+/// Expected (and re-forecast) benefit per time bucket — drives the
+/// "Expected vs realised benefits" chart.
+model BenefitProfile {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  benefitId      String   @db.Uuid
+  periodEnd      DateTime @db.Date
+  expectedValue  Decimal  @db.Decimal(20, 2)
+  forecastValue  Decimal? @db.Decimal(20, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  benefit      Benefit      @relation(fields: [benefitId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@unique([benefitId, periodEnd])
+  @@index([organisationId, periodEnd])
+}
+
+model BenefitActual {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organisationId String    @db.Uuid
+  benefitId      String    @db.Uuid
+  periodId       String    @db.Uuid
+  realisedValue  Decimal   @db.Decimal(20, 2)
+  evidence       String?
+  verifiedById   String?   @db.Uuid
+  verifiedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  benefit      Benefit         @relation(fields: [benefitId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+
+  @@unique([benefitId, periodId])
+  @@index([organisationId, periodId])
+}
+
+// ---------------------------------------------------------------------
+// Governance: approvals, rules, documents, notifications, audit
+// ---------------------------------------------------------------------
+
+/// Generic maker-checker workflow. `payload` holds the proposed change.
+model Approval {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  organisationId String         @db.Uuid
+  reference      String? /// e.g. "CR-0142" for change requests
+  type           ApprovalType
+  entityType     String /// "Initiative", "Milestone", "Ruleset"...
+  entityId       String         @db.Uuid
+  payload        Json
+  justification  String?
+  requestedById  String         @db.Uuid
+  reviewerId     String?        @db.Uuid
+  status         ApprovalStatus @default(PENDING)
+  decisionReason String?
+  decidedAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  requestedBy  Membership   @relation("ApprovalRequester", fields: [requestedById, organisationId], references: [id, organisationId])
+  reviewer     Membership?  @relation("ApprovalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  decision     Decision?
+
+  @@index([organisationId, status])
+  @@index([organisationId, entityType, entityId])
+}
+
+/// Versioned business rules per organisation: RAG thresholds, health modifiers,
+/// escalation ladder, reporting-cycle windows and reminders.
+/// Only one ACTIVE ruleset per organisation (partial unique index in SQL).
+/// `config` is validated against a versioned zod schema in the API.
+model Ruleset {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  organisationId String        @db.Uuid
+  version        Int
+  status         RulesetStatus @default(DRAFT)
+  config         Json
+  changeSummary  String?
+  proposedById   String?       @db.Uuid
+  approvedById   String?       @db.Uuid
+  effectiveFrom  DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, version])
+  @@index([organisationId, status])
+}
+
+/// Evidence and attachments. Files live in object storage, keyed per tenant:
+///   <organisationId>/<entityType>/<entityId>/<file>
+model Document {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organisationId String    @db.Uuid
+  entityType     String
+  entityId       String    @db.Uuid
+  fileName       String
+  storageKey     String    @unique
+  mimeType       String
+  sizeBytes      Int
+  checksum       String? /// sha256, for integrity and de-duplication
+  uploadedById   String    @db.Uuid
+  /// Evidence review by the Strategy Office.
+  reviewedById   String?   @db.Uuid
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime? /// soft delete; the object is purged by a job
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, entityType, entityId])
+}
+
+model Notification {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organisationId String    @db.Uuid
+  membershipId   String    @db.Uuid
+  type           String /// "UPDATE_DUE", "ESCALATED", "APPROVAL_REQUESTED"...
+  title          String
+  body           String?
+  link           String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  membership   Membership   @relation(fields: [membershipId, organisationId], references: [id, organisationId], onDelete: Cascade)
+
+  @@index([organisationId, membershipId, readAt, createdAt])
+}
+
+/// Append-only. The app role is granted INSERT and SELECT only on this table
+/// (see the RLS migration). Partition by month once volume requires it.
+model AuditEvent {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organisationId String   @db.Uuid
+  actorId        String?  @db.Uuid /// membership; null for system actions
+  action         String /// "STATUS_OVERRIDE", "BASELINE_CHANGED", "RULESET_PROPOSED"...
+  entityType     String
+  entityId       String   @db.Uuid
+  before         Json?
+  after          Json?
+  ipAddress      String?
+  requestId      String? /// correlates with API logs
+  createdAt      DateTime @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@index([organisationId, createdAt])
+  @@index([organisationId, entityType, entityId])
+}

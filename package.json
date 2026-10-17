@@ -1,0 +1,31 @@
+{
+  "name": "sims",
+  "private": true,
+  "description": "SIMS — Strategic Initiative Management & Execution Tracking System",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "dev:server": "npm run start:dev -w @sims/server",
+    "dev:client": "npm run dev -w @sims/client",
+    "db:migrate": "npm run db:migrate -w @sims/server",
+    "db:generate": "npm run db:generate -w @sims/server",
+    "db:studio": "npm run db:studio -w @sims/server",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.1": true
+  }
+}
