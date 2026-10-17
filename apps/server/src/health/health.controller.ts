@@ -3,8 +3,11 @@ import {
   Get,
   Logger,
   ServiceUnavailableException,
+  VERSION_NEUTRAL,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../infrastructure/database/index.js';
+import { Public } from '../modules/auth/decorators.js';
 
 export interface HealthReport {
   status: 'ok';
@@ -16,7 +19,9 @@ export interface HealthReport {
  * Returns 503 (not 500) when a dependency is down so the instance is taken
  * out of rotation instead of being restarted in a loop.
  */
-@Controller('health')
+@Public()
+@SkipThrottle()
+@Controller({ path: 'health', version: VERSION_NEUTRAL })
 export class HealthController {
   private readonly logger = new Logger(HealthController.name);
 

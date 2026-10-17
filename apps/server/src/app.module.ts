@@ -1,9 +1,36 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from './config/config.module.js';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { rateLimitOptions } from './common/http/rate-limit.js';
+import { ConfigModule, ENV } from './config/config.module.js';
+import type { Env } from './config/env.js';
 import { HealthModule } from './health/health.module.js';
 import { DatabaseModule } from './infrastructure/database/index.js';
+import {
+  AccessTokenGuard,
+  AuthModule,
+  RolesGuard,
+  TenantContextInterceptor,
+} from './modules/auth/index.js';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, HealthModule],
+  imports: [
+    ConfigModule,
+    DatabaseModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ENV],
+      useFactory: (env: Env) => rateLimitOptions(env),
+    }),
+    HealthModule,
+    AuthModule,
+  ],
+  providers: [
+    // Global guards run in this order: rate limit → authentication → roles.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useExisting: AccessTokenGuard },
+    { provide: APP_GUARD, useExisting: RolesGuard },
+    // Authenticated requests run inside their organisation's tenant context.
+    { provide: APP_INTERCEPTOR, useExisting: TenantContextInterceptor },
+  ],
 })
 export class AppModule {}

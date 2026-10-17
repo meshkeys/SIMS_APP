@@ -402,19 +402,21 @@ model User {
 
 /// Rotating refresh tokens. Only a hash is stored. Tokens issued from the same
 /// sign-in share a `familyId`; reuse of a rotated token revokes the whole family.
+/// User-scoped, not tenant data: deliberately has no `organisationId` column
+/// (that name means "tenant-owned, protected by RLS" everywhere in the schema).
 model RefreshToken {
-  id             String    @id @default(uuid(7)) @db.Uuid
-  userId         String    @db.Uuid
-  familyId       String    @db.Uuid
-  tokenHash      String    @unique
-  /// The organisation the session is signed into (users can switch).
-  organisationId String?   @db.Uuid
-  expiresAt      DateTime
-  revokedAt      DateTime?
-  replacedById   String?   @db.Uuid
-  userAgent      String?
-  ipAddress      String?
-  createdAt      DateTime  @default(now())
+  id                   String    @id @default(uuid(7)) @db.Uuid
+  userId               String    @db.Uuid
+  familyId             String    @db.Uuid
+  tokenHash            String    @unique
+  /// The workspace this session is signed into (users can switch).
+  activeOrganisationId String?   @db.Uuid
+  expiresAt            DateTime
+  revokedAt            DateTime?
+  replacedById         String?   @db.Uuid
+  userAgent            String?
+  ipAddress            String?
+  createdAt            DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

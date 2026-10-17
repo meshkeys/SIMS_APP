@@ -7,6 +7,12 @@ export const DEMO_ORG = {
   emailDomain: 'meridian.example', // reserved TLD: never routable
 } as const;
 
+/**
+ * Shared password for every demo user (local development and demos only;
+ * the seed refuses to run in production).
+ */
+export const DEMO_PASSWORD = 'Meridian-demo-2026';
+
 export const DEPARTMENTS = {
   executive: 'Executive Office',
   strategy: 'Strategy Office',

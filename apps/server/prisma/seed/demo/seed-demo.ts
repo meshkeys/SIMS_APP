@@ -50,8 +50,10 @@ import {
   uuidv7,
   weightedCompletion,
 } from './lib.js';
+import { hashPassword } from '../../../src/modules/auth/passwords.js';
 import {
   DEMO_ORG,
+  DEMO_PASSWORD,
   DEPARTMENTS,
   emailFor,
   PEOPLE,
@@ -214,13 +216,19 @@ function escalationHistory(spec: EscalationSpec, ruleset: RulesetConfig) {
 export async function seedDemo(prisma: PrismaClient): Promise<SeedSummary> {
   const ruleset = parseRulesetConfig(DEFAULT_RULESET_CONFIG);
   validateSpecs(ruleset);
-  return prisma.$transaction((tx) => writeDemo(tx, ruleset), {
+  // One hash for every demo user: Argon2 is deliberately slow.
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
+  return prisma.$transaction((tx) => writeDemo(tx, ruleset, passwordHash), {
     maxWait: 10_000,
     timeout: 120_000,
   });
 }
 
-async function writeDemo(tx: Tx, ruleset: RulesetConfig): Promise<SeedSummary> {
+async function writeDemo(
+  tx: Tx,
+  ruleset: RulesetConfig,
+  passwordHash: string,
+): Promise<SeedSummary> {
   // ----------------------------------------------------------- reset
   await tx.organisation.deleteMany({ where: { slug: DEMO_ORG.slug } });
   await tx.user.deleteMany({
@@ -277,6 +285,7 @@ async function writeDemo(tx: Tx, ruleset: RulesetConfig): Promise<SeedSummary> {
       email: emailFor(key),
       name: PEOPLE[key].name,
       emailVerifiedAt: date('2026-01-10'),
+      passwordHash,
     })),
   });
   await tx.membership.createMany({
