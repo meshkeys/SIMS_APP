@@ -29,3 +29,6 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 *.local
+
+# Built documentation (regenerate with npm run docs:build)
+docs/dist/

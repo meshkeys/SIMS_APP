@@ -22,11 +22,15 @@
     "db:seed": "npm run db:seed -w @sims/server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "docs:build": "node scripts/build-docs.mjs"
   },
   "allowScripts": {
     "@prisma/engines@7.10.1": true,
     "esbuild@0.28.2": true,
     "prisma@7.10.1": true
+  },
+  "devDependencies": {
+    "marked": "^18.1.1"
   }
 }

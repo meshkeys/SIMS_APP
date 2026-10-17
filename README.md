@@ -4,6 +4,15 @@ A multi-tenant Strategy Execution Command Centre: translate corporate strategy i
 measurable initiatives, monitor execution, surface delays, enforce accountability and
 report to Management and the Board.
 
+## Documentation
+
+Full technical documentation lives in [`docs/`](docs/README.md) (Markdown, versioned with
+the code). Build a downloadable PDF/HTML copy with:
+
+```bash
+npm run docs:build    # → docs/dist/SIMS-Technical-Documentation.pdf
+```
+
 ## Repository layout
 
 ```
