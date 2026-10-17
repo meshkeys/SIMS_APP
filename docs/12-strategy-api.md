@@ -1,4 +1,4 @@
-# 12. Strategy API
+# 12. Strategy and KPI API
 
 Plans, their configurable framework levels, and the strategy tree (pillars, objectives, or
 whatever the organisation calls its levels). Powers the **Strategy map** screen and
@@ -96,8 +96,52 @@ Limits: 1–10 levels.
   `LEVELS_CHANGED`, `ELEMENT_CREATED`, `ELEMENT_UPDATED`, `ELEMENT_DELETED`) with
   before/after values.
 
-## 12.7 Not yet
+## 12.7 KPIs
 
-KPI management (create/edit KPIs, interim targets) is the next slice. Plan approval
-(maker-checker, versioning approved plans) arrives with the governance slice; until then
-changes to an approved plan are allowed for the Strategy Office and fully audited.
+| Method & path | Who | Purpose |
+|---|---|---|
+| `GET /api/v1/plans/:planId/kpis` | any member | A plan's KPIs with progress and the top-level element each rolls up to; `?elementId=` narrows to one element |
+| `GET /api/v1/kpis/:id` | any member | Definition, targets, last 12 actuals, initiatives expected to move it |
+| `POST /api/v1/elements/:elementId/kpis` | Strategy Office, Admin | Create a KPI on an element (with optional interim targets) |
+| `PATCH /api/v1/kpis/:id` | Strategy Office, Admin | Edit the definition, owner, or move to another element |
+| `PUT /api/v1/kpis/:id/targets` | Strategy Office, Admin | Replace the full list of interim targets |
+| `DELETE /api/v1/kpis/:id` | Strategy Office, Admin | Delete a KPI that has no history |
+
+**Definition**
+
+| Field | Notes |
+|---|---|
+| `code` | Organisation-wide, generated `K01, K02…` when omitted; unique (`409 CODE_TAKEN`) |
+| `unit` | Free text: `%`, `NGN m`, `days`, `score`, `clients`… |
+| `direction` | `HIGHER_IS_BETTER` (default), `LOWER_IS_BETTER`, or `WITHIN_RANGE` (with `rangeLow`/`rangeHigh`) |
+| `frequency` | How often actuals are recorded: monthly (default), quarterly, half-yearly, annually |
+| `baseline`, `baselineDate` | Starting point |
+| `target` | End-of-plan target |
+| `targets[]` | Interim targets (`label`, `targetDate`, `value`), e.g. FY2025, FY2026; returned in date order |
+
+**Rules** (each returns a field-level error)
+
+- A KPI lives on an element whose level allows KPIs (`409 KPIS_NOT_ALLOWED` otherwise —
+  e.g. "Strategic pillars do not hold KPIs in this framework").
+- The target must differ from the baseline and sit on the right side of it for the
+  direction (a "higher is better" target below the baseline is refused).
+- Within-range KPIs need both bounds, low ≤ high; other KPIs must not have a range.
+  Changing direction away from "within range" clears the range automatically.
+- Interim targets fall inside the plan period, with distinct dates and labels.
+- Moving a KPI is allowed only to an element in the same plan whose level allows KPIs.
+- A KPI with recorded actuals cannot be deleted — its history feeds past reports
+  (`409 KPI_HAS_ACTUALS`); one linked to initiatives must be unlinked first (`409 KPI_IN_USE`).
+
+**Reading position against target.** Every KPI response carries `currentTarget` (the next
+target due, else the last one), `latestValue`, `trajectory` and `progressToTarget`.
+`trajectory` starts as `NOT_MEASURABLE` and is recalculated when actuals are recorded
+(performance slice).
+
+Audit events: `KPI_CREATED`, `KPI_UPDATED`, `KPI_TARGETS_CHANGED`, `KPI_DELETED`.
+
+## 12.8 Not yet
+
+Recording KPI actuals and trajectory calculation come with the performance slice. Plan
+approval (maker-checker, versioning approved plans) arrives with the governance slice;
+until then changes to an approved plan are allowed for the Strategy Office and fully
+audited.

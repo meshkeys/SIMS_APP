@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — KPI management (slice 5b)
+- Create, edit, move and delete KPIs; interim targets saved as a list; organisation-wide
+  codes (`K01…`).
+- Definition rules: target on the right side of the baseline, complete ranges for
+  within-range KPIs, targets inside the plan period, KPIs only on levels that allow them.
+- KPIs with recorded actuals are protected from deletion.
+- Plan KPI list (grouped by top-level element) and KPI detail with targets, recent actuals
+  and linked initiatives; shared KPI view used by every screen.
+
 ## 2026-10-18 — Strategy API (slice 5)
 - Plans from five framework templates (pillars, Balanced Scorecard, OKRs, public sector,
   custom); edit plan details.

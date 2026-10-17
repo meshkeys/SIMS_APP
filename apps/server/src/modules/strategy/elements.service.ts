@@ -4,24 +4,23 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { toIsoDate, toNumber } from '../../common/data/numbers.js';
+import { toNumber } from '../../common/data/numbers.js';
 import { isUniqueViolation } from '../../common/data/prisma-errors.js';
 import { uuidv7 } from '../../common/ids/uuidv7.js';
 import { canSeeInitiative } from '../../domain/access/initiative-visibility.js';
 import { nextElementCode } from '../../domain/strategy/element-codes.js';
-import { progressToTarget } from '../../domain/strategy/kpi-progress.js';
-import type {
-  Health,
-  InitiativeStatus,
-  KpiDirection,
-  Trajectory,
-} from '../../generated/prisma/enums.js';
+import type { Health, InitiativeStatus } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
   TenantPrismaService,
 } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
+import {
+  kpiTargetsInclude,
+  type KpiSummary,
+  toKpiSummary,
+} from '../kpis/kpi-view.js';
 import {
   assertActiveMembers,
   personSelect,
@@ -34,22 +33,7 @@ import type {
   UpdateElementInput,
 } from './strategy.schemas.js';
 
-export interface ElementKpi {
-  id: string;
-  code: string;
-  name: string;
-  unit: string;
-  direction: KpiDirection;
-  baseline: number | null;
-  /** The next target due (e.g. FY2026), else the end-of-plan target. */
-  currentTarget: { label: string; value: number; targetDate: string } | null;
-  planTarget: number | null;
-  latestValue: number | null;
-  latestAt: string | null;
-  trajectory: Trajectory;
-  /** % of the way from baseline to the current target. */
-  progressToTarget: number | null;
-}
+export type ElementKpi = KpiSummary;
 
 export interface ElementContributor {
   initiativeId: string;
@@ -126,10 +110,7 @@ export class ElementsService {
           orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
           select: { id: true, code: true, title: true },
         },
-        kpis: {
-          orderBy: { code: 'asc' },
-          include: { targets: { orderBy: { targetDate: 'asc' } } },
-        },
+        kpis: { orderBy: { code: 'asc' }, include: kpiTargetsInclude },
         initiativeLinks: {
           where: { initiative: { status: { notIn: NOT_CONTRIBUTING } } },
           orderBy: [{ contributionWeight: 'desc' }],
@@ -174,41 +155,7 @@ export class ElementsService {
       executionScore: toNumber(element.executionScore),
       impactScore: toNumber(element.impactScore),
       health: element.health,
-      kpis: element.kpis.map((kpi) => {
-        const next =
-          kpi.targets.find((target) => target.targetDate >= today) ??
-          kpi.targets.at(-1);
-        const currentTarget = next
-          ? {
-              label: next.label,
-              value: toNumber(next.value),
-              targetDate: toIsoDate(next.targetDate),
-            }
-          : null;
-        const baseline = toNumber(kpi.baseline);
-        const latestValue = toNumber(kpi.latestValue);
-        return {
-          id: kpi.id,
-          code: kpi.code,
-          name: kpi.name,
-          unit: kpi.unit,
-          direction: kpi.direction,
-          baseline,
-          currentTarget,
-          planTarget: toNumber(kpi.target),
-          latestValue,
-          latestAt: toIsoDate(kpi.latestAt),
-          trajectory: kpi.trajectory,
-          progressToTarget: progressToTarget({
-            direction: kpi.direction,
-            baseline,
-            target: currentTarget?.value ?? toNumber(kpi.target),
-            actual: latestValue,
-            rangeLow: toNumber(kpi.rangeLow),
-            rangeHigh: toNumber(kpi.rangeHigh),
-          }),
-        };
-      }),
+      kpis: element.kpis.map((kpi) => toKpiSummary(kpi, today)),
       contributors: visible.map((link) => ({
         initiativeId: link.initiative.id,
         code: link.initiative.code,

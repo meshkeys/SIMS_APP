@@ -14,6 +14,7 @@ import {
   TenantContextInterceptor,
 } from './modules/auth/index.js';
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
+import { KpisModule } from './modules/kpis/kpis.module.js';
 import { StrategyModule } from './modules/strategy/strategy.module.js';
 
 @Module({
@@ -29,6 +30,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     AuthModule,
     InvitationsModule,
     StrategyModule,
+    KpisModule,
   ],
   providers: [
     // Global guards run in this order: rate limit → authentication → roles.
