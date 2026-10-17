@@ -19,6 +19,7 @@
     "db:migrate": "npm run db:migrate -w @sims/server",
     "db:generate": "npm run db:generate -w @sims/server",
     "db:studio": "npm run db:studio -w @sims/server",
+    "db:seed": "npm run db:seed -w @sims/server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"

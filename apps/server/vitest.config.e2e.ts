@@ -5,6 +5,13 @@ export default defineConfig({
   test: {
     globals: true,
     root: './',
-    include: ['**/*.e2e-spec.ts'],
+    include: ['test/**/*.e2e-spec.ts'],
+    // Migrates the test database once per run.
+    globalSetup: ['./test/setup/global-setup.ts'],
+    // Points DATABASE_URL at the test database before any app code loads.
+    setupFiles: ['./test/setup/test-env.ts'],
+    // Suites share one database; run files one at a time.
+    fileParallelism: false,
+    hookTimeout: 60_000,
   },
 });

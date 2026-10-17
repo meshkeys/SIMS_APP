@@ -27,8 +27,9 @@
 // =====================================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -489,7 +490,7 @@ model Invitation {
   createdAt      DateTime  @default(now())
 
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  invitedBy    Membership   @relation(fields: [invitedById, organisationId], references: [id, organisationId])
+  invitedBy    Membership   @relation(fields: [invitedById, organisationId], references: [id, organisationId], onDelete: NoAction)
 
   @@index([organisationId, email])
 }
@@ -614,7 +615,7 @@ model StrategyElement {
 
   organisation    Organisation              @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   plan            StrategicPlan             @relation(fields: [planId, organisationId], references: [id, organisationId], onDelete: Cascade)
-  level           FrameworkLevel            @relation(fields: [levelId, organisationId], references: [id, organisationId])
+  level           FrameworkLevel            @relation(fields: [levelId, organisationId], references: [id, organisationId], onDelete: NoAction)
   parent          StrategyElement?          @relation("ElementTree", fields: [parentId], references: [id], onDelete: Cascade)
   children        StrategyElement[]         @relation("ElementTree")
   owner           Membership?               @relation("ElementOwner", fields: [ownerId], references: [id], onDelete: SetNull)
@@ -723,7 +724,7 @@ model KpiActual {
 
   organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   kpi          Kpi             @relation(fields: [kpiId, organisationId], references: [id, organisationId], onDelete: Cascade)
-  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId], onDelete: NoAction)
 
   @@unique([kpiId, periodId])
   @@index([organisationId, periodId])
@@ -785,7 +786,7 @@ model Initiative {
   updatedAt    DateTime @updatedAt
 
   organisation      Organisation              @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  plan              StrategicPlan             @relation(fields: [planId, organisationId], references: [id, organisationId])
+  plan              StrategicPlan             @relation(fields: [planId, organisationId], references: [id, organisationId], onDelete: NoAction)
   owner             Membership?               @relation("InitiativeOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   sponsor           Membership?               @relation("InitiativeSponsor", fields: [sponsorId], references: [id], onDelete: SetNull)
   benefitsOwner     Membership?               @relation("BenefitsOwner", fields: [benefitsOwnerId], references: [id], onDelete: SetNull)
@@ -983,8 +984,10 @@ model RiskIssue {
 /// Anything blocking execution that needs someone more senior to act.
 /// Separate from RiskIssue because escalations also come from missed updates,
 /// missing KPI actuals, blocked dependencies and resource conflicts.
-/// The ladder (L1 owner → L2 sponsor → L3 MD/CEO·EXCO → L4 Board) is driven
-/// by the active Ruleset; every level change is kept in EscalationLevelChange.
+/// The ladder is configured per organisation in the active Ruleset
+/// (`escalation.levels`: any number of levels, names, deciders and timings);
+/// `level` is a position on that ladder. Every level change is kept in
+/// EscalationLevelChange together with the level's name at that moment.
 model Escalation {
   id               String           @id @default(uuid(7)) @db.Uuid
   organisationId   String           @db.Uuid
@@ -996,7 +999,7 @@ model Escalation {
   initiativeId     String?          @db.Uuid
   riskIssueId      String?          @db.Uuid
   dependencyId     String?          @db.Uuid
-  level            Int              @default(1) /// 1–4
+  level            Int              @default(1) /// position on the organisation's ladder (1 = first)
   status           EscalationStatus @default(OPEN)
   raisedById       String?          @db.Uuid /// null = raised automatically
   /// Who must decide at the current level (a person, or a role when unassigned).
@@ -1032,6 +1035,10 @@ model EscalationLevelChange {
   escalationId   String                 @db.Uuid
   fromLevel      Int?
   toLevel        Int
+  /// Level name when the change happened, so history survives ladder edits.
+  toLevelName    String
+  /// Ruleset version whose ladder applied.
+  rulesetVersion Int?
   reason         EscalationChangeReason
   note           String?
   actorId        String?                @db.Uuid /// null = system
@@ -1143,8 +1150,8 @@ model StatusUpdate {
 
   organisation Organisation       @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   initiative   Initiative         @relation(fields: [initiativeId, organisationId], references: [id, organisationId], onDelete: Cascade)
-  period       ReportingPeriod    @relation(fields: [periodId, organisationId], references: [id, organisationId])
-  submittedBy  Membership         @relation("UpdateSubmitter", fields: [submittedById, organisationId], references: [id, organisationId])
+  period       ReportingPeriod    @relation(fields: [periodId, organisationId], references: [id, organisationId], onDelete: NoAction)
+  submittedBy  Membership         @relation("UpdateSubmitter", fields: [submittedById, organisationId], references: [id, organisationId], onDelete: NoAction)
   lines        StatusUpdateLine[]
 
   @@unique([initiativeId, periodId])
@@ -1194,7 +1201,7 @@ model Comment {
   updatedAt      DateTime    @updatedAt
 
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  author       Membership   @relation(fields: [authorId], references: [id])
+  author       Membership   @relation(fields: [authorId], references: [id], onDelete: NoAction)
   parent       Comment?     @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
   replies      Comment[]    @relation("CommentThread")
 
@@ -1212,7 +1219,7 @@ model ReportSnapshot {
   createdAt      DateTime @default(now())
 
   organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId], onDelete: NoAction)
   packs        ReportPack[]
 
   @@index([organisationId, periodId])
@@ -1243,9 +1250,9 @@ model ReportPack {
   updatedAt      DateTime         @updatedAt
 
   organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId], onDelete: NoAction)
   snapshot     ReportSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
-  requestedBy  Membership      @relation(fields: [requestedById], references: [id])
+  requestedBy  Membership      @relation(fields: [requestedById], references: [id], onDelete: NoAction)
 
   @@index([organisationId, createdAt])
 }
@@ -1310,7 +1317,7 @@ model BenefitActual {
 
   organisation Organisation    @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   benefit      Benefit         @relation(fields: [benefitId, organisationId], references: [id, organisationId], onDelete: Cascade)
-  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId])
+  period       ReportingPeriod @relation(fields: [periodId, organisationId], references: [id, organisationId], onDelete: NoAction)
 
   @@unique([benefitId, periodId])
   @@index([organisationId, periodId])
@@ -1339,7 +1346,7 @@ model Approval {
   updatedAt      DateTime       @updatedAt
 
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  requestedBy  Membership   @relation("ApprovalRequester", fields: [requestedById, organisationId], references: [id, organisationId])
+  requestedBy  Membership   @relation("ApprovalRequester", fields: [requestedById, organisationId], references: [id, organisationId], onDelete: NoAction)
   reviewer     Membership?  @relation("ApprovalReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
   decision     Decision?
 
@@ -1349,7 +1356,7 @@ model Approval {
 
 /// Versioned business rules per organisation: RAG thresholds, health modifiers,
 /// escalation ladder, reporting-cycle windows and reminders.
-/// Only one ACTIVE ruleset per organisation (partial unique index in SQL).
+/// Only one ACTIVE ruleset per organisation (partial unique index below).
 /// `config` is validated against a versioned zod schema in the API.
 model Ruleset {
   id             String        @id @default(uuid(7)) @db.Uuid
@@ -1367,6 +1374,7 @@ model Ruleset {
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
   @@unique([organisationId, version])
+  @@unique([organisationId], map: "Ruleset_one_active_per_org", where: raw("status = 'ACTIVE'"))
   @@index([organisationId, status])
 }
 

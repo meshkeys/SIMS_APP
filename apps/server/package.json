@@ -25,6 +25,7 @@
     "db:validate": "prisma validate",
     "db:format": "prisma format",
     "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed/run.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
