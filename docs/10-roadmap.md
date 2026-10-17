@@ -15,8 +15,8 @@ with its tests and documentation.
 | 3 | Configurable rulesets and escalation ladder; tenant cascade delete; demo seed | Done |
 | 4a | Authentication: sign-up with organisation, sign-in, refresh rotation, roles, tenant context per request, API conventions | Done |
 | — | Documentation set (this document) | Done |
-| 4b | Invitations by email | Next |
-| 5 | Strategy API: plans, framework levels, elements, KPIs (Strategy map, onboarding step 2) | Planned |
+| 4b | Invitations by email; mail module (SMTP) | Done |
+| 5 | Strategy API: plans, framework levels, elements, KPIs (Strategy map, onboarding step 2) | Next |
 | 6 | Delivery API + rules engine: initiatives, milestones, tasks, dependencies, health calculation | Planned |
 | 7 | Reporting cycle: periods, updates workflow, verification, locking, snapshots | Planned |
 | 8 | Governance: risks, escalations (automatic ladder), decisions, maker-checker approvals, rulesets admin | Planned |
@@ -30,6 +30,8 @@ with its tests and documentation.
 ## 10.3 Known follow-ups
 
 - Rate-limit counters move to Redis (shared across instances) with the jobs module.
+- Email sending moves to a retrying background job (today: sent after commit; failures are reported and resendable).
+- Production email provider and sender domain (SPF, DKIM, DMARC).
 - Per-account (not only per-IP) sign-in throttling.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).

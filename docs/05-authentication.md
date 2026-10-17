@@ -97,8 +97,49 @@ The membership is re-checked on every refresh; a deactivated member is signed ou
   flight at a time).
 - Send requests with `credentials: 'include'` so the cookie reaches auth endpoints.
 
-## 5.6 Coming next
+## 5.6 Invitations
 
-Invitations (admin invites by email with roles; invitee accepts by setting a password or
-linking an existing account), password reset, email verification, and SSO (Microsoft Entra
-ID / Google Workspace via OpenID Connect).
+People join an organisation by invitation.
+
+| Method & path | Auth | Purpose |
+|---|---|---|
+| `POST /api/v1/invitations` | System Admin or Strategy Office | Invite by email with roles (optional job title, department) |
+| `GET /api/v1/invitations` | System Admin or Strategy Office | Recent invitations, newest first, with status (`PENDING`, `ACCEPTED`, `REVOKED`, `EXPIRED`) |
+| `POST /api/v1/invitations/:id/resend` | System Admin or Strategy Office | New link, new 7-day expiry; the old link stops working |
+| `DELETE /api/v1/invitations/:id` | System Admin or Strategy Office | Revoke |
+| `POST /api/v1/invitations/lookup` | public, strict rate limit | What the accept page shows; `accountExists` tells it which form to display |
+| `POST /api/v1/invitations/accept` | public, strict rate limit | Join and sign in (same response as sign-in) |
+
+**Rules**
+
+- The link contains a 256-bit one-time token; only its SHA-256 hash is stored. Tokens are
+  sent in request bodies, never URLs, so they stay out of access logs. Links expire after
+  7 days and work once (claimed atomically).
+- Re-inviting an address replaces its pending invitation.
+- Only a System Admin can grant `SYSTEM_ADMIN` (`CANNOT_GRANT_ROLE`), preventing privilege
+  escalation by other inviters.
+- Seat limit: active members plus pending invitations may not exceed the subscription's
+  seats (`SEAT_LIMIT_REACHED`). Invitations per organisation are serialised so two admins
+  cannot both take the last seat.
+- Existing members cannot be invited again (`ALREADY_MEMBER`); a deactivated member who
+  accepts a new invitation is reactivated with the invited roles.
+- **New person:** gives a name and a new password (strength rules apply).
+  **Existing SIMS user** (e.g. a consultant in another organisation): gives their existing
+  password, proving ownership; the workspace is added to their account.
+- Accepting proves control of the email address, so it is marked verified.
+- The email is sent after the invitation is saved. If sending fails, the invitation is kept
+  and the response says `emailDelivered: false`; use *resend*. (Sending moves to a retrying
+  background job with the jobs module.)
+
+**Error codes:** `INVITATION_NOT_FOUND` (404); `INVITATION_USED`, `INVITATION_EXPIRED`,
+`INVITATION_UNAVAILABLE` (410); `INVITATION_CLOSED`, `ALREADY_MEMBER`, `SEAT_LIMIT_REACHED`,
+`PASSWORD_SIGNIN_UNAVAILABLE` (409); `CANNOT_GRANT_ROLE` (403).
+
+**Web app:** the emailed link is `APP_URL/accept-invitation?token=…`. The page should read
+the token, remove it from the address bar (`history.replaceState`), call `lookup`, then
+`accept`.
+
+## 5.7 Coming next
+
+Password reset, email verification for self sign-up, SSO (Microsoft Entra ID / Google
+Workspace via OpenID Connect), and a non-cookie refresh path for the mobile app.

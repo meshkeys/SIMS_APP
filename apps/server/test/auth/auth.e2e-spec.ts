@@ -144,13 +144,11 @@ describe('Authentication (e2e)', () => {
     });
 
     it('lists every invalid field', async () => {
-      const response = await http()
-        .post('/api/v1/auth/signup')
-        .send({
-          organisationName: 'X',
-          email: 'not-an-email',
-          password: 'short',
-        });
+      const response = await http().post('/api/v1/auth/signup').send({
+        organisationName: 'X',
+        email: 'not-an-email',
+        password: 'short',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.code).toBe('VALIDATION_FAILED');

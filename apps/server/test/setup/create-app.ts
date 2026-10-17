@@ -7,12 +7,20 @@ import { configureApp } from '../../src/app.setup.js';
 
 /** The real application, configured exactly as in production. */
 export async function createTestApp(
-  options: { controllers?: Type[] } = {},
+  options: {
+    controllers?: Type[];
+    /** Replace providers, e.g. the mailer with a fake. */
+    overrides?: { provide: unknown; useValue: unknown }[];
+  } = {},
 ): Promise<NestExpressApplication> {
-  const moduleRef = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [AppModule],
     controllers: options.controllers ?? [],
-  }).compile();
+  });
+  for (const { provide, useValue } of options.overrides ?? []) {
+    builder = builder.overrideProvider(provide).useValue(useValue);
+  }
+  const moduleRef = await builder.compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestExpressApplication>(),
   );

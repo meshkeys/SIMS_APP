@@ -189,6 +189,25 @@ export class AuthService {
     return this.issue(auth.userId, workspace, rotated);
   }
 
+  /**
+   * Starts a session for a user who was just authenticated another way
+   * (e.g. by accepting an emailed invitation).
+   */
+  async startSessionIn(
+    userId: string,
+    organisationId: string,
+    meta: ClientMeta,
+  ): Promise<IssuedSession> {
+    const workspace = await this.usableWorkspace(userId, organisationId);
+    if (!workspace) {
+      throw new ForbiddenException({
+        code: 'NO_ACTIVE_MEMBERSHIP',
+        message: 'You do not have access to that workspace.',
+      });
+    }
+    return this.startSession(userId, workspace, meta);
+  }
+
   logout(refreshToken: string | undefined): Promise<void> {
     return refreshToken
       ? this.refreshTokens.revoke(refreshToken)

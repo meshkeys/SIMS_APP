@@ -24,30 +24,11 @@ import {
   type SwitchOrganisationInput,
   switchOrganisationSchema,
 } from './auth.schemas.js';
-import {
-  AuthService,
-  type IssuedSession,
-  type SessionView,
-} from './auth.service.js';
+import { AuthService, type SessionView } from './auth.service.js';
 import { CurrentAuth, Public } from './decorators.js';
-import {
-  clearRefreshCookie,
-  readRefreshCookie,
-  setRefreshCookie,
-} from './refresh-cookie.js';
-import type { ClientMeta } from './tokens/refresh-token.service.js';
-
-/** Body of every endpoint that starts or renews a session. */
-export interface SessionResponse {
-  accessToken: string;
-  accessTokenExpiresAt: string;
-  session: SessionView;
-}
-
-const clientMeta = (req: Request): ClientMeta => ({
-  userAgent: req.header('user-agent'),
-  ipAddress: req.ip,
-});
+import { clearRefreshCookie, readRefreshCookie } from './refresh-cookie.js';
+import { type SessionResponse, sendSession } from './session-response.js';
+import { clientMeta } from './client-meta.js';
 
 const missingRefreshToken = () =>
   new UnauthorizedException({
@@ -76,7 +57,11 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<SessionResponse> {
-    return this.respond(res, await this.auth.signup(input, clientMeta(req)));
+    return sendSession(
+      res,
+      await this.auth.signup(input, clientMeta(req)),
+      this.secureCookies,
+    );
   }
 
   @Public()
@@ -88,7 +73,11 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<SessionResponse> {
-    return this.respond(res, await this.auth.login(input, clientMeta(req)));
+    return sendSession(
+      res,
+      await this.auth.login(input, clientMeta(req)),
+      this.secureCookies,
+    );
   }
 
   /** Exchanges the refresh cookie for a new access token (and a new cookie). */
@@ -103,7 +92,11 @@ export class AuthController {
     const token = readRefreshCookie(req);
     if (!token) throw missingRefreshToken();
     try {
-      return this.respond(res, await this.auth.refresh(token, clientMeta(req)));
+      return sendSession(
+        res,
+        await this.auth.refresh(token, clientMeta(req)),
+        this.secureCookies,
+      );
     } catch (error) {
       clearRefreshCookie(res, this.secureCookies);
       throw error;
@@ -122,7 +115,7 @@ export class AuthController {
   ): Promise<SessionResponse> {
     const token = readRefreshCookie(req);
     if (!token) throw missingRefreshToken();
-    return this.respond(
+    return sendSession(
       res,
       await this.auth.switchOrganisation(
         caller,
@@ -130,6 +123,7 @@ export class AuthController {
         input.organisationId,
         clientMeta(req),
       ),
+      this.secureCookies,
     );
   }
 
@@ -148,15 +142,5 @@ export class AuthController {
   @Get('me')
   me(@CurrentAuth() caller: AuthContext): Promise<SessionView> {
     return this.auth.me(caller);
-  }
-
-  private respond(res: Response, session: IssuedSession): SessionResponse {
-    setRefreshCookie(res, session.refreshToken, this.secureCookies);
-    res.setHeader('Cache-Control', 'no-store');
-    return {
-      accessToken: session.accessToken.token,
-      accessTokenExpiresAt: session.accessToken.expiresAt.toISOString(),
-      session: session.view,
-    };
   }
 }

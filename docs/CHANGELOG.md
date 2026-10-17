@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Invitations (slice 4b)
+- Mail module: `Mailer` port with an SMTP implementation (Mailpit locally); HTML and text
+  emails with escaped user input.
+- Invite, list, resend and revoke (System Admin / Strategy Office); public lookup and accept.
+- One-time hashed tokens (7-day expiry); re-invite replaces; seat limit includes pending
+  invitations; only System Admins can grant System Admin; existing users link a workspace
+  with their password; acceptance verifies the email.
+- `sims_invitation_by_token_hash()` lookup; shared secure-token helper.
+
 ## 2026-10-18 — Documentation
 - Documentation set in `docs/` with a PDF/HTML build (`npm run docs:build`).
 

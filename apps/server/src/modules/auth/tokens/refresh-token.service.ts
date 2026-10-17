@@ -1,5 +1,9 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+import {
+  generateSecureToken,
+  hashSecureToken,
+} from '../../../common/crypto/secure-token.js';
 import { uuidv7 } from '../../../common/ids/uuidv7.js';
 import { ENV } from '../../../config/config.module.js';
 import type { Env } from '../../../config/env.js';
@@ -24,9 +28,6 @@ export interface RotatedRefreshToken extends IssuedRefreshToken {
 
 /** A rotated token re-presented within this window is a benign race (two tabs), not theft. */
 const REUSE_GRACE_MS = 30_000;
-
-const hashToken = (token: string) =>
-  createHash('sha256').update(token).digest('hex');
 
 const invalid = (code: string, message: string) =>
   new UnauthorizedException({ code, message });
@@ -60,7 +61,7 @@ export class RefreshTokenService {
     meta: ClientMeta,
     familyId: string = randomUUID(),
   ): Promise<IssuedRefreshToken> {
-    const token = randomBytes(32).toString('base64url');
+    const token = generateSecureToken();
     const expiresAt = new Date(Date.now() + this.ttlMs);
     await this.prisma.refreshToken.create({
       data: {
@@ -68,7 +69,7 @@ export class RefreshTokenService {
         userId,
         familyId,
         activeOrganisationId: organisationId,
-        tokenHash: hashToken(token),
+        tokenHash: hashSecureToken(token),
         expiresAt,
         userAgent: meta.userAgent?.slice(0, 400),
         ipAddress: meta.ipAddress,
@@ -87,7 +88,7 @@ export class RefreshTokenService {
     organisationId?: string,
   ): Promise<RotatedRefreshToken> {
     const current = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(token) },
+      where: { tokenHash: hashSecureToken(token) },
     });
     if (!current)
       throw invalid('INVALID_REFRESH_TOKEN', 'Please sign in again.');
@@ -106,7 +107,7 @@ export class RefreshTokenService {
       );
     }
 
-    const next = randomBytes(32).toString('base64url');
+    const next = generateSecureToken();
     const nextId = uuidv7();
     const expiresAt = new Date(Date.now() + this.ttlMs);
     const targetOrg = organisationId ?? current.activeOrganisationId;
@@ -124,7 +125,7 @@ export class RefreshTokenService {
           userId: current.userId,
           familyId: current.familyId,
           activeOrganisationId: targetOrg,
-          tokenHash: hashToken(next),
+          tokenHash: hashSecureToken(next),
           expiresAt,
           userAgent: meta.userAgent?.slice(0, 400),
           ipAddress: meta.ipAddress,
@@ -147,7 +148,7 @@ export class RefreshTokenService {
   /** Signs out every device that shares this sign-in. Unknown tokens are ignored. */
   async revoke(token: string): Promise<void> {
     const current = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(token) },
+      where: { tokenHash: hashSecureToken(token) },
       select: { familyId: true },
     });
     if (current) await this.revokeFamily(current.familyId);

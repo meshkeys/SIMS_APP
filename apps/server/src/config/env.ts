@@ -41,6 +41,18 @@ export const envSchema = z
     COOKIE_SECURE: z.stringbool().optional(),
     /** Browser origins allowed to call the API with credentials. */
     CORS_ORIGINS: commaList.default(['http://localhost:5173']),
+    /** Public address of the web app; used to build links in emails. */
+    APP_URL: z.url().default('http://localhost:5173'),
+
+    /** Outgoing mail (SMTP). Locally this is Mailpit; in production any SMTP provider. */
+    SMTP_HOST: z.string().min(1).default('localhost'),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65_535).default(1025),
+    /** true = implicit TLS (port 465). STARTTLS is used automatically when offered. */
+    SMTP_SECURE: z.stringbool().default(false),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASSWORD: z.string().optional(),
+    MAIL_FROM: z.string().min(3).default('SIMS <no-reply@sims.local>'),
+
     /** Reverse proxies in front of the API (load balancer = 1), so client IPs are correct. */
     TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
     /** Requests per minute per client IP, all endpoints. */

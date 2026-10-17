@@ -76,3 +76,4 @@ complete; lower-case emails; valid workspace slugs. A partial unique index ensur
 | `…_allow_tenant_cascade_delete` | NO ACTION on required relations so a tenant can be deleted cleanly |
 | `…_auth_membership_lookup` | `sims_auth_memberships()` — the sign-in lookup (chapter 4) |
 | `…_refresh_token_not_tenant_scoped` | RefreshToken is user data: column renamed, RLS removed |
+| `…_invitation_token_lookup` | `sims_invitation_by_token_hash()` for the accept page; index for invitation lists |

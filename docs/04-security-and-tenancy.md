@@ -35,13 +35,20 @@ without one.
 Its migration must call `SELECT sims_enable_tenant_rls('"NewTable"');`. An automated test
 fails if any table with an `organisationId` column lacks row-level security.
 
-## 4.3 The single sanctioned cross-tenant path
+## 4.3 Sanctioned cross-tenant lookups
 
-At sign-in the API knows the person but not yet the organisation. The function
-`sims_auth_memberships(user_id)` is `SECURITY DEFINER` with a pinned `search_path`, and
-returns **only that user's** memberships with the minimum organisation fields. `sims_app`
-may execute it but not change it. In production the migration role must be a superuser
-or have `BYPASSRLS` for this function to work.
+Two moments happen before any tenant is known. Each has one narrow, read-only
+`SECURITY DEFINER` function with a pinned `search_path`; `sims_app` may execute them but not
+change them.
+
+| Function | Used when | Returns |
+|---|---|---|
+| `sims_auth_memberships(user_id)` | Sign-in, refresh, switching workspace | Only that user's memberships, with minimum organisation fields |
+| `sims_invitation_by_token_hash(hash)` | Public accept-invitation page | One invitation matching the hash of a secret token |
+
+In production the migration role must be a superuser or have `BYPASSRLS` for these
+functions to work. Any new cross-tenant need gets its own function, reviewed the same way;
+never a general bypass.
 
 ## 4.4 Data integrity and audit
 

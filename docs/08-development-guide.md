@@ -51,12 +51,22 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `TRUST_PROXY` | 0 | Number of proxies in front of the API |
 | `RATE_LIMIT_PER_MINUTE` | 300 | General limit per IP |
 | `RATE_LIMIT_AUTH_PER_MINUTE` | 10 | Sign-in/up/refresh limit per IP |
+| `APP_URL` | http://localhost:5173 | Web app address, used in email links |
+| `SMTP_HOST` / `SMTP_PORT` | localhost / 1025 | Outgoing mail server (Mailpit locally) |
+| `SMTP_SECURE` | false | `true` for implicit TLS (port 465); STARTTLS is used when offered |
+| `SMTP_USER` / `SMTP_PASSWORD` | — | SMTP credentials, if the provider needs them |
+| `MAIL_FROM` | SIMS <no-reply@sims.local> | Sender shown on emails |
 | `TEST_DATABASE_URL` / `TEST_DATABASE_ADMIN_URL` | — | e2e database (name must end in `_test`) |
 
 Configuration is validated at start-up; the server refuses to boot and lists every problem
 if anything is missing or invalid.
 
-## 8.5 Testing strategy
+## 8.5 Email in development
+
+All email goes to **Mailpit**: open http://localhost:8025 to read what the API sent
+(invitations, later notifications). Nothing leaves your machine.
+
+## 8.6 Testing strategy
 
 | Level | Where | Covers |
 |---|---|---|
@@ -64,9 +74,11 @@ if anything is missing or invalid.
 | End-to-end | `test/**/*.e2e-spec.ts` | The real app (same `configureApp` as production) against a migrated test database, as the real app role |
 
 Notable suites: tenant isolation (RLS, composite keys, append-only audit, catalog guards);
-authentication flows; demo seed integrity (pins every number shown in the wireframes).
+authentication flows; invitations (a fake mailer captures the emailed link); real SMTP
+delivery through Mailpit (skipped if Mailpit is not running); demo seed integrity (pins
+every number shown in the wireframes).
 
-## 8.6 How-to
+## 8.7 How-to
 
 **Add an endpoint.** Create/extend a module in `src/modules/<feature>/`; define a zod
 schema; use `@Body(new ZodValidationPipe(schema))`; use `TenantPrismaService`; add
@@ -80,7 +92,7 @@ e2e suite (the catalog guard checks it).
 CHECK constraints or renames (Prisma would drop and re-add a renamed column); confirm
 no drift with `prisma migrate diff`.
 
-## 8.7 Code conventions
+## 8.8 Code conventions
 
 - TypeScript strict; ESM (`.js` extensions in imports).
 - Business rules in `src/domain/` (no framework imports).
@@ -88,7 +100,7 @@ no drift with `prisma migrate diff`.
 - Comments explain *why*, not *what*.
 - Prettier formatting; oxlint for linting.
 
-## 8.8 Git workflow
+## 8.9 Git workflow
 
 Small, reviewable slices. Each slice: code + tests + docs updated, all checks green, then
 one commit with a conventional message (`feat(auth): …`, `chore: …`, `docs: …`).

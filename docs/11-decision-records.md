@@ -164,3 +164,21 @@ field-level validation messages.
 `errors[]`, and the `requestId`.
 
 **Consequences.** Clients branch on `code`; support can trace any error by `requestId`.
+
+---
+
+## ADR-012 — Email through a `Mailer` port; send after commit
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Invitations (and later notifications) send email. Email providers fail and
+are slow; tests must not send real mail; the provider may change.
+
+**Decision.** Feature code depends on a `Mailer` interface. The SMTP implementation works
+with any provider (Mailpit locally). Mail is sent only after the database transaction
+commits; a failure is logged and reported to the caller (`emailDelivered: false`) and the
+record can be resent.
+
+**Consequences.** A mail outage never loses data or rolls back business actions. Tests
+swap in a fake mailer and read the emailed link. Delivery is not retried automatically
+until the jobs module adds a queue.

@@ -23,6 +23,12 @@ import { RefreshTokenService } from './tokens/refresh-token.service.js';
     RolesGuard,
     TenantContextInterceptor,
   ],
-  exports: [AccessTokenGuard, RolesGuard, TenantContextInterceptor],
+  exports: [
+    AuthService,
+    AuthDirectory,
+    AccessTokenGuard,
+    RolesGuard,
+    TenantContextInterceptor,
+  ],
 })
 export class AuthModule {}
