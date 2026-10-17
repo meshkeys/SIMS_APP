@@ -182,3 +182,38 @@ record can be resent.
 **Consequences.** A mail outage never loses data or rolls back business actions. Tests
 swap in a fake mailer and read the emailed link. Delivery is not retried automatically
 until the jobs module adds a queue.
+
+---
+
+## ADR-013 — One read model per screen; flat element lists
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Screens like the Strategy map combine plan, levels, elements, people, KPIs
+and initiative health. Assembling that from many generic endpoints means many round trips
+and N+1 queries as plans grow.
+
+**Decision.** Each data-heavy screen gets a read endpoint shaped for it (e.g.
+`GET /plans/:id/map`) that runs a fixed number of queries and returns stored rollups.
+Trees are returned as flat lists with `parentId`; the client builds the hierarchy.
+Generic CRUD endpoints remain for editing.
+
+**Consequences.** Fast screens with predictable database load at any plan size; one place
+to cache later. Read models must be updated when screens change.
+
+---
+
+## ADR-014 — Validate membership references explicitly
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Foreign keys are checked by PostgreSQL without row-level security, and
+person references (owner, sponsor) are plain foreign keys, so another tenant's membership
+id would pass the database check.
+
+**Decision.** Every write that sets a membership reference calls `assertActiveMembers`,
+which reads through row-level security and requires an active member.
+
+**Consequences.** Cross-tenant references are impossible through the API; one helper to
+reuse in every module (initiatives, risks, tasks…).
+

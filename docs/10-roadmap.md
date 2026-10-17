@@ -16,7 +16,8 @@ with its tests and documentation.
 | 4a | Authentication: sign-up with organisation, sign-in, refresh rotation, roles, tenant context per request, API conventions | Done |
 | — | Documentation set (this document) | Done |
 | 4b | Invitations by email; mail module (SMTP) | Done |
-| 5 | Strategy API: plans, framework levels, elements, KPIs (Strategy map, onboarding step 2) | Next |
+| 5 | Strategy API: plans, framework templates and levels, elements, strategy map read model | Done |
+| 5b | KPI management: KPIs, interim targets (Strategy map KPI table, onboarding) | Next |
 | 6 | Delivery API + rules engine: initiatives, milestones, tasks, dependencies, health calculation | Planned |
 | 7 | Reporting cycle: periods, updates workflow, verification, locking, snapshots | Planned |
 | 8 | Governance: risks, escalations (automatic ladder), decisions, maker-checker approvals, rulesets admin | Planned |

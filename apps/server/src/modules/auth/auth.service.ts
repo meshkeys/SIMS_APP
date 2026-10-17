@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { isUniqueViolation } from '../../common/data/prisma-errors.js';
 import { uuidv7 } from '../../common/ids/uuidv7.js';
 import { DEFAULT_RULESET_CONFIG } from '../../domain/rulesets/ruleset-config.js';
 import type { Role } from '../../generated/prisma/enums.js';
@@ -471,11 +472,4 @@ export function slugify(name: string): string {
 
 function randomSuffix(): string {
   return Math.random().toString(36).slice(2, 6).padEnd(4, '0');
-}
-
-/** Prisma unique-constraint violation mentioning `field` (works across driver adapters). */
-function isUniqueViolation(error: unknown, field: string): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  const { code, meta } = error as { code?: unknown; meta?: unknown };
-  return code === 'P2002' && JSON.stringify(meta ?? {}).includes(field);
 }

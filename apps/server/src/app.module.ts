@@ -14,6 +14,7 @@ import {
   TenantContextInterceptor,
 } from './modules/auth/index.js';
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
+import { StrategyModule } from './modules/strategy/strategy.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module.js';
     HealthModule,
     AuthModule,
     InvitationsModule,
+    StrategyModule,
   ],
   providers: [
     // Global guards run in this order: rate limit → authentication → roles.

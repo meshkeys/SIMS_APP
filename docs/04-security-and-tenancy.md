@@ -87,7 +87,20 @@ Role checks (`@Roles(...)`) answer "may this kind of user call this endpoint?". 
 rules — owner, sponsor, sensitive initiatives, Internal Audit read-only — are enforced in
 services as each module is built.
 
-## 4.8 Secrets
+## 4.8 Foreign keys bypass row-level security
+
+PostgreSQL checks foreign keys without applying row-level security. For relations that use
+composite tenant keys (chapter 3) this is harmless — the key itself includes the
+organisation. But **optional person references** (owner, sponsor, assignee…) are plain
+foreign keys to `Membership`, so a request could otherwise point them at another tenant's
+member and the database would accept it.
+
+Rule: every write that sets a membership id validates it first with
+`assertActiveMembers(tx, { ownerId, sponsorId })`, which reads through row-level security
+(other tenants' members are invisible) and requires the member to be active. Tested:
+an owner id from another organisation is rejected with `400`.
+
+## 4.9 Secrets
 
 | Secret | Where | Notes |
 |---|---|---|

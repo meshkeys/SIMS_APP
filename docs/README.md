@@ -15,6 +15,7 @@ Strategic Initiative Management System · Strategy Execution Command Centre
 | 9 | [Demo data](09-demo-data.md) | Everyone |
 | 10 | [Roadmap and status](10-roadmap.md) | Everyone |
 | 11 | [Architecture decision records](11-decision-records.md) | Engineers, reviewers |
+| 12 | [Strategy API](12-strategy-api.md) | Engineers (API and web) |
 | — | [Changelog](CHANGELOG.md) | Everyone |
 
 ## Downloadable copy

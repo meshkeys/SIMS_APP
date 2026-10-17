@@ -2,6 +2,17 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Strategy API (slice 5)
+- Plans from five framework templates (pillars, Balanced Scorecard, OKRs, public sector,
+  custom); edit plan details.
+- Levels saved as one ordered list with safety rules (no moving/removing levels that hold
+  items; no switching off KPIs in use).
+- Elements: create with generated codes, edit, move one level up, reorder, delete when empty.
+- Strategy map read model (one call, fixed query count) and element detail with KPI
+  progress to target and contributing initiatives; sensitive initiatives hidden but counted.
+- Owner/sponsor ids validated against active members of the tenant.
+- Shared helpers: audit recording, decimal→number, person references, unique-violation detection.
+
 ## 2026-10-18 — Invitations (slice 4b)
 - Mail module: `Mailer` port with an SMTP implementation (Mailpit locally); HTML and text
   emails with escaped user input.

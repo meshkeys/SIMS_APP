@@ -18,6 +18,12 @@ export const INVITER_ROLES = [
   'STRATEGY_OFFICE',
 ] as const satisfies readonly Role[];
 
+/** Roles that may change the strategic plan, its framework and elements. */
+export const STRATEGY_EDITOR_ROLES = [
+  'STRATEGY_OFFICE',
+  'SYSTEM_ADMIN',
+] as const satisfies readonly Role[];
+
 /**
  * Roles only a System Administrator can hand out. Stops anyone with invite
  * rights from creating a new administrator (privilege escalation).
