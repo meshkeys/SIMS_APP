@@ -2,6 +2,27 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Governance (slice 8a)
+- Risks and issues: register with the 5×5 heatmap, filters and counts; risks scored from
+  likelihood × impact; health re-runs when items change (critical-issue cap).
+- Decisions required (due dates, overdue, deferral that reappears) and the decision log;
+  "I need a management decision" on an update creates a decision for the sponsor.
+- Change requests (maker-checker) for active baselines: routed to the MD/CEO (baseline) or
+  sponsor (budget, scope), never approved by the requester, re-validated and applied on
+  approval, withdrawable. Active baselines are now locked for everyone, the Strategy Office
+  included (ADR-021).
+
+## 2026-10-18 — Reporting cycle (slice 7)
+- Periods: open with deadlines in working days at 17:00 in the organisation's time zone
+  (daylight saving handled), advance stages, lock with progress and report snapshots;
+  cycle tracker with "Day N of M" and counts.
+- My updates; the update form with lines, live evaluation (claimed, planned, variance,
+  health preview), checklist and comment thread; save draft and submit.
+- Strategy Office verification (never above the claim), challenges with reasons, sponsor
+  confirmation, review queue; health recalculated at each step.
+- Locking turns unreported initiatives Unknown (unless forced Red) and freezes the numbers
+  Board packs use.
+
 ## 2026-10-18 — Delivery API, write side (slice 6c)
 - Propose/draft initiatives (code suggested from the pillar), edit with per-initiative
   permissions, replace objective links, lifecycle with readiness checks and reasons.

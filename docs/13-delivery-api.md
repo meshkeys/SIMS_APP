@@ -142,15 +142,15 @@ any open status ──▶ CANCELLED          (CLOSED and CANCELLED are final)
 | Owner, sponsor, sensitivity; objective links; status | ✓ | — | — | — |
 | Title, priority, department, benefits owner | ✓ | ✓ | — | — |
 | Description, business case, scope, forecast end, spend | ✓ | ✓ | ✓ | — |
-| Baseline (dates, budget) and milestone plan (add/remove, weights, baseline dates, critical) | ✓ | before activation | before activation | — |
+| Baseline (dates, budget) and milestone plan (add/remove, weights, baseline dates, critical) | before activation | before activation | before activation | — |
 | Milestone titles, forecasts, order; tasks; dependencies | ✓ | ✓ | ✓ | — |
 | Task status | ✓ | ✓ | ✓ | the assignee |
 
 - Not accountable → `403 NOT_ACCOUNTABLE`; a field above your level →
   `403 FIELDS_NOT_PERMITTED` listing the fields; a locked baseline →
   `409 BASELINE_LOCKED`. Sensitive initiatives you may not see answer `404`.
-- **The baseline locks when delivery starts.** Until change requests arrive (governance
-  slice), only the Strategy Office can change it, recorded as `BASELINE_CHANGED`.
+- **The baseline locks when delivery starts — for everyone.** After activation it changes
+  only through an approved change request (chapter 15.4).
 - A milestone with reported or verified progress cannot be removed (`MILESTONE_HAS_PROGRESS`).
 - A forecast move is recorded as its own event and appears in the activity trail
   ("Forecast for … moved 7 Oct → 22 Oct").

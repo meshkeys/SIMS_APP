@@ -16,7 +16,9 @@ import {
 } from './modules/auth/index.js';
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
 import { DeliveryModule } from './modules/delivery/delivery.module.js';
+import { GovernanceModule } from './modules/governance/governance.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
+import { ReportingModule } from './modules/reporting/reporting.module.js';
 import { StrategyModule } from './modules/strategy/strategy.module.js';
 
 @Module({
@@ -35,6 +37,8 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     StrategyModule,
     KpisModule,
     DeliveryModule,
+    ReportingModule,
+    GovernanceModule,
   ],
   providers: [
     // Global guards run in this order: rate limit → authentication → roles.

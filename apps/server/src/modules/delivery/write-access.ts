@@ -43,7 +43,7 @@ export const notYourInitiative = () =>
 export const baselineLocked = (what = 'The baseline') =>
   new ConflictException({
     code: 'BASELINE_LOCKED',
-    message: `${what} is locked while the initiative is being delivered. Ask the Strategy Office to raise a change request.`,
+    message: `${what} is locked while the initiative is being delivered. Raise a change request (POST /initiatives/:id/change-requests).`,
   });
 
 export const invalidField = (path: string, message: string) =>

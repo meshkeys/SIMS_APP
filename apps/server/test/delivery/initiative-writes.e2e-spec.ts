@@ -24,21 +24,39 @@ describe('Initiative changes (e2e)', () => {
   const people: Record<string, string> = {};
   let robo: { id: string; milestones: { id: string; title: string }[] };
 
-  const call = async (as: string, method: 'get' | 'post' | 'patch' | 'put' | 'delete', path: string, body?: object) => {
+  const call = async (
+    as: string,
+    method: 'get' | 'post' | 'patch' | 'put' | 'delete',
+    path: string,
+    body?: object,
+  ) => {
     const bearer = await token(as);
-    return request(app.getHttpServer())[method](`/api/v1${path}`).auth(bearer, { type: 'bearer' }).send(body);
+    return request(app.getHttpServer())
+      [method](`/api/v1${path}`)
+      .auth(bearer, { type: 'bearer' })
+      .send(body);
   };
 
   beforeAll(async () => {
     admin = createAdminPool();
     await loadDemo(admin);
-    app = await createTestApp({ overrides: [{ provide: CLOCK, useValue: clock }] });
+    app = await createTestApp({
+      overrides: [{ provide: CLOCK, useValue: clock }],
+    });
     token = signInAs(app);
-    for (const row of (await admin.query(`SELECT code, id FROM "Initiative"`)).rows) ids[row.code] = row.id;
-    for (const row of (await admin.query(`SELECT code, id FROM "StrategyElement"`)).rows) elements[row.code] = row.id;
+    for (const row of (await admin.query(`SELECT code, id FROM "Initiative"`))
+      .rows)
+      ids[row.code] = row.id;
     for (const row of (
-      await admin.query(`SELECT u.email, m.id FROM "Membership" m JOIN "User" u ON u.id = m."userId"`)
-    ).rows) people[row.email] = row.id;
+      await admin.query(`SELECT code, id FROM "StrategyElement"`)
+    ).rows)
+      elements[row.code] = row.id;
+    for (const row of (
+      await admin.query(
+        `SELECT u.email, m.id FROM "Membership" m JOIN "User" u ON u.id = m."userId"`,
+      )
+    ).rows)
+      people[row.email] = row.id;
   });
 
   afterAll(async () => {
@@ -86,41 +104,70 @@ describe('Initiative changes (e2e)', () => {
 
       const unknown = await call(HASSAN, 'post', '/initiatives', {
         title: 'Nowhere',
-        objectives: [{ elementId: '0199f0a0-0000-7000-8000-00000000dead', weight: 10, isPrimary: true }],
+        objectives: [
+          {
+            elementId: '0199f0a0-0000-7000-8000-00000000dead',
+            weight: 10,
+            isPrimary: true,
+          },
+        ],
       });
       expect(unknown.status).toBe(400);
       expect(unknown.body.errors[0].path).toBe('objectives.0.elementId');
     });
 
     it('lets the owner plan milestones while it is in the pipeline', async () => {
-      const first = await call(HASSAN, 'post', `/initiatives/${robo.id}/milestones`, {
-        title: 'Advice engine built',
-        weight: 60,
-        isCritical: true,
-        baselineStartDate: '2026-11-01',
-        baselineDate: '2027-03-31',
-      });
+      const first = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/milestones`,
+        {
+          title: 'Advice engine built',
+          weight: 60,
+          isCritical: true,
+          baselineStartDate: '2026-11-01',
+          baselineDate: '2027-03-31',
+        },
+      );
       expect(first.status).toBe(201);
-      const second = await call(HASSAN, 'post', `/initiatives/${robo.id}/milestones`, {
-        title: 'Launched to retail customers',
-        weight: 40,
-        baselineStartDate: '2027-04-01',
-        baselineDate: '2027-06-30',
-      });
+      const second = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/milestones`,
+        {
+          title: 'Launched to retail customers',
+          weight: 40,
+          baselineStartDate: '2027-04-01',
+          baselineDate: '2027-06-30',
+        },
+      );
       robo = second.body;
-      expect(robo.milestones.map((m) => m.title)).toEqual(['Advice engine built', 'Launched to retail customers']);
+      expect(robo.milestones.map((m) => m.title)).toEqual([
+        'Advice engine built',
+        'Launched to retail customers',
+      ]);
     });
   });
 
   describe('lifecycle', () => {
     it('is changed only by the Strategy Office', async () => {
-      const response = await call(HASSAN, 'post', `/initiatives/${robo.id}/status`, { status: 'APPROVED' });
+      const response = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        { status: 'APPROVED' },
+      );
       expect(response.status).toBe(403);
       expect(response.body.code).toBe('STRATEGY_OFFICE_ONLY');
     });
 
     it('refuses skipping approval', async () => {
-      const response = await call(AMARA, 'post', `/initiatives/${robo.id}/status`, { status: 'ACTIVE' });
+      const response = await call(
+        AMARA,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        { status: 'ACTIVE' },
+      );
       expect(response.status).toBe(409);
       expect(response.body.detail).toContain('APPROVED');
     });
@@ -129,15 +176,28 @@ describe('Initiative changes (e2e)', () => {
       const bare = await call(AMARA, 'post', '/initiatives', {
         title: 'Bare idea',
         status: 'DRAFT',
-        objectives: [{ elementId: elements['O3.1'], weight: 5, isPrimary: true }],
+        objectives: [
+          { elementId: elements['O3.1'], weight: 5, isPrimary: true },
+        ],
       });
-      await call(AMARA, 'post', `/initiatives/${bare.body.id}/status`, { status: 'PROPOSED' });
-      await call(AMARA, 'post', `/initiatives/${bare.body.id}/status`, { status: 'APPROVED' });
-      const response = await call(AMARA, 'post', `/initiatives/${bare.body.id}/status`, { status: 'ACTIVE' });
+      await call(AMARA, 'post', `/initiatives/${bare.body.id}/status`, {
+        status: 'PROPOSED',
+      });
+      await call(AMARA, 'post', `/initiatives/${bare.body.id}/status`, {
+        status: 'APPROVED',
+      });
+      const response = await call(
+        AMARA,
+        'post',
+        `/initiatives/${bare.body.id}/status`,
+        { status: 'ACTIVE' },
+      );
 
       expect(response.status).toBe(409);
       expect(response.body.code).toBe('NOT_READY');
-      expect(response.body.errors.map((e: { message: string }) => e.message)).toEqual([
+      expect(
+        response.body.errors.map((e: { message: string }) => e.message),
+      ).toEqual([
         'Assign an initiative owner',
         'Assign an executive sponsor',
         'Set baseline start and end dates',
@@ -146,123 +206,187 @@ describe('Initiative changes (e2e)', () => {
     });
 
     it('activates a ready initiative and calculates its health', async () => {
-      await call(AMARA, 'post', `/initiatives/${robo.id}/status`, { status: 'APPROVED' });
-      const response = await call(AMARA, 'post', `/initiatives/${robo.id}/status`, { status: 'ACTIVE' });
+      await call(AMARA, 'post', `/initiatives/${robo.id}/status`, {
+        status: 'APPROVED',
+      });
+      const response = await call(
+        AMARA,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        { status: 'ACTIVE' },
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         status: 'ACTIVE',
         execution: { verified: 0, planned: 0 },
-        health: { calculated: 'GREEN', reasons: [{ rule: 'PROGRESS_VS_PLAN', detail: 'On plan' }] },
+        health: {
+          calculated: 'GREEN',
+          reasons: [{ rule: 'PROGRESS_VS_PLAN', detail: 'On plan' }],
+        },
       });
-      expect((await call(AMARA, 'get', '/initiatives')).body.tabCounts.active).toBe(33);
+      expect(
+        (await call(AMARA, 'get', '/initiatives')).body.tabCounts.active,
+      ).toBe(33);
     });
   });
 
   describe('once active, the baseline is locked', () => {
     it('for the owner: no new milestones, weights or baseline dates', async () => {
-      const add = await call(HASSAN, 'post', `/initiatives/${robo.id}/milestones`, {
-        title: 'Extra',
-        weight: 10,
-        baselineDate: '2027-05-01',
-      });
+      const add = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/milestones`,
+        {
+          title: 'Extra',
+          weight: 10,
+          baselineDate: '2027-05-01',
+        },
+      );
       expect(add.status).toBe(409);
       expect(add.body.code).toBe('BASELINE_LOCKED');
 
-      const end = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, { baselineEnd: '2027-09-30' });
+      const end = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, {
+        baselineEnd: '2027-09-30',
+      });
       expect(end.status).toBe(409);
     });
 
     it('but forecasts and the narrative stay open, with the forecast move in the trail', async () => {
       const milestone = robo.milestones[0];
-      const forecast = await call(HASSAN, 'patch', `/milestones/${milestone.id}`, { forecastDate: '2027-04-15' });
+      const forecast = await call(
+        HASSAN,
+        'patch',
+        `/milestones/${milestone.id}`,
+        { forecastDate: '2027-04-15' },
+      );
       expect(forecast.status).toBe(200);
-      expect(forecast.body.activity[0].summary).toBe('Forecast for Advice engine built moved  → 15 Apr');
+      expect(forecast.body.activity[0].summary).toBe(
+        'Forecast for Advice engine built moved  → 15 Apr',
+      );
 
-      const narrative = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, { description: 'Updated scope.' });
+      const narrative = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, {
+        description: 'Updated scope.',
+      });
       expect(narrative.status).toBe(200);
     });
 
     it('owners cannot reassign accountability', async () => {
-      const response = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, { sponsorId: people[COO], priority: 1 });
+      const response = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, {
+        sponsorId: people[COO],
+        priority: 1,
+      });
       expect(response.status).toBe(403);
-      expect(response.body.errors.map((e: { path: string }) => e.path)).toEqual(['sponsorId', 'priority']);
-    });
-
-    it('the Strategy Office may still change it, recorded as a baseline change', async () => {
-      const response = await call(AMARA, 'patch', `/initiatives/${robo.id}`, { baselineEnd: '2027-07-31' });
-      expect(response.status).toBe(200);
-      expect(response.body.activity[0].action).toBe('BASELINE_CHANGED');
-    });
-  });
-
-  describe('health follows every change', () => {
-    it('drops the forced Red when a milestone stops being critical', async () => {
-      const dig004 = (await call(AMARA, 'get', `/initiatives/${ids['DIG-004']}`)).body;
-      const vendor = dig004.milestones.find((m: { title: string }) => m.title === 'Vendor contract signed');
-
-      const response = await call(AMARA, 'patch', `/milestones/${vendor.id}`, { isCritical: false });
-      expect(response.body.health.calculated).toBe('AMBER');
-      expect(response.body.health.reasons.map((r: { rule: string }) => r.rule)).not.toContain(
-        'OVERDUE_CRITICAL_MILESTONE',
+      expect(response.body.errors.map((e: { path: string }) => e.path)).toEqual(
+        ['sponsorId', 'priority'],
       );
     });
 
-    it('keeps milestones that have progress', async () => {
-      const dig004 = (await call(AMARA, 'get', `/initiatives/${ids['DIG-004']}`)).body;
-      const done = dig004.milestones.find((m: { title: string }) => m.title === 'Business case approved');
-      const response = await call(AMARA, 'delete', `/milestones/${done.id}`);
+    it('even for the Strategy Office: changes go through a change request', async () => {
+      const response = await call(AMARA, 'patch', `/initiatives/${robo.id}`, {
+        baselineEnd: '2027-07-31',
+      });
       expect(response.status).toBe(409);
-      expect(response.body.code).toBe('MILESTONE_HAS_PROGRESS');
+      expect(response.body.code).toBe('BASELINE_LOCKED');
+      expect(response.body.detail).toContain('change request');
+
+      const dig004 = (
+        await call(AMARA, 'get', `/initiatives/${ids['DIG-004']}`)
+      ).body;
+      const vendor = dig004.milestones.find(
+        (m: { title: string }) => m.title === 'Vendor contract signed',
+      );
+      const critical = await call(AMARA, 'patch', `/milestones/${vendor.id}`, {
+        isCritical: false,
+      });
+      expect(critical.status).toBe(409);
+      const removal = await call(AMARA, 'delete', `/milestones/${vendor.id}`);
+      expect(removal.status).toBe(409);
     });
   });
 
   describe('tasks', () => {
     it('are managed by the owner; the assignee updates the status', async () => {
       const milestone = robo.milestones[0];
-      const added = await call(HASSAN, 'post', `/milestones/${milestone.id}/tasks`, {
-        title: 'Risk-profiling questionnaire',
-        assigneeId: people[NKECHI],
-        dueDate: '2026-12-15',
-      });
+      const added = await call(
+        HASSAN,
+        'post',
+        `/milestones/${milestone.id}/tasks`,
+        {
+          title: 'Risk-profiling questionnaire',
+          assigneeId: people[NKECHI],
+          dueDate: '2026-12-15',
+        },
+      );
       expect(added.status).toBe(201);
       const task = added.body.milestones[0].tasks[0];
-      expect(task).toMatchObject({ status: 'TODO', assignee: { name: 'Nkechi Ibe' } });
+      expect(task).toMatchObject({
+        status: 'TODO',
+        assignee: { name: 'Nkechi Ibe' },
+      });
 
-      const done = await call(NKECHI, 'patch', `/tasks/${task.id}`, { status: 'DONE' });
+      const done = await call(NKECHI, 'patch', `/tasks/${task.id}`, {
+        status: 'DONE',
+      });
       expect(done.status).toBe(200);
-      expect(done.body.milestones[0].tasks[0]).toMatchObject({ status: 'DONE', completedAt: DEMO_NOW.toISOString() });
+      expect(done.body.milestones[0].tasks[0]).toMatchObject({
+        status: 'DONE',
+        completedAt: DEMO_NOW.toISOString(),
+      });
 
-      const rename = await call(NKECHI, 'patch', `/tasks/${task.id}`, { title: 'Renamed' });
+      const rename = await call(NKECHI, 'patch', `/tasks/${task.id}`, {
+        title: 'Renamed',
+      });
       expect(rename.status).toBe(403);
     });
   });
 
   describe('dependencies', () => {
     it('records what an initiative waits on and starts the blocked clock', async () => {
-      const response = await call(HASSAN, 'post', `/initiatives/${robo.id}/dependencies`, {
-        toInitiativeId: ids['DIG-004'],
-        status: 'BLOCKED',
-        isCriticalPath: true,
-      });
+      const response = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/dependencies`,
+        {
+          toInitiativeId: ids['DIG-004'],
+          status: 'BLOCKED',
+          isCriticalPath: true,
+        },
+      );
       expect(response.status).toBe(201);
       expect(response.body.dependencies.blockedBy).toEqual([
-        expect.objectContaining({ code: 'DIG-004', status: 'BLOCKED', blockedSince: '2026-10-16' }),
+        expect.objectContaining({
+          code: 'DIG-004',
+          status: 'BLOCKED',
+          blockedSince: '2026-10-16',
+        }),
       ]);
 
-      const duplicate = await call(HASSAN, 'post', `/initiatives/${robo.id}/dependencies`, { toInitiativeId: ids['DIG-004'] });
+      const duplicate = await call(
+        HASSAN,
+        'post',
+        `/initiatives/${robo.id}/dependencies`,
+        { toInitiativeId: ids['DIG-004'] },
+      );
       expect(duplicate.status).toBe(409);
       expect(duplicate.body.code).toBe('DEPENDENCY_EXISTS');
     });
 
     it('refuses a loop, naming it', async () => {
       // DIG-016 waits on DIG-004, which waits on DIG-011.
-      const response = await call(AMARA, 'post', `/initiatives/${ids['DIG-011']}/dependencies`, {
-        toInitiativeId: robo.id,
-      });
+      const response = await call(
+        AMARA,
+        'post',
+        `/initiatives/${ids['DIG-011']}/dependencies`,
+        {
+          toInitiativeId: robo.id,
+        },
+      );
       expect(response.status).toBe(409);
       expect(response.body.code).toBe('DEPENDENCY_CYCLE');
-      expect(response.body.detail).toContain('DIG-011 → DIG-016 → DIG-004 → DIG-011');
+      expect(response.body.detail).toContain(
+        'DIG-011 → DIG-016 → DIG-004 → DIG-011',
+      );
     });
 
     it('caps health at Amber once blocked for 14 days', async () => {
@@ -270,9 +394,13 @@ describe('Initiative changes (e2e)', () => {
       const robo2 = (await call(AMARA, 'get', `/initiatives/${robo.id}`)).body;
       const dependency = robo2.dependencies.blockedBy[0];
       // Any change re-runs the rules at the current date.
-      const response = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, { description: 'Still waiting.' });
+      const response = await call(HASSAN, 'patch', `/initiatives/${robo.id}`, {
+        description: 'Still waiting.',
+      });
       expect(response.body.health.calculated).toBe('AMBER');
-      expect(response.body.health.reasons.map((r: { detail: string }) => r.detail)).toContain(
+      expect(
+        response.body.health.reasons.map((r: { detail: string }) => r.detail),
+      ).toContain(
         'Blocked for 16 days by DIG-004 Launch Digital Investment Platform',
       );
       expect(dependency.code).toBe('DIG-004');
@@ -282,39 +410,82 @@ describe('Initiative changes (e2e)', () => {
 
   describe('access', () => {
     it('refuses people not accountable for the initiative', async () => {
-      const response = await call(COO, 'patch', `/initiatives/${ids['DIG-004']}`, { description: 'x' });
+      const response = await call(
+        COO,
+        'patch',
+        `/initiatives/${ids['DIG-004']}`,
+        { description: 'x' },
+      );
       expect(response.status).toBe(403);
       expect(response.body.code).toBe('NOT_ACCOUNTABLE');
     });
 
     it('answers 404 for sensitive initiatives the caller cannot see', async () => {
-      const response = await call(HASSAN, 'patch', `/initiatives/${ids['OPS-005']}`, { description: 'x' });
+      const response = await call(
+        HASSAN,
+        'patch',
+        `/initiatives/${ids['OPS-005']}`,
+        { description: 'x' },
+      );
       expect(response.status).toBe(404);
     });
 
     it('lets only the Strategy Office change objective links', async () => {
-      const objectives = [{ elementId: elements['O2.2'], weight: 15, isPrimary: true }];
-      expect((await call(HASSAN, 'put', `/initiatives/${robo.id}/objectives`, { objectives })).status).toBe(403);
-      const response = await call(AMARA, 'put', `/initiatives/${robo.id}/objectives`, { objectives });
+      const objectives = [
+        { elementId: elements['O2.2'], weight: 15, isPrimary: true },
+      ];
+      expect(
+        (
+          await call(HASSAN, 'put', `/initiatives/${robo.id}/objectives`, {
+            objectives,
+          })
+        ).status,
+      ).toBe(403);
+      const response = await call(
+        AMARA,
+        'put',
+        `/initiatives/${robo.id}/objectives`,
+        { objectives },
+      );
       expect(response.status).toBe(200);
-      expect(response.body.contributesTo).toEqual([expect.objectContaining({ code: 'O2.2', weight: 15, isPrimary: true })]);
+      expect(response.body.contributesTo).toEqual([
+        expect.objectContaining({ code: 'O2.2', weight: 15, isPrimary: true }),
+      ]);
     });
   });
 
   describe('closing', () => {
     it('requires a reason, then records the actual end date', async () => {
-      const noReason = await call(AMARA, 'post', `/initiatives/${robo.id}/status`, { status: 'CLOSED' });
+      const noReason = await call(
+        AMARA,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        { status: 'CLOSED' },
+      );
       expect(noReason.status).toBe(400);
       expect(noReason.body.errors[0].path).toBe('reason');
 
-      const closed = await call(AMARA, 'post', `/initiatives/${robo.id}/status`, {
-        status: 'CLOSED',
-        reason: 'Merged into the wealth platform programme.',
-      });
+      const closed = await call(
+        AMARA,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        {
+          status: 'CLOSED',
+          reason: 'Merged into the wealth platform programme.',
+        },
+      );
       expect(closed.status).toBe(200);
-      expect(closed.body).toMatchObject({ status: 'CLOSED', actualEnd: '2026-10-16' });
+      expect(closed.body).toMatchObject({
+        status: 'CLOSED',
+        actualEnd: '2026-10-16',
+      });
 
-      const reopen = await call(AMARA, 'post', `/initiatives/${robo.id}/status`, { status: 'ACTIVE' });
+      const reopen = await call(
+        AMARA,
+        'post',
+        `/initiatives/${robo.id}/status`,
+        { status: 'ACTIVE' },
+      );
       expect(reopen.status).toBe(409);
     });
 
@@ -327,7 +498,6 @@ describe('Initiative changes (e2e)', () => {
         expect.arrayContaining([
           'INITIATIVE_PROPOSED',
           'STATUS_CHANGED',
-          'BASELINE_CHANGED',
           'DEPENDENCY_ADDED',
           'OBJECTIVES_CHANGED',
         ]),

@@ -4,6 +4,7 @@ import { toNumber } from '../../common/data/numbers.js';
 import { stableStringify } from '../../common/data/stable-json.js';
 import {
   calculateHealth,
+  type HealthFacts,
   type HealthResult,
 } from '../../domain/delivery/health.js';
 import {
@@ -15,6 +16,10 @@ import {
   parseRulesetConfig,
   type RulesetConfig,
 } from '../../domain/rulesets/ruleset-config.js';
+import {
+  owesUpdate,
+  SUBMITTED_STATUSES,
+} from '../../domain/reporting/obligations.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import {
   TenantPrismaService,
@@ -29,7 +34,7 @@ export interface RecalculationSummary {
 }
 
 /** Statuses an initiative has once submitted (anything but a draft counts as "in"). */
-const SUBMITTED = ['SUBMITTED', 'CHALLENGED', 'REVIEWED', 'APPROVED'] as const;
+const SUBMITTED = SUBMITTED_STATUSES;
 
 /**
  * Keeps stored progress and health in step with the facts. Gathers each
@@ -68,10 +73,30 @@ export class HealthRecalculationService {
     });
   }
 
-  private async recalculate(
+  /**
+   * Health as it would be with different verified progress — used by the
+   * update form to preview the status the owner's claims would give.
+   * The open period's overdue flag is dropped: submitting clears it.
+   */
+  async previewHealth(
+    tx: TenantTransactionClient,
+    initiativeId: string,
+    verifiedProgress: number,
+  ): Promise<HealthResult | null> {
+    const { rules, items } = await this.gather(tx, { id: initiativeId });
+    const item = items[0];
+    if (!item) return null;
+    return calculateHealth(
+      { ...item.facts, verifiedProgress, overdueUpdate: null },
+      rules.config,
+    );
+  }
+
+  /** Everything the rules engine needs, for each matching initiative. */
+  private async gather(
     tx: TenantTransactionClient,
     where: Prisma.InitiativeWhereInput,
-  ): Promise<RecalculationSummary> {
+  ) {
     const now = this.clock.now();
     const rules = await this.loadActiveRules(tx);
 
@@ -112,8 +137,7 @@ export class HealthRecalculationService {
         },
       },
     });
-    if (initiatives.length === 0)
-      return { checked: 0, changed: 0, healthChanges: [] };
+    if (initiatives.length === 0) return { rules, items: [] };
 
     const periods = await this.periodFacts(
       tx,
@@ -136,12 +160,7 @@ export class HealthRecalculationService {
       submitted.map((u) => `${u.initiativeId}:${u.periodId}`),
     );
 
-    const summary: RecalculationSummary = {
-      checked: initiatives.length,
-      changed: 0,
-      healthChanges: [],
-    };
-    for (const initiative of initiatives) {
+    const items = initiatives.map((initiative) => {
       const plan = periods.find((p) => p.planId === initiative.planId);
       const milestones = initiative.milestones.map((m) => ({
         weight: toNumber(m.weight),
@@ -159,10 +178,10 @@ export class HealthRecalculationService {
       // An update is owed for a period only if the initiative was active
       // before the period's deadline and had started by the period's end.
       const owes = (period: { dueAt: Date | null; end: Date }) =>
-        (!initiative.activatedAt ||
-          !period.dueAt ||
-          initiative.activatedAt < period.dueAt) &&
-        (!initiative.baselineStart || initiative.baselineStart <= period.end);
+        owesUpdate(initiative, {
+          submissionDueAt: period.dueAt,
+          endDate: period.end,
+        });
 
       // Missed: owed in the last locked period, never reported.
       const missedUpdate =
@@ -180,31 +199,45 @@ export class HealthRecalculationService {
           ? { periodName: plan.openName!, dueAt: plan.openDueAt }
           : null;
 
-      const result = calculateHealth(
-        {
-          plannedProgress: planned,
-          verifiedProgress: verified,
-          criticalMilestones: initiative.milestones
-            .filter((m) => m.isCritical)
-            .map((m) => ({
-              title: m.title,
-              baselineDate: m.baselineDate,
-              complete: m.status === 'COMPLETE',
-            })),
-          openCriticalIssues: initiative.risks,
-          blockedDependencies: initiative.dependsOn
-            .filter((d) => d.blockedSince)
-            .map((d) => ({
-              title: `${d.toInitiative.code} ${d.toInitiative.title}`,
-              blockedSince: d.blockedSince!,
-              isCriticalPath: d.isCriticalPath,
-            })),
-          missedUpdate,
-          overdueUpdate,
-          today: now,
-        },
-        rules.config,
-      );
+      const facts: HealthFacts = {
+        plannedProgress: planned,
+        verifiedProgress: verified,
+        criticalMilestones: initiative.milestones
+          .filter((m) => m.isCritical)
+          .map((m) => ({
+            title: m.title,
+            baselineDate: m.baselineDate,
+            complete: m.status === 'COMPLETE',
+          })),
+        openCriticalIssues: initiative.risks,
+        blockedDependencies: initiative.dependsOn
+          .filter((d) => d.blockedSince)
+          .map((d) => ({
+            title: `${d.toInitiative.code} ${d.toInitiative.title}`,
+            blockedSince: d.blockedSince!,
+            isCriticalPath: d.isCriticalPath,
+          })),
+        missedUpdate,
+        overdueUpdate,
+        today: now,
+      };
+      return { initiative, verified, planned, facts };
+    });
+    return { rules, items };
+  }
+
+  private async recalculate(
+    tx: TenantTransactionClient,
+    where: Prisma.InitiativeWhereInput,
+  ): Promise<RecalculationSummary> {
+    const { rules, items } = await this.gather(tx, where);
+    const summary: RecalculationSummary = {
+      checked: items.length,
+      changed: 0,
+      healthChanges: [],
+    };
+    for (const { initiative, verified, planned, facts } of items) {
+      const result = calculateHealth(facts, rules.config);
 
       if (!this.differs(initiative, verified, planned, result)) continue;
       summary.changed += 1;

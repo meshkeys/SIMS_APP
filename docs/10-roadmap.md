@@ -21,10 +21,11 @@ with its tests and documentation.
 | 6a | Rules engine: completion, planned progress, health with reasons, overrides (seed now engine-calculated) | Done |
 | 6b | Delivery API (read): register, initiative detail, recalculation, overrides | Done |
 | 6c | Delivery API (write): propose/edit initiatives, lifecycle, milestones, tasks, dependencies, objective links | Done |
-| 7 | Reporting cycle: monthly updates with evidence, verification and challenge, sponsor confirmation, period lock, snapshots | Next |
-| 8 | Governance: risks, escalations (automatic ladder), decisions, maker-checker approvals, rulesets admin | Planned |
+| 7 | Reporting cycle: periods and deadlines, My updates, verification and challenge, sponsor confirmation, lock and snapshots | Done |
+| 8a | Governance: risks and issues, decisions, change requests (maker-checker) | Done |
+| 8b | Governance: automatic escalation ladder, rulesets admin with impact preview | Planned |
 | 9 | Benefits realisation and KPI actuals | Planned |
-| 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Planned |
+| 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Next |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
 | 13 | OpenAPI reference; shared API contracts package | Planned |
@@ -35,6 +36,8 @@ with its tests and documentation.
 - Rate-limit counters move to Redis (shared across instances) with the jobs module.
 - Email sending moves to a retrying background job (today: sent after commit; failures are reported and resendable).
 - Production email provider and sender domain (SPF, DKIM, DMARC).
+- Evidence becomes a blocking checklist item once uploads exist (documents slice).
+- Public holidays in the reporting calendar (today: Mon–Fri working days).
 - Per-account (not only per-IP) sign-in throttling.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).

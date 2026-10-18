@@ -310,3 +310,42 @@ re-runs the health rules in the same transaction.
 Baseline changes become rare, visible events (`BASELINE_CHANGED`) — and, with the
 governance slice, will go through maker-checker change requests instead of direct edits.
 
+---
+
+## ADR-020 — Verified figures drive everything; locked periods are frozen
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Owners are optimistic about their own progress; reports must not drift after
+management has approved them; deadlines must mean the same thing in every organisation's
+time zone.
+
+**Decision.** Owners *claim* completion per milestone; only the Strategy Office *verifies*,
+never above the claim, and only verified figures become milestone completion (and so
+progress and health). Cycle deadlines are computed once, in working days at 17:00 local time,
+and stored on the period. Locking a period recalculates health, writes progress snapshots and
+a report snapshot, and makes the period read-only.
+
+**Consequences.** "Claimed vs verified" is visible at every step and auditable; Board packs
+read frozen snapshots, so the numbers never change after approval; rule changes never move a
+live cycle. Public holidays are not yet in the working-day calendar.
+
+---
+
+## ADR-021 — Active baselines change only through maker-checker change requests
+
+**Status:** Accepted · 2026-10-18 (supersedes the Strategy Office exception in ADR-019)
+
+**Context.** ADR-019 let the Strategy Office edit a locked baseline directly until change
+requests existed. With them in place, any direct edit — even by the Office — would let the
+goalposts move without a second pair of eyes.
+
+**Decision.** Once an initiative is active, nobody edits its baseline directly. Changes go
+through a change request with a justification, decided by the MD/CEO (baseline) or the
+sponsor (budget, scope) — and never by the requester. Approval re-validates the change
+against the current baseline before applying it.
+
+**Consequences.** Every change to what was promised has a requester, an approver, a reason
+and a before/after record. Urgent fixes need an approver available; the request shows in
+their "Decisions required" with a due date.
+

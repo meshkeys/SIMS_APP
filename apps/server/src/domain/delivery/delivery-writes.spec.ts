@@ -1,5 +1,10 @@
 import { findDependencyCycle } from './dependencies.js';
-import { activationGaps, canTransition, isBaselineLocked, transitionNeedsReason } from './lifecycle.js';
+import {
+  activationGaps,
+  canTransition,
+  isBaselineLocked,
+  transitionNeedsReason,
+} from './lifecycle.js';
 import {
   canChangeMilestonePlan,
   deniedFields,
@@ -24,7 +29,11 @@ describe('lifecycle', () => {
   });
 
   it('asks for a reason when delivery stops or pauses', () => {
-    expect(['ON_HOLD', 'CANCELLED', 'CLOSED'].every((s) => transitionNeedsReason(s as never))).toBe(true);
+    expect(
+      ['ON_HOLD', 'CANCELLED', 'CLOSED'].every((s) =>
+        transitionNeedsReason(s as never),
+      ),
+    ).toBe(true);
     expect(transitionNeedsReason('ACTIVE')).toBe(false);
   });
 
@@ -56,37 +65,66 @@ describe('permissions', () => {
   const initiative = { ownerId: 'owner', sponsorId: 'sponsor' };
 
   it('works out the caller’s relation', () => {
-    expect(relationTo({ membershipId: 'x', roles: ['STRATEGY_OFFICE'] }, initiative)).toBe('OFFICE');
-    expect(relationTo({ membershipId: 'sponsor', roles: ['EXECUTIVE_SPONSOR'] }, initiative)).toBe('SPONSOR');
-    expect(relationTo({ membershipId: 'owner', roles: ['INITIATIVE_OWNER'] }, initiative)).toBe('OWNER');
-    expect(relationTo({ membershipId: 'x', roles: ['EXECUTIVE_SPONSOR'] }, initiative)).toBe('NONE');
+    expect(
+      relationTo({ membershipId: 'x', roles: ['STRATEGY_OFFICE'] }, initiative),
+    ).toBe('OFFICE');
+    expect(
+      relationTo(
+        { membershipId: 'sponsor', roles: ['EXECUTIVE_SPONSOR'] },
+        initiative,
+      ),
+    ).toBe('SPONSOR');
+    expect(
+      relationTo(
+        { membershipId: 'owner', roles: ['INITIATIVE_OWNER'] },
+        initiative,
+      ),
+    ).toBe('OWNER');
+    expect(
+      relationTo(
+        { membershipId: 'x', roles: ['EXECUTIVE_SPONSOR'] },
+        initiative,
+      ),
+    ).toBe('NONE');
   });
 
   it('lets owners edit the narrative but not accountability or shape', () => {
-    expect(deniedFields('OWNER', 'ACTIVE', ['description', 'forecastEnd'])).toEqual([]);
-    expect(deniedFields('OWNER', 'ACTIVE', ['sponsorId', 'priority']).map((d) => d.field)).toEqual([
-      'sponsorId',
-      'priority',
-    ]);
+    expect(
+      deniedFields('OWNER', 'ACTIVE', ['description', 'forecastEnd']),
+    ).toEqual([]);
+    expect(
+      deniedFields('OWNER', 'ACTIVE', ['sponsorId', 'priority']).map(
+        (d) => d.field,
+      ),
+    ).toEqual(['sponsorId', 'priority']);
   });
 
-  it('locks the baseline for everyone but the Strategy Office once active', () => {
+  it('locks the baseline for everyone once active, the Strategy Office included', () => {
     expect(deniedFields('SPONSOR', 'PROPOSED', ['baselineEnd'])).toEqual([]);
     expect(deniedFields('SPONSOR', 'ACTIVE', ['baselineEnd'])).toEqual([
       { field: 'baselineEnd', reason: 'BASELINE_LOCKED' },
     ]);
-    expect(deniedFields('OFFICE', 'ACTIVE', ['baselineEnd'])).toEqual([]);
+    expect(deniedFields('OFFICE', 'ACTIVE', ['baselineEnd'])).toEqual([
+      { field: 'baselineEnd', reason: 'BASELINE_LOCKED' },
+    ]);
   });
 
   it('applies the same lock to the milestone plan', () => {
     expect(canChangeMilestonePlan('OWNER', 'APPROVED')).toBe(true);
     expect(canChangeMilestonePlan('OWNER', 'ACTIVE')).toBe(false);
-    expect(canChangeMilestonePlan('OFFICE', 'ACTIVE')).toBe(true);
+    expect(canChangeMilestonePlan('OFFICE', 'ACTIVE')).toBe(false);
+    expect(canChangeMilestonePlan('OFFICE', 'DRAFT')).toBe(true);
     expect(canChangeMilestonePlan('NONE', 'DRAFT')).toBe(false);
   });
 
   it('suggests codes from the pillar name', () => {
-    expect(suggestInitiativeCode('Digital Transformation', ['DIG-004', 'DIG-015', 'REV-002'])).toBe('DIG-016');
+    expect(
+      suggestInitiativeCode('Digital Transformation', [
+        'DIG-004',
+        'DIG-015',
+        'REV-002',
+      ]),
+    ).toBe('DIG-016');
     expect(suggestInitiativeCode('Customer Experience', [])).toBe('CUS-001');
     expect(suggestInitiativeCode(null, [])).toBe('INI-001');
     expect(suggestInitiativeCode('5G', [])).toBe('GXX-001');
@@ -105,11 +143,20 @@ describe('findDependencyCycle', () => {
   });
 
   it('finds a direct loop', () => {
-    expect(findDependencyCycle(edges, 'DIG-011', 'DIG-007')).toEqual(['DIG-011', 'DIG-007', 'DIG-011']);
+    expect(findDependencyCycle(edges, 'DIG-011', 'DIG-007')).toEqual([
+      'DIG-011',
+      'DIG-007',
+      'DIG-011',
+    ]);
   });
 
   it('finds a loop through a chain', () => {
-    expect(findDependencyCycle(edges, 'DIG-011', 'REV-005')).toEqual(['DIG-011', 'REV-005', 'DIG-004', 'DIG-011']);
+    expect(findDependencyCycle(edges, 'DIG-011', 'REV-005')).toEqual([
+      'DIG-011',
+      'REV-005',
+      'DIG-004',
+      'DIG-011',
+    ]);
   });
 
   it('treats depending on itself as a loop', () => {

@@ -20,16 +20,7 @@ export const RISK_HEATMAP: Record<number, Record<number, number>> = {
 };
 
 /** Likelihood × impact → severity. */
-export const severityFor = (likelihood: number, impact: number): Severity => {
-  const score = likelihood * impact;
-  return score >= 15
-    ? 'CRITICAL'
-    : score >= 10
-      ? 'HIGH'
-      : score >= 5
-        ? 'MEDIUM'
-        : 'LOW';
-};
+export { severityFor } from '../../../src/domain/governance/risks.js';
 
 export interface RiskSpec {
   initiative: string | null;
@@ -350,7 +341,10 @@ export const DECISIONS: DecisionSpec[] = [
     changeRequest: {
       type: 'BASELINE_CHANGE',
       requestedBy: 'headTech',
-      payload: { baselineEnd: { from: '2026-10-15', to: '2026-11-26' } },
+      payload: {
+        changes: { baselineEnd: '2026-11-26' },
+        before: { baselineEnd: '2026-10-15' },
+      },
       justification:
         'Core banking API dependency (DIG-011) slipped; integration cannot start before November.',
     },
@@ -366,7 +360,10 @@ export const DECISIONS: DecisionSpec[] = [
     changeRequest: {
       type: 'BUDGET_CHANGE',
       requestedBy: 'headDigital',
-      payload: { contingencyRelease: 85_000_000, currency: 'NGN' },
+      payload: {
+        changes: { baselineBudget: 1_285_000_000 },
+        before: { baselineBudget: 1_200_000_000 },
+      },
       justification:
         'Vendor requires a mobilisation payment on signature (expected 22 Oct).',
     },
