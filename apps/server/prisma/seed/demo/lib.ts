@@ -35,18 +35,6 @@ export function allocate(total: number, shares: readonly number[]): number[] {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Σ(weight × completion) ÷ Σ weight — the platform's completion formula. */
-export function weightedCompletion(
-  milestones: readonly { weight: number; verifiedCompletion: number }[],
-): number {
-  const totalWeight = milestones.reduce((a, m) => a + m.weight, 0);
-  if (totalWeight === 0) return 0;
-  return round2(
-    milestones.reduce((a, m) => a + m.weight * m.verifiedCompletion, 0) /
-      totalWeight,
-  );
-}
-
 export interface MilestoneSeed {
   title: string;
   weight: number;

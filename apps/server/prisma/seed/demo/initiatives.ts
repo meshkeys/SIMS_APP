@@ -114,7 +114,7 @@ export const ACTIVE_INITIATIVES: InitiativeSpec[] = [
       m(
         'Scale to 120 institutional clients',
         50,
-        '2026-07-01',
+        '2026-08-17',
         '2026-11-30',
         72,
       ),
@@ -277,7 +277,7 @@ export const ACTIVE_INITIATIVES: InitiativeSpec[] = [
         forecastDate: date('2026-10-31'),
         claimedCompletion: 95,
       }),
-      m('Testing and deployment', 25, '2026-08-01', '2026-11-30', 44, {
+      m('Testing and deployment', 25, '2026-08-20', '2026-11-30', 44, {
         forecastDate: date('2026-11-30'),
         claimedCompletion: 48,
       }),
@@ -567,7 +567,7 @@ export const ACTIVE_INITIATIVES: InitiativeSpec[] = [
         '2026-10-27',
         90,
       ),
-      m('Performance review system live', 25, '2026-08-01', '2026-10-30', 72),
+      m('Performance review system live', 25, '2026-09-26', '2026-10-30', 72),
     ],
   },
   {

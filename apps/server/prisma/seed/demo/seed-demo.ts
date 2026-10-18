@@ -45,12 +45,14 @@ import {
   date,
   daysAgo,
   endOfMonth,
-  generateMilestones,
-  type MilestoneSeed,
   uuidv7,
-  weightedCompletion,
 } from './lib.js';
 import { hashPassword } from '../../../src/modules/auth/passwords.js';
+import {
+  type ComputedDelivery,
+  computeDelivery,
+  deliveryProblems,
+} from './delivery.js';
 import {
   DEMO_ORG,
   DEMO_PASSWORD,
@@ -105,21 +107,14 @@ const trajectoryFor = (impact: number | null): Trajectory =>
         ? 'SLIGHTLY_BEHIND'
         : 'OFF_TRAJECTORY';
 
-const milestonesFor = (spec: InitiativeSpec): MilestoneSeed[] =>
-  spec.milestones ??
-  generateMilestones({
-    start: date(spec.start),
-    end: date(spec.end),
-    progress: spec.progress,
-    health: spec.health,
-  });
+type Computed = Map<string, ComputedDelivery>;
 
 /** Share of the way from start to today, for back-filled history. */
-function progressAt(spec: InitiativeSpec, at: Date) {
-  const start = date(spec.start).getTime();
+function progressAt(spec: InitiativeSpec, start: Date, at: Date) {
+  const startMs = start.getTime();
   const f = Math.min(
     1,
-    Math.max(0, (at.getTime() - start) / (AS_OF.getTime() - start)),
+    Math.max(0, (at.getTime() - startMs) / (AS_OF.getTime() - startMs)),
   );
   return {
     planned: Math.round(spec.planned * f * 100) / 100,
@@ -128,7 +123,7 @@ function progressAt(spec: InitiativeSpec, at: Date) {
 }
 
 /** Fails fast on inconsistent demo data before touching the database. */
-function validateSpecs(ruleset: RulesetConfig): void {
+function validateSpecs(ruleset: RulesetConfig, computed: Computed): void {
   const problems: string[] = [];
   const codes = new Set<string>();
   const objectiveCodes = new Set(OBJECTIVES.map((o) => o.code));
@@ -144,15 +139,7 @@ function validateSpecs(ruleset: RulesetConfig): void {
       if (!objectiveCodes.has(objective))
         problems.push(`${spec.code}: unknown objective ${objective}`);
     }
-    const ms = milestonesFor(spec);
-    if (
-      ms.length > 0 &&
-      Math.abs(weightedCompletion(ms) - spec.progress) > 0.01
-    ) {
-      problems.push(
-        `${spec.code}: milestones give ${weightedCompletion(ms)}%, spec says ${spec.progress}%`,
-      );
-    }
+    problems.push(...deliveryProblems(spec, computed.get(spec.code)!));
   }
   for (const [key, person] of Object.entries(PEOPLE)) {
     const manager = (person as { manager?: string }).manager;
@@ -215,19 +202,28 @@ function escalationHistory(spec: EscalationSpec, ruleset: RulesetConfig) {
  */
 export async function seedDemo(prisma: PrismaClient): Promise<SeedSummary> {
   const ruleset = parseRulesetConfig(DEFAULT_RULESET_CONFIG);
-  validateSpecs(ruleset);
+  // Health and planned progress come from the real rules engine, and must
+  // reproduce the wireframes exactly or the seed refuses to run.
+  const computed: Computed = new Map(
+    ALL_INITIATIVES.map((spec) => [spec.code, computeDelivery(spec, ruleset)]),
+  );
+  validateSpecs(ruleset, computed);
   // One hash for every demo user: Argon2 is deliberately slow.
   const passwordHash = await hashPassword(DEMO_PASSWORD);
-  return prisma.$transaction((tx) => writeDemo(tx, ruleset, passwordHash), {
-    maxWait: 10_000,
-    timeout: 120_000,
-  });
+  return prisma.$transaction(
+    (tx) => writeDemo(tx, ruleset, passwordHash, computed),
+    {
+      maxWait: 10_000,
+      timeout: 120_000,
+    },
+  );
 }
 
 async function writeDemo(
   tx: Tx,
   ruleset: RulesetConfig,
   passwordHash: string,
+  computed: Computed,
 ): Promise<SeedSummary> {
   // ----------------------------------------------------------- reset
   await tx.organisation.deleteMany({ where: { slug: DEMO_ORG.slug } });
@@ -565,28 +561,8 @@ async function writeDemo(
         spec.code === 'DIG-004'
           ? 0.58
           : (Math.min(spec.progress, 95) / 100) * 0.9;
-      const gap = Math.round((spec.planned - spec.progress) * 10) / 10;
+      const delivery = computed.get(spec.code)!;
       const isLive = status === 'ACTIVE';
-      const reasons = isLive
-        ? [
-            {
-              rule: 'PP_BEHIND_PLAN',
-              result: gap <= 5 ? 'GREEN' : gap <= 15 ? 'AMBER' : 'RED',
-              detail:
-                gap > 0
-                  ? `${gap} pp behind plan`
-                  : `${Math.abs(gap)} pp ahead of plan`,
-            },
-          ]
-        : null;
-      if (spec.code === 'DIG-004') {
-        reasons?.push({
-          rule: 'CRITICAL_MILESTONE_OVERDUE',
-          result: 'RED',
-          detail:
-            'Critical milestone "Vendor contract signed" overdue by 9 days',
-        });
-      }
       const behindDays =
         spec.health === 'RED' ? 45 : spec.health === 'AMBER' ? 14 : 0;
       return {
@@ -607,7 +583,7 @@ async function writeDemo(
         priority: spec.priority ?? 2,
         status,
         isSensitive: spec.isSensitive ?? false,
-        baselineStart: date(spec.start),
+        baselineStart: delivery.start,
         baselineEnd: date(spec.end),
         baselineBudget: budget,
         spentToDate: Math.round(budget * spentPct),
@@ -618,8 +594,10 @@ async function writeDemo(
               ? addDays(date(spec.end), behindDays)
               : null,
         actualEnd: status === 'CLOSED' ? date(spec.end) : null,
-        calculatedHealth: spec.health,
-        healthReasons: reasons ?? undefined,
+        calculatedHealth: delivery.health?.health ?? 'UNKNOWN',
+        healthReasons: delivery.health
+          ? (delivery.health.reasons as unknown as Prisma.InputJsonValue)
+          : undefined,
         rulesetVersion: isLive ? 4 : null,
         ...(spec.code === 'DIG-004'
           ? {
@@ -631,8 +609,8 @@ async function writeDemo(
               overrideExpiresAt: date('2026-10-31'),
             }
           : {}),
-        verifiedProgress: spec.progress,
-        plannedProgress: spec.planned,
+        verifiedProgress: delivery.verified,
+        plannedProgress: delivery.planned,
         impactScore: spec.impact,
         impactSummary:
           spec.impact === null ? 'Not yet measurable' : spec.impactSummary,
@@ -703,7 +681,7 @@ async function writeDemo(
   let milestoneCount = 0;
   await tx.milestone.createMany({
     data: ALL_INITIATIVES.flatMap((spec) =>
-      milestonesFor(spec).map((ms, order) => {
+      computed.get(spec.code)!.milestones.map((ms, order) => {
         milestoneCount++;
         const id = (milestoneIds[`${spec.code}:${ms.title}`] = uuidv7());
         return {
@@ -797,14 +775,17 @@ async function writeDemo(
         const monthEnd = endOfMonth(
           date(`2026-${String(m + 1).padStart(2, '0')}-01`),
         );
-        if (monthEnd > date(spec.start)) points.push(monthEnd);
+        if (monthEnd > computed.get(spec.code)!.start) points.push(monthEnd);
       }
       points.push(date('2026-10-16'));
       return points.map((asOf) => {
         const isToday = asOf.getTime() === date('2026-10-16').getTime();
         const p = isToday
-          ? { planned: spec.planned, verified: spec.progress }
-          : progressAt(spec, asOf);
+          ? {
+              planned: computed.get(spec.code)!.planned,
+              verified: spec.progress,
+            }
+          : progressAt(spec, computed.get(spec.code)!.start, asOf);
         return {
           id: uuidv7(),
           ...org,
@@ -825,10 +806,16 @@ async function writeDemo(
 
   const ownerOrSponsor = (spec: InitiativeSpec) =>
     member[spec.owner ?? spec.sponsor];
-  const september = active.filter((s) => date(s.start) < date('2026-09-01'));
+  const september = active.filter(
+    (s) => computed.get(s.code)!.start < date('2026-09-30'),
+  );
   await tx.statusUpdate.createMany({
     data: september.map((spec) => {
-      const p = progressAt(spec, date('2026-08-31'));
+      const p = progressAt(
+        spec,
+        computed.get(spec.code)!.start,
+        date('2026-08-31'),
+      );
       return {
         id: uuidv7(),
         ...org,
@@ -877,7 +864,7 @@ async function writeDemo(
                 ? Math.min(100, spec.progress + 4)
                 : spec.progress,
           verifiedProgress: spec.progress,
-          plannedProgress: spec.planned,
+          plannedProgress: computed.get(spec.code)!.planned,
           healthAtSubmission:
             spec.code === 'DIG-004' ? ('AMBER' as const) : spec.health,
           progressNarrative:

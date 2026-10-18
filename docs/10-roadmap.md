@@ -18,7 +18,8 @@ with its tests and documentation.
 | 4b | Invitations by email; mail module (SMTP) | Done |
 | 5 | Strategy API: plans, framework templates and levels, elements, strategy map read model | Done |
 | 5b | KPI management: KPIs, interim targets, definition rules | Done |
-| 6 | Delivery API + rules engine: initiatives, milestones, tasks, dependencies, health calculation | Next |
+| 6a | Rules engine: completion, planned progress, health with reasons, overrides (seed now engine-calculated) | Done |
+| 6b | Delivery API: initiatives, milestones, tasks, dependencies, recalculation, overrides (register, detail) | Next |
 | 7 | Reporting cycle: periods, updates workflow, verification, locking, snapshots | Planned |
 | 8 | Governance: risks, escalations (automatic ladder), decisions, maker-checker approvals, rulesets admin | Planned |
 | 9 | Benefits realisation and KPI actuals | Planned |

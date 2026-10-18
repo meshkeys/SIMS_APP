@@ -217,3 +217,41 @@ which reads through row-level security and requires an active member.
 **Consequences.** Cross-tenant references are impossible through the API; one helper to
 reuse in every module (initiatives, risks, tasks…).
 
+---
+
+## ADR-015 — Health is a pure function of facts and rules
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Initiative health drives the dashboard, escalations and Board packs. It must
+be explainable, configurable per organisation, and identical wherever it is computed.
+
+**Decision.** Completion and health live in `src/domain/delivery` as pure functions:
+facts + ruleset in, status + reasons out. No database or framework access. The order is
+fixed: progress band → Amber caps → forced Red → Unknown for a missed update in the last
+locked period. Reasons are stored with the status.
+
+**Consequences.** Exhaustively unit-tested; the same code serves requests, jobs, the seed
+(which now proves the engine reproduces every wireframe status) and the rules "impact
+preview". Changing the order of rules is a deliberate, versioned decision.
+
+---
+
+## ADR-016 — Missing updates: flag when overdue, Unknown when locked
+
+**Status:** Accepted · 2026-10-18 (refines the missed-update rule in ADR-015)
+
+**Context.** A status built on old figures misleads. But turning an initiative "Unknown"
+as soon as a cycle opens, or the minute a deadline passes, punishes owners who still have
+time and floods dashboards with Unknowns.
+
+**Decision.** Two stages. After the open period's submission deadline passes with no
+update, the status is kept and flagged "Update overdue · N days" (a `FLAG` reason; no
+status change). When the period locks without an update, the status becomes Unknown —
+unless an overdue critical milestone forces Red.
+
+**Consequences.** Live screens stay truthful and actionable (people see exactly what is
+late); Board packs never carry unverifiable figures. Because planned progress keeps
+rising, an initiative that goes silent drifts worse on its own. The flag depends on the
+clock, so health must be recalculated at least daily (delivery slice).
+

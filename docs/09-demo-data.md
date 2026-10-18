@@ -36,6 +36,11 @@ All demo users share the password **`Meridian-demo-2026`**. Emails follow
 
 The e2e suite `test/seed/demo-seed.e2e-spec.ts` pins these numbers.
 
+**Health is calculated, not typed in.** The seed runs the real rules engine (chapter 7)
+over each initiative's milestones, issues and dependencies, and refuses to run if any
+calculated status or planned percentage differs from the wireframes. Generated
+milestone windows are laid out so planned progress today matches the wireframe figure.
+
 ## 9.3 Wireframe inconsistencies and how they were resolved
 
 Some wireframe screens state the same fact differently. The demo data picks one version so

@@ -51,7 +51,62 @@ Default ladder:
 Every level change is recorded with the level's **name at that moment** and the ruleset
 version, so history stays accurate after the ladder is renamed or resized.
 
-## 7.3 Versioning the rules format
+## 7.3 How completion is calculated
+
+Code: `apps/server/src/domain/delivery/progress.ts`.
+
+- **Verified completion** = Σ(milestone weight × verified completion) ÷ Σ weight.
+- **Planned completion** on a date = Σ(weight × share of each milestone's planned window
+  that has elapsed) ÷ Σ weight. A milestone's window runs from its `baselineStartDate`
+  (or the initiative's start) to its `baselineDate`, and is planned to progress evenly.
+- Milestones with weight 0 (e.g. "Vendor contract signed") do not count toward completion
+  but still matter to the health rules.
+- All dates are calendar days (UTC), so a figure is stable for the whole day.
+
+## 7.4 How health is calculated
+
+Code: `apps/server/src/domain/delivery/health.ts` — a pure function of facts and the
+organisation's ruleset. It runs identically in requests, background recalculation, the
+demo seed and the admin "impact preview".
+
+| Step | Rule | Effect |
+|---|---|---|
+| 1 | **Progress vs plan** — pp behind = planned − verified | ≤ Green limit → Green; ≤ Amber limit → Amber; beyond → Red. Ahead of plan is Green |
+| 2 | **Open critical issue** (if enabled) | Caps at Amber: the best possible status is Amber. Never improves a worse status |
+| 2 | **Blocked dependency** for ≥ N days (if enabled; optionally critical-path only) | Caps at Amber |
+| 3 | **Overdue critical milestone** (if enabled) — not complete and past its *baseline* date | Forces Red, whatever else is true |
+| 4 | **Missed update** (if enabled) — no update in the most recent **locked** period | Unknown, unless Red was forced in step 3 |
+| — | **Update overdue** — the open period's submission deadline has passed with no update | Flag only: status unchanged, shown as "Update overdue · N days" |
+
+Every rule that fires adds a reason with a plain-language `detail`, stored on the initiative
+(`healthReasons`) for the "Why this status?" panel. Example (DIG-004):
+
+| Rule | Result | Detail |
+|---|---|---|
+| Progress vs plan | Amber | 9 pp behind plan (Green up to 5 pp, Amber up to 15 pp) |
+| Open critical issue | Amber | Open critical issue: "Core banking API not ready for integration testing" |
+| Blocked dependency | Amber | Blocked for 14 days by DIG-011 Core Banking API Layer |
+| Overdue critical milestone | **Red** | Critical milestone "Vendor contract signed" overdue by 9 days |
+
+**Missing updates: a two-stage rule.** The aim is a true picture without punishing owners
+who still have time:
+
+| When | What people see |
+|---|---|
+| Before the submission deadline | The normal status |
+| Deadline passed, no update yet (cycle still open) | The status, plus **"Update overdue · N days"** — the figures are visibly not fresh, and the update is chased (escalation, reminders) |
+| Period locked, still no update | **Unknown** — unverifiable figures never reach the Board pack |
+
+A silent initiative cannot look better than it is: planned progress keeps rising every
+day while verified progress stands still, so its status drifts towards Amber and Red on
+its own. In the demo, CX-004, DIG-007 and REV-005 carry the overdue flag (the register's
+"2 Oct · overdue", the dashboard's "Updates outstanding: 3").
+
+**Overrides.** A manual override (reason, author and expiry are mandatory) is shown
+instead of the calculated status until it expires; the calculated status and its reasons
+remain visible alongside it.
+
+## 7.5 Versioning the rules format
 
 `schemaVersion` identifies the shape of the JSON. When the shape changes, a new version is
 added with a migration function; stored rulesets are never reinterpreted.

@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Rules engine (slice 6a)
+- Verified and planned completion from milestones (planned from each milestone's window).
+- Health: progress band, critical-issue and blocked-dependency caps, overdue critical
+  milestone forces Red, missed update in the last locked period → Unknown; plain-language
+  reasons for "Why this status?"; override expiry.
+- Demo seed now calculates planned progress and health with the engine and verifies them
+  against the wireframes.
+- Missing updates: "Update overdue" flag once the open period's deadline passes;
+  Unknown only when the period locks without an update (ADR-016).
+
 ## 2026-10-18 — KPI management (slice 5b)
 - Create, edit, move and delete KPIs; interim targets saved as a list; organisation-wide
   codes (`K01…`).

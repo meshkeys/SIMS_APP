@@ -198,9 +198,42 @@ describe('Demo seed', () => {
       FROM "Initiative" WHERE "organisationId" = $1 AND code = 'DIG-004'`);
     expect(dig004).toEqual({
       progress: 65,
-      planned: 74,
+      // Calculated from the milestone windows by the rules engine: 73.97 → shown as 74%.
+      planned: expect.closeTo(74, 0),
       calculated: 'RED',
       override: 'AMBER',
     });
+  });
+
+  it('flags overdue October updates without changing the status', async () => {
+    const flagged = await rows<{ code: string; health: string }>(`
+      SELECT code, "calculatedHealth" AS health FROM "Initiative"
+      WHERE "organisationId" = $1
+        AND "healthReasons" @> '[{"rule": "UPDATE_OVERDUE"}]'
+      ORDER BY code`);
+    // Matches the register ("2 Oct · overdue") and "Updates outstanding: 3".
+    expect(flagged).toEqual([
+      { code: 'CX-004', health: 'RED' },
+      { code: 'DIG-007', health: 'RED' },
+      { code: 'REV-005', health: 'GREEN' },
+    ]);
+  });
+
+  it('stores the rules engine’s reasons for every active initiative', async () => {
+    const reasons = await one<{ withReasons: number; active: number }>(`
+      SELECT count(*) FILTER (WHERE jsonb_array_length("healthReasons") > 0)::int AS "withReasons",
+             count(*)::int AS active
+      FROM "Initiative" WHERE "organisationId" = $1 AND status = 'ACTIVE'`);
+    expect(reasons.withReasons).toBe(reasons.active);
+
+    const dig004 = await one<{ rules: string[] }>(`
+      SELECT jsonb_path_query_array("healthReasons", '$[*].rule') AS rules
+      FROM "Initiative" WHERE "organisationId" = $1 AND code = 'DIG-004'`);
+    expect(dig004.rules).toEqual([
+      'PROGRESS_VS_PLAN',
+      'OPEN_CRITICAL_ISSUE',
+      'BLOCKED_DEPENDENCY',
+      'OVERDUE_CRITICAL_MILESTONE',
+    ]);
   });
 });
