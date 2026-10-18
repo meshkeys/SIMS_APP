@@ -783,6 +783,9 @@ model Initiative {
 
   lastUpdateAt         DateTime?
   lastVerifiedUpdateAt DateTime?
+  /// First time it became ACTIVE. Updates are owed only for reporting
+  /// periods whose deadline falls after this moment.
+  activatedAt          DateTime?
 
   customFields Json?
   createdAt    DateTime @default(now())

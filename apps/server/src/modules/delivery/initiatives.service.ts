@@ -47,6 +47,14 @@ export interface MilestoneView {
   /** Days past the baseline date while incomplete; 0 otherwise. */
   overdueDays: number;
   evidenceCount: number;
+  tasks: {
+    id: string;
+    title: string;
+    status: string;
+    assignee: PersonRef | null;
+    dueDate: string | null;
+    completedAt: string | null;
+  }[];
 }
 
 export interface InitiativeDetail {
@@ -182,6 +190,12 @@ export class InitiativesService {
         },
         milestones: {
           orderBy: [{ sortOrder: 'asc' }, { baselineDate: 'asc' }],
+          include: {
+            tasks: {
+              orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
+              include: { assignee: personSelect },
+            },
+          },
         },
         risks: {
           where: { status: 'OPEN' },
@@ -367,6 +381,14 @@ export class InitiativesService {
             : 0,
           overdueDays: Math.max(0, late),
           evidenceCount: evidenceById.get(m.id) ?? 0,
+          tasks: m.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            assignee: toPersonRef(task.assignee),
+            dueDate: toIsoDate(task.dueDate),
+            completedAt: task.completedAt?.toISOString() ?? null,
+          })),
         };
       }),
       risks: initiative.risks

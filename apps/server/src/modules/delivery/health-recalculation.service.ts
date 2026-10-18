@@ -82,6 +82,7 @@ export class HealthRecalculationService {
         code: true,
         planId: true,
         baselineStart: true,
+        activatedAt: true,
         calculatedHealth: true,
         healthReasons: true,
         verifiedProgress: true,
@@ -155,18 +156,26 @@ export class HealthRecalculationService {
         initiative.baselineStart,
       );
 
-      // Missed: it was running during the last locked period but never reported.
+      // An update is owed for a period only if the initiative was active
+      // before the period's deadline and had started by the period's end.
+      const owes = (period: { dueAt: Date | null; end: Date }) =>
+        (!initiative.activatedAt ||
+          !period.dueAt ||
+          initiative.activatedAt < period.dueAt) &&
+        (!initiative.baselineStart || initiative.baselineStart <= period.end);
+
+      // Missed: owed in the last locked period, never reported.
       const missedUpdate =
         plan?.lockedId &&
-        (!initiative.baselineStart ||
-          initiative.baselineStart <= plan.lockedEnd!) &&
+        owes({ dueAt: plan.lockedDueAt, end: plan.lockedEnd! }) &&
         !hasUpdate.has(`${initiative.id}:${plan.lockedId}`)
           ? { periodName: plan.lockedName! }
           : null;
-      // Overdue: the open period's deadline has passed and nothing is in yet.
+      // Overdue: owed in the open period, deadline passed, nothing in yet.
       const overdueUpdate =
         plan?.openId &&
         plan.openDueAt &&
+        owes({ dueAt: plan.openDueAt, end: plan.openEnd! }) &&
         !hasUpdate.has(`${initiative.id}:${plan.openId}`)
           ? { periodName: plan.openName!, dueAt: plan.openDueAt }
           : null;
@@ -287,8 +296,10 @@ export class HealthRecalculationService {
         lockedId: locked?.id ?? null,
         lockedName: locked?.name ?? null,
         lockedEnd: locked?.endDate ?? null,
+        lockedDueAt: locked?.submissionDueAt ?? null,
         openId: open?.id ?? null,
         openName: open?.name ?? null,
+        openEnd: open?.endDate ?? null,
         openDueAt: open?.submissionDueAt ?? null,
       };
     });

@@ -78,6 +78,10 @@ demo seed and the admin "impact preview".
 | 4 | **Missed update** (if enabled) — no update in the most recent **locked** period | Unknown, unless Red was forced in step 3 |
 | — | **Update overdue** — the open period's submission deadline has passed with no update | Flag only: status unchanged, shown as "Update overdue · N days" |
 
+An update is **owed** for a period only if the initiative was active before that period's
+deadline (`activatedAt`) and had started by the period's end (`baselineStart`). A new
+initiative is never flagged for a cycle it was not part of.
+
 Every rule that fires adds a reason with a plain-language `detail`, stored on the initiative
 (`healthReasons`) for the "Why this status?" panel. Example (DIG-004):
 

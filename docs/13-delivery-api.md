@@ -1,8 +1,7 @@
 # 13. Delivery API
 
-Initiatives: the **Initiative register**, **Initiative detail**, health recalculation and
-status overrides. (Creating and editing initiatives, milestones, tasks and dependencies
-follows in the next slice.)
+Initiatives, milestones, tasks and dependencies: the **Initiative register**, **Initiative
+detail**, proposing and changing initiatives, health recalculation and status overrides.
 
 ## 13.1 Endpoints
 
@@ -13,6 +12,19 @@ follows in the next slice.)
 | `PUT /api/v1/initiatives/:id/override` | see 13.5 | Override the calculated status |
 | `DELETE /api/v1/initiatives/:id/override` | see 13.5 | Remove an override |
 | `POST /api/v1/initiatives/recalculate` | Strategy Office, Admin | Recalculate progress and health now |
+| `POST /api/v1/initiatives` | Strategy Office, Admin, sponsors, owners | Propose (or draft) an initiative |
+| `PATCH /api/v1/initiatives/:id` | see 13.8 | Edit details |
+| `PUT /api/v1/initiatives/:id/objectives` | Strategy Office | Replace the objectives it contributes to |
+| `POST /api/v1/initiatives/:id/status` | Strategy Office | Move through the lifecycle |
+| `POST /api/v1/initiatives/:id/milestones` | see 13.8 | Add a milestone |
+| `PATCH` / `DELETE /api/v1/milestones/:id` | see 13.8 | Change or remove a milestone |
+| `POST /api/v1/milestones/:id/tasks` | Office, sponsor, owner | Add a task |
+| `PATCH` / `DELETE /api/v1/tasks/:id` | Office, sponsor, owner; assignee (status only) | Change or remove a task |
+| `POST /api/v1/initiatives/:id/dependencies` | Office, sponsor, owner | Record what it waits on |
+| `PATCH` / `DELETE /api/v1/dependencies/:id` | Office, sponsor, owner | Change or remove a dependency |
+
+Every change returns the updated initiative detail, so a screen redraws in one step, and
+re-runs the health rules for that initiative in the same transaction.
 
 ## 13.2 Register
 
@@ -102,3 +114,55 @@ nothing, because the seed was produced by the same engine.
 Business logic reads the current time from an injectable `Clock`, never `new Date()`.
 Production uses the system clock; tests pin it (the e2e suite runs at the wireframes'
 moment, 16 Oct 2026 09:00, and moves it forward to test expiry and drift).
+
+## 13.7 Lifecycle
+
+```
+DRAFT ──▶ PROPOSED ──▶ APPROVED ──▶ ACTIVE ⇄ ON_HOLD
+  ▲          │                        │
+  └──────────┘ (returned for rework)  └──▶ CLOSED
+any open status ──▶ CANCELLED          (CLOSED and CANCELLED are final)
+```
+
+- Only the Strategy Office changes status (`STRATEGY_OFFICE_ONLY`); skipping a step answers
+  `409 INVALID_TRANSITION` naming the allowed moves.
+- **On hold, closed and cancelled need a reason** (10+ characters).
+- **Activation checks readiness** (`409 NOT_READY`, listing every gap): an owner, an
+  executive sponsor, baseline start and end dates, a primary objective, and at least one
+  weighted milestone.
+- The first activation records `activatedAt`; closing records `actualEnd`.
+- **Proposing:** sponsors and owners may propose; a proposer outside the Strategy Office
+  becomes the owner unless one is named. Codes are suggested from the pillar's name
+  (Digital Transformation → `DIG-016`) when not given; codes are unique (`CODE_TAKEN`).
+
+## 13.8 Who may change what
+
+| | Strategy Office / Admin | Sponsor of it | Owner of it | Others |
+|---|---|---|---|---|
+| Owner, sponsor, sensitivity; objective links; status | ✓ | — | — | — |
+| Title, priority, department, benefits owner | ✓ | ✓ | — | — |
+| Description, business case, scope, forecast end, spend | ✓ | ✓ | ✓ | — |
+| Baseline (dates, budget) and milestone plan (add/remove, weights, baseline dates, critical) | ✓ | before activation | before activation | — |
+| Milestone titles, forecasts, order; tasks; dependencies | ✓ | ✓ | ✓ | — |
+| Task status | ✓ | ✓ | ✓ | the assignee |
+
+- Not accountable → `403 NOT_ACCOUNTABLE`; a field above your level →
+  `403 FIELDS_NOT_PERMITTED` listing the fields; a locked baseline →
+  `409 BASELINE_LOCKED`. Sensitive initiatives you may not see answer `404`.
+- **The baseline locks when delivery starts.** Until change requests arrive (governance
+  slice), only the Strategy Office can change it, recorded as `BASELINE_CHANGED`.
+- A milestone with reported or verified progress cannot be removed (`MILESTONE_HAS_PROGRESS`).
+- A forecast move is recorded as its own event and appears in the activity trail
+  ("Forecast for … moved 7 Oct → 22 Oct").
+- Owner, sponsor, benefits owner and assignee must be active members (chapter 4.8).
+
+## 13.9 Dependencies
+
+- "A depends on B" means A waits on B; both must be in the same plan.
+- **Loops are refused** (`409 DEPENDENCY_CYCLE`), naming the loop
+  ("DIG-011 → DIG-016 → DIG-004 → DIG-011") — such a chain could never resolve.
+- Setting status `BLOCKED` starts the blocked-since clock; leaving it clears it. After the
+  configured number of days on the critical path, the waiting initiative's health is capped
+  at Amber (chapter 7.4).
+- A dependency with an open escalation cannot be removed (`DEPENDENCY_ESCALATED`).
+

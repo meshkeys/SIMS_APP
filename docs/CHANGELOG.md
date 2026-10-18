@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Delivery API, write side (slice 6c)
+- Propose/draft initiatives (code suggested from the pillar), edit with per-initiative
+  permissions, replace objective links, lifecycle with readiness checks and reasons.
+- Milestones, tasks (assignee may update status) and dependencies (loop detection,
+  blocked-since clock). Every change recalculates health in the same transaction.
+- Baseline locked once active (Strategy Office only, recorded as `BASELINE_CHANGED`).
+- `activatedAt`: updates are owed only for periods after activation — fixes a new
+  initiative being flagged for a cycle it was not part of (found by tests).
+
 ## 2026-10-18 — Delivery API, read side (slice 6b)
 - Initiative register: tabs and health chips with counts, filters (element subtree,
   department, search on code/title/owner), sorting (worst first by default), pages;

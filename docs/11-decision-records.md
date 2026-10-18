@@ -289,3 +289,24 @@ page/pageSize with totals, computed in one indexed SQL statement. Unbounded stre
 **Consequences.** Matches the screen's interaction; deep offsets are cheap at tenant scale.
 Revisit if a single tenant's register grows past tens of thousands of rows.
 
+---
+
+## ADR-019 — Per-initiative permissions and a baseline that locks at activation
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Role checks alone are too coarse: an Executive Sponsor must not edit an
+initiative someone else sponsors, and once delivery starts the agreed plan is what progress
+and health are measured against, so it cannot drift silently.
+
+**Decision.** Writes are authorised by the caller's relation to the initiative (Strategy
+Office, its sponsor, its owner) and by field group (accountability, shape, narrative,
+baseline). When an initiative becomes active its baseline — dates, budget and the milestone
+plan (weights, baseline dates, critical flags, adding/removing) — locks for everyone but
+the Strategy Office; forecasts, narrative, tasks and dependencies stay open. Every change
+re-runs the health rules in the same transaction.
+
+**Consequences.** Owners keep day-to-day control without being able to move the goalposts.
+Baseline changes become rare, visible events (`BASELINE_CHANGED`) — and, with the
+governance slice, will go through maker-checker change requests instead of direct edits.
+

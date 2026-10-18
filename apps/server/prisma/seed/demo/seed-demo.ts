@@ -584,6 +584,8 @@ async function writeDemo(
         status,
         isSensitive: spec.isSensitive ?? false,
         baselineStart: delivery.start,
+        activatedAt:
+          status === 'ACTIVE' || status === 'CLOSED' ? delivery.start : null,
         baselineEnd: date(spec.end),
         baselineBudget: budget,
         spentToDate: Math.round(budget * spentPct),

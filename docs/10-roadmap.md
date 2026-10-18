@@ -20,8 +20,8 @@ with its tests and documentation.
 | 5b | KPI management: KPIs, interim targets, definition rules | Done |
 | 6a | Rules engine: completion, planned progress, health with reasons, overrides (seed now engine-calculated) | Done |
 | 6b | Delivery API (read): register, initiative detail, recalculation, overrides | Done |
-| 6c | Delivery API (write): create/edit initiatives, milestones, tasks, dependencies, objective links | Next |
-| 7 | Reporting cycle: periods, updates workflow, verification, locking, snapshots | Planned |
+| 6c | Delivery API (write): propose/edit initiatives, lifecycle, milestones, tasks, dependencies, objective links | Done |
+| 7 | Reporting cycle: monthly updates with evidence, verification and challenge, sponsor confirmation, period lock, snapshots | Next |
 | 8 | Governance: risks, escalations (automatic ladder), decisions, maker-checker approvals, rulesets admin | Planned |
 | 9 | Benefits realisation and KPI actuals | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Planned |
