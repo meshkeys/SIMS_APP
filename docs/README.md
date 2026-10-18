@@ -20,6 +20,7 @@ Strategic Initiative Management System · Strategy Execution Command Centre
 | 14 | [Reporting cycle](14-reporting-cycle.md) | Everyone |
 | 15 | [Governance API](15-governance-api.md) | Engineers (API and web) |
 | 16 | [Dashboard API](16-dashboard-api.md) | Engineers (API and web) |
+| 17 | [API contracts](17-api-contracts.md) | Engineers (API and web) |
 | — | [Changelog](CHANGELOG.md) | Everyone |
 
 ## Downloadable copy

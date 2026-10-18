@@ -17,14 +17,11 @@ import {
 } from '../../domain/delivery/progress.js';
 import { canPerform, owesUpdate } from '../../domain/reporting/obligations.js';
 import {
-  type ChecklistItem,
   evaluateUpdate,
   type UpdateLineFacts,
 } from '../../domain/reporting/update-checklist.js';
 import type {
   CommentKind,
-  Health,
-  Severity,
   UpdateStatus,
 } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
@@ -37,131 +34,21 @@ import type { AuthContext } from '../auth/index.js';
 import { HealthRecalculationService } from '../delivery/health-recalculation.service.js';
 import { DecisionsService } from '../governance/decisions.service.js';
 import { seesAllInitiatives } from '../delivery/visibility.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
+import { personSelect, toPersonRef } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
 import { periodNotFound } from './periods.service.js';
 import type {
   ApproveInput,
   ChallengeInput,
   CommentInput,
+  MyUpdates,
+  MyUpdateStatus,
   UpdateDraftInput,
+  UpdateForm,
+  UpdateListItem,
   UpdatesQuery,
   VerifyInput,
-} from './reporting.schemas.js';
-
-export type MyUpdateStatus = UpdateStatus | 'NOT_STARTED';
-
-export interface MyUpdates {
-  period: {
-    id: string;
-    name: string;
-    status: string;
-    submissionDueAt: string | null;
-  } | null;
-  items: {
-    initiativeId: string;
-    code: string;
-    title: string;
-    status: MyUpdateStatus;
-    /** Needs the owner's attention now (not started, draft, or challenged). */
-    actionNeeded: boolean;
-    dueAt: string | null;
-    overdue: boolean;
-    savedAt: string | null;
-    submittedAt: string | null;
-  }[];
-}
-
-export interface UpdateForm {
-  period: {
-    id: string;
-    name: string;
-    status: string;
-    submissionDueAt: string | null;
-    locked: boolean;
-  };
-  initiative: {
-    id: string;
-    code: string;
-    title: string;
-    owner: PersonRef | null;
-    sponsor: PersonRef | null;
-  };
-  update: {
-    id: string;
-    status: UpdateStatus;
-    submittedBy: PersonRef | null;
-    savedAt: string;
-    submittedAt: string | null;
-    reviewedAt: string | null;
-    approvedAt: string | null;
-    claimedProgress: number;
-    verifiedProgress: number | null;
-    progressNarrative: string | null;
-    varianceExplanation: string | null;
-    recoveryAction: string | null;
-    nextSteps: string | null;
-    needsDecision: boolean;
-  } | null;
-  lines: {
-    milestoneId: string;
-    title: string;
-    weight: number;
-    isCritical: boolean;
-    baselineDate: string;
-    forecastDate: string | null;
-    lastVerified: number;
-    claimed: number | null;
-    verified: number | null;
-    /** Completed milestones are locked at 100%. */
-    locked: boolean;
-    evidenceRequired: boolean;
-    evidenceCount: number;
-    needsEvidence: boolean;
-    note: string | null;
-  }[];
-  evaluation: {
-    claimedCompletion: number;
-    plannedCompletion: number;
-    variancePp: number;
-    /** The status the claimed figures would give, from the rules engine. */
-    healthPreview: Health | null;
-    checklist: ChecklistItem[];
-    canSubmit: boolean;
-  };
-  risks: { id: string; type: string; title: string; severity: Severity }[];
-  comments: {
-    id: string;
-    parentId: string | null;
-    kind: CommentKind;
-    body: string;
-    author: PersonRef | null;
-    at: string;
-  }[];
-  /** What the caller may do now, so the screen shows the right buttons. */
-  can: {
-    edit: boolean;
-    submit: boolean;
-    verify: boolean;
-    challenge: boolean;
-    approve: boolean;
-    comment: boolean;
-  };
-}
-
-export interface UpdateListItem {
-  updateId: string;
-  initiativeId: string;
-  code: string;
-  title: string;
-  owner: PersonRef | null;
-  status: UpdateStatus;
-  claimedProgress: number;
-  verifiedProgress: number | null;
-  plannedProgress: number | null;
-  submittedAt: string | null;
-  evidenceFlags: number;
-}
+} from '@sims/contracts';
 
 const STATUS_PRIORITY: Record<MyUpdateStatus, number> = {
   CHALLENGED: 0,

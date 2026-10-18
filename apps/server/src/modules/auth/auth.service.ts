@@ -15,7 +15,6 @@ import {
 } from '../../infrastructure/database/index.js';
 import type { AuthContext } from './auth-context.js';
 import { AuthDirectory, type WorkspaceMembership } from './auth-directory.js';
-import type { LoginInput, SignupInput } from './auth.schemas.js';
 import {
   burnPasswordCheck,
   hashPassword,
@@ -30,24 +29,7 @@ import {
   type IssuedRefreshToken,
   RefreshTokenService,
 } from './tokens/refresh-token.service.js';
-
-/** What the client knows about the signed-in user (returned by sign-in and /me). */
-export interface SessionView {
-  user: { id: string; name: string; email: string };
-  organisation: {
-    id: string;
-    name: string;
-    slug: string;
-    status: string;
-    currency: string;
-    timezone: string;
-    terminology: unknown;
-    onboardingStep: number;
-  };
-  membership: { id: string; roles: Role[]; jobTitle: string | null };
-  /** Every workspace the user can switch to. */
-  organisations: { id: string; name: string; slug: string; roles: Role[] }[];
-}
+import type { LoginInput, SessionView, SignupInput } from '@sims/contracts';
 
 export interface IssuedSession {
   view: SessionView;

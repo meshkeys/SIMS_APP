@@ -1,0 +1,30 @@
+{
+  "name": "@sims/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SIMS API contracts: request and response schemas (zod) and types, shared by server and web app",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "lint": "oxlint src/",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "oxlint": "^1.58.0",
+    "prettier": "^3.4.2",
+    "typescript": "^6.0.2"
+  }
+}

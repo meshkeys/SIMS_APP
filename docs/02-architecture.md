@@ -29,7 +29,7 @@ documents module.
 | API framework | NestJS 12 (Express) | Modular structure, dependency injection, guards/interceptors |
 | Database | PostgreSQL 16 | Row-level security, strong constraints, JSON where useful |
 | ORM / migrations | Prisma 7 (driver adapter `pg`) | Type-safe queries, reviewable SQL migrations |
-| Validation | zod 4 | One schema gives runtime validation and static types; shareable with the web app |
+| Validation | zod 4 | One schema gives runtime validation and static types; shared with the web app through `@sims/contracts` |
 | Auth | JWT (jose) + rotating opaque refresh tokens; Argon2id | See chapter 5 |
 | Jobs / queues | BullMQ on Redis (planned) | Recalculation, escalation ladder, reminders, pack generation |
 | Web app | React 19 + Vite (planned: TanStack Router/Query, Tailwind, Radix) | |
@@ -55,7 +55,8 @@ strategy_app/
         generated/          Prisma client (generated, not committed)
       test/                 end-to-end tests and helpers
     client/                 React web app
-  packages/                 shared code (API contracts) — as needed
+  packages/
+    contracts/              @sims/contracts: request/response schemas and types (chapter 17)
   docker/                   local infrastructure init scripts
   docs/                     this documentation
 ```
@@ -64,8 +65,9 @@ strategy_app/
 
 - **`domain/`** holds rules and calculations (rulesets, health, scoring). It imports
   nothing from NestJS or Prisma, so it is fast to test and can be reused by the web app.
-- **`modules/<feature>/`** holds controllers (HTTP), services (use cases) and schemas
-  (request validation). Services use `TenantPrismaService` for data.
+- **`modules/<feature>/`** holds controllers (HTTP) and services (use cases). Request
+  and response shapes come from `@sims/contracts`. Services use `TenantPrismaService` for
+  data.
 - **`infrastructure/`** wraps external systems. Feature code never creates database
   connections itself.
 

@@ -10,7 +10,7 @@
 
 ```bash
 cp .env.example .env        # then set JWT_ACCESS_SECRET (openssl rand -base64 48)
-npm install                 # all workspaces; generates the Prisma client
+npm install                 # all workspaces; generates the Prisma client, builds @sims/contracts
 npm run infra:up            # Postgres :5433, Redis :6379, Mailpit :1025 (UI :8025)
 npm run db:migrate          # apply migrations
 npm run db:seed             # demo organisation (re-runnable)
@@ -29,6 +29,8 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `npm run db:seed` | Load the Meridian demo tenant |
 | `npm run db:studio` | Browse data in Prisma Studio (as the owner role) |
 | `npm run dev:server` | API with hot reload |
+| `npm run dev:contracts` | Rebuild `@sims/contracts` on save (while editing API shapes) |
+| `npm run db:generate` | Regenerate the Prisma client and the contract enums |
 | `npm test -w @sims/server` | Unit tests |
 | `npm run test:e2e -w @sims/server` | End-to-end tests against `sims_test` |
 | `npm run lint` / `npm run build` | All workspaces |
@@ -80,9 +82,11 @@ every number shown in the wireframes).
 
 ## 8.7 How-to
 
-**Add an endpoint.** Create/extend a module in `src/modules/<feature>/`; define a zod
-schema; use `@Body(new ZodValidationPipe(schema))`; use `TenantPrismaService`; add
-`@Roles(...)` where needed; throw Nest exceptions with a `code`; add e2e tests.
+**Add an endpoint.** Define the request and response schemas in
+`packages/contracts/src/<area>.ts` (chapter 17); create/extend a module in
+`src/modules/<feature>/`; use `@Body(new ZodValidationPipe(schema))` and type the service's
+return with the contract type; use `TenantPrismaService`; add `@Roles(...)` where needed;
+throw Nest exceptions with a `code`; add e2e tests.
 
 **Add a tenant table.** Add the model with `organisationId` and composite relations to its
 parent; create the migration; append `SELECT sims_enable_tenant_rls('"Table"');`; run the

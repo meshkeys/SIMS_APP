@@ -14,132 +14,19 @@ import type { HealthReason } from '../../domain/delivery/health.js';
 import { daysBetween } from '../../domain/delivery/progress.js';
 import type {
   DependencyStatus,
-  Health,
-  InitiativeStatus,
-  MilestoneStatus,
-  RiskStatus,
-  RiskType,
   Severity,
-  Trajectory,
 } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import { TenantPrismaService } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
+import { personSelect, toPersonRef } from '../people/person.js';
 import { describeActivity } from './activity.js';
-import type { OverrideInput } from './delivery.schemas.js';
 import { HealthRecalculationService } from './health-recalculation.service.js';
-
-export interface MilestoneView {
-  id: string;
-  title: string;
-  weight: number;
-  isCritical: boolean;
-  status: MilestoneStatus;
-  baselineStartDate: string | null;
-  baselineDate: string;
-  forecastDate: string | null;
-  actualDate: string | null;
-  claimedCompletion: number;
-  verifiedCompletion: number;
-  /** Percentage points this milestone adds to the initiative's completion. */
-  contribution: number;
-  /** Days past the baseline date while incomplete; 0 otherwise. */
-  overdueDays: number;
-  evidenceCount: number;
-  tasks: {
-    id: string;
-    title: string;
-    status: string;
-    assignee: PersonRef | null;
-    dueDate: string | null;
-    completedAt: string | null;
-  }[];
-}
-
-export interface InitiativeDetail {
-  id: string;
-  code: string;
-  title: string;
-  description: string | null;
-  status: InitiativeStatus;
-  priority: number;
-  isSensitive: boolean;
-  plan: { id: string; name: string };
-  /** Every element it contributes to; `isPrimary` marks its home. */
-  contributesTo: {
-    elementId: string;
-    code: string;
-    title: string;
-    weight: number;
-    isPrimary: boolean;
-  }[];
-  pillar: { id: string; code: string; title: string } | null;
-  owner: PersonRef | null;
-  sponsor: PersonRef | null;
-  benefitsOwner: PersonRef | null;
-  department: { id: string; name: string } | null;
-  baseline: { start: string | null; end: string | null };
-  forecastEnd: string | null;
-  actualEnd: string | null;
-  budget: {
-    baseline: number | null;
-    spent: number | null;
-    spentPct: number | null;
-  };
-  lastVerifiedUpdateAt: string | null;
-  execution: { verified: number; planned: number; variancePp: number };
-  health: {
-    effective: Health;
-    calculated: Health;
-    reasons: HealthReason[];
-    override: {
-      health: Health;
-      reason: string;
-      by: PersonRef | null;
-      at: string | null;
-      expiresAt: string;
-    } | null;
-    updateOverdue: { detail: string } | null;
-  };
-  impact: {
-    score: number | null;
-    summary: string | null;
-    trajectory: Trajectory;
-  };
-  milestones: MilestoneView[];
-  risks: {
-    id: string;
-    type: RiskType;
-    title: string;
-    severity: Severity;
-    status: RiskStatus;
-    owner: PersonRef | null;
-    dueDate: string | null;
-    escalationLevel: number | null;
-  }[];
-  dependencies: {
-    blockedBy: DependencyView[];
-    enables: DependencyView[];
-  };
-  kpis: { id: string; code: string; name: string }[];
-  progressHistory: { asOf: string; planned: number; verified: number }[];
-  activity: {
-    action: string;
-    summary: string;
-    at: string;
-    actor: PersonRef | null;
-  }[];
-}
-
-export interface DependencyView {
-  initiativeId: string;
-  code: string;
-  title: string;
-  status: DependencyStatus;
-  blockedSince: string | null;
-  isCriticalPath: boolean;
-}
+import type {
+  DependencyView,
+  InitiativeDetail,
+  OverrideInput,
+} from '@sims/contracts';
 
 const SEVERITY_ORDER: Record<Severity, number> = {
   CRITICAL: 0,

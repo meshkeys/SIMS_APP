@@ -10,19 +10,19 @@ import {
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { type AuthContext, CurrentAuth } from '../auth/index.js';
+import { WorkItemsService } from './work-items.service.js';
 import {
   type CreateTaskInput,
   createTaskSchema,
   idSchema,
+  type InitiativeDetail,
   type UpdateDependencyInput,
   updateDependencySchema,
   type UpdateMilestoneInput,
   updateMilestoneSchema,
   type UpdateTaskInput,
   updateTaskSchema,
-} from './delivery.schemas.js';
-import type { InitiativeDetail } from './initiatives.service.js';
-import { WorkItemsService } from './work-items.service.js';
+} from '@sims/contracts';
 
 const id = new ZodValidationPipe(idSchema);
 

@@ -12,7 +12,8 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
-import { type PeriodSummary, PeriodsService } from './periods.service.js';
+import { PeriodsService } from './periods.service.js';
+import { UpdatesService } from './updates.service.js';
 import {
   type ApproveInput,
   approveSchema,
@@ -23,21 +24,19 @@ import {
   idSchema,
   type LockPeriodInput,
   lockPeriodSchema,
+  type MyUpdates,
   type OpenPeriodInput,
   openPeriodSchema,
+  type PeriodSummary,
   type UpdateDraftInput,
   updateDraftSchema,
+  type UpdateForm,
+  type UpdateListItem,
   type UpdatesQuery,
   updatesQuerySchema,
   type VerifyInput,
   verifySchema,
-} from './reporting.schemas.js';
-import {
-  type MyUpdates,
-  type UpdateForm,
-  type UpdateListItem,
-  UpdatesService,
-} from './updates.service.js';
+} from '@sims/contracts';
 
 const id = new ZodValidationPipe(idSchema);
 

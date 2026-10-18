@@ -5,6 +5,7 @@ import type {
   KpiDirection,
   Trajectory,
 } from '../../generated/prisma/enums.js';
+import type { KpiSummary } from '@sims/contracts';
 
 type DecimalLike = { toNumber(): number };
 
@@ -30,37 +31,6 @@ export interface KpiRow {
     targetDate: Date;
     value: DecimalLike;
   }[];
-}
-
-export interface KpiTargetView {
-  id: string;
-  label: string;
-  targetDate: string;
-  value: number;
-}
-
-/** How every screen shows a KPI: position against its current target. */
-export interface KpiSummary {
-  id: string;
-  code: string;
-  name: string;
-  unit: string;
-  direction: KpiDirection;
-  frequency: Frequency;
-  baseline: number | null;
-  baselineDate: string | null;
-  /** End-of-plan target. */
-  planTarget: number | null;
-  rangeLow: number | null;
-  rangeHigh: number | null;
-  targets: KpiTargetView[];
-  /** The next target due (e.g. FY2026), else the last one. */
-  currentTarget: KpiTargetView | null;
-  latestValue: number | null;
-  latestAt: string | null;
-  trajectory: Trajectory;
-  /** % of the way from baseline to the current target (see kpi-progress.ts). */
-  progressToTarget: number | null;
 }
 
 /** Prisma `include` that yields a `KpiRow`. */

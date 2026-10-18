@@ -25,15 +25,7 @@ import {
   TenantPrismaService,
   type TenantTransactionClient,
 } from '../../infrastructure/database/index.js';
-
-export interface RecalculationSummary {
-  checked: number;
-  changed: number;
-  /** Codes whose status changed, with old → new. */
-  healthChanges: { code: string; from: string; to: string }[];
-  /** Pillars/objectives whose rolled-up scores or health changed. */
-  elementsChanged: number;
-}
+import type { RecalculationSummary } from '@sims/contracts';
 
 /** Statuses an initiative has once submitted (anything but a draft counts as "in"). */
 const SUBMITTED = SUBMITTED_STATUSES;

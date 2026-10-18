@@ -12,18 +12,13 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
-import {
-  type ChangeRequestView,
-  ChangeRequestsService,
-} from './change-requests.service.js';
-import {
-  type DecisionPage,
-  DecisionsService,
-  type DecisionView,
-} from './decisions.service.js';
+import { ChangeRequestsService } from './change-requests.service.js';
+import { DecisionsService } from './decisions.service.js';
+import { RisksService } from './risks.service.js';
 import {
   type ChangeRequestQuery,
   changeRequestQuerySchema,
+  type ChangeRequestView,
   type CreateChangeRequestInput,
   createChangeRequestSchema,
   type CreateDecisionInput,
@@ -32,19 +27,18 @@ import {
   createRiskSchema,
   type DecideInput,
   decideSchema,
+  type DecisionPage,
   type DecisionQuery,
   decisionQuerySchema,
+  type DecisionView,
   idSchema,
   type RiskQuery,
   riskQuerySchema,
+  type RiskRegister,
+  type RiskView,
   type UpdateRiskInput,
   updateRiskSchema,
-} from './governance.schemas.js';
-import {
-  type RiskRegister,
-  RisksService,
-  type RiskView,
-} from './risks.service.js';
+} from '@sims/contracts';
 
 const id = new ZodValidationPipe(idSchema);
 

@@ -28,17 +28,8 @@ import {
 import type { AuthContext } from '../auth/index.js';
 import { assertActiveMembers } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
-import type {
-  CreateInitiativeInput,
-  ObjectivesInput,
-  StatusChangeInput,
-  UpdateInitiativeInput,
-} from './delivery.schemas.js';
 import { HealthRecalculationService } from './health-recalculation.service.js';
-import {
-  type InitiativeDetail,
-  InitiativesService,
-} from './initiatives.service.js';
+import { InitiativesService } from './initiatives.service.js';
 import {
   assertDepartmentExists,
   baselineLocked,
@@ -46,6 +37,13 @@ import {
   loadForWrite,
   toDate,
 } from './write-access.js';
+import type {
+  CreateInitiativeInput,
+  InitiativeDetail,
+  ObjectivesInput,
+  StatusChangeInput,
+  UpdateInitiativeInput,
+} from '@sims/contracts';
 
 const BASELINE_FIELDS = ['baselineStart', 'baselineEnd', 'baselineBudget'];
 

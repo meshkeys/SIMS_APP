@@ -2,39 +2,32 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CLOCK, type Clock } from '../../common/clock/clock.js';
 import { toIsoDate, toNumber } from '../../common/data/numbers.js';
 import { daysBetween } from '../../domain/delivery/progress.js';
-import {
-  valueQuadrant,
-  type ValueQuadrant,
-} from '../../domain/strategy/rollup.js';
+import { valueQuadrant } from '../../domain/strategy/rollup.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type {
   Health,
   InitiativeStatus,
-  MilestoneStatus,
   PeriodStatus,
-  Role,
-  Severity,
 } from '../../generated/prisma/enums.js';
 import { TenantPrismaService } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
 import { loadActiveRules } from '../delivery/element-rollups.js';
-import {
-  InitiativeRegisterService,
-  type RegisterItem,
-} from '../delivery/initiative-register.service.js';
-import { REGISTER_TABS } from '../delivery/delivery.schemas.js';
+import { InitiativeRegisterService } from '../delivery/initiative-register.service.js';
 import { seesAllInitiatives } from '../delivery/visibility.js';
-import {
-  DecisionsService,
-  type DecisionView,
-} from '../governance/decisions.service.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
-import {
-  PeriodsService,
-  type PeriodSummary,
-} from '../reporting/periods.service.js';
+import { DecisionsService } from '../governance/decisions.service.js';
+import { personSelect, toPersonRef } from '../people/person.js';
+import { PeriodsService } from '../reporting/periods.service.js';
 import { PlansService } from '../strategy/plans.service.js';
-import type { DashboardQuery } from './dashboard.schemas.js';
+import {
+  type CycleStage,
+  type CycleStageKey,
+  type Dashboard,
+  type DashboardQuery,
+  type MatrixPoint,
+  type PeriodSummary,
+  REGISTER_TABS,
+  VALUE_QUADRANTS,
+} from '@sims/contracts';
 
 /** How many rows each "top N" panel shows. */
 const WATCHLIST_SIZE = 5;
@@ -44,106 +37,6 @@ const MILESTONES_SHOWN = 8;
 const MILESTONE_WINDOW_DAYS = 14;
 /** Dots per quadrant in the delivery-vs-value matrix (counts are always exact). */
 const MATRIX_ITEMS_PER_QUADRANT = 50;
-
-const QUADRANTS: ValueQuadrant[] = [
-  'ON_PLAN_VALUE_OK',
-  'ON_PLAN_VALUE_LOW',
-  'BEHIND_VALUE_OK',
-  'BEHIND_VALUE_LOW',
-  'NOT_MEASURABLE',
-];
-
-type StageKey =
-  'OWNER_SUBMISSION' | 'STRATEGY_REVIEW' | 'SPONSOR_REVIEW' | 'REPORT_ISSUE';
-
-export interface CycleStage {
-  key: StageKey;
-  dueAt: string | null;
-  state: 'DONE' | 'CURRENT' | 'UPCOMING';
-}
-
-export interface ElementPerformance {
-  id: string;
-  code: string;
-  title: string;
-  health: Health;
-  executionScore: number | null;
-  impactScore: number | null;
-  /** Active and on-hold initiatives the viewer can see whose home objective sits here. */
-  initiatives: number;
-  atRisk: number;
-  delayed: number;
-}
-
-export interface MatrixPoint {
-  id: string;
-  code: string;
-  title: string;
-  health: Health;
-  impactScore: number | null;
-}
-
-export interface EscalationSummary {
-  id: string;
-  reference: string;
-  title: string;
-  severity: Severity;
-  level: number;
-  levelName: string;
-  /** Days since it reached its current level. */
-  daysAtLevel: number;
-  /** Days since it was raised. */
-  ageDays: number;
-  initiative: { id: string; code: string; title: string } | null;
-  decisionFrom: PersonRef | null;
-  decisionFromRole: Role | null;
-}
-
-export interface MilestoneDue {
-  id: string;
-  title: string;
-  initiative: { id: string; code: string; title: string };
-  /** Forecast date if there is one, else the baseline date. */
-  dueDate: string;
-  baselineDate: string;
-  /** Forecast minus baseline, in days (positive = slipping). */
-  slipDays: number;
-  isCritical: boolean;
-  status: MilestoneStatus;
-  verifiedCompletion: number;
-}
-
-export interface Dashboard {
-  plan: { id: string; name: string; startDate: string; endDate: string };
-  asAt: string;
-  /** The element the dashboard is narrowed to, or null for the whole plan. */
-  scope: { id: string; code: string; title: string } | null;
-  cycle: (PeriodSummary & { stages: CycleStage[] }) | null;
-  tiles: {
-    active: number;
-    onTrack: number;
-    atRisk: number;
-    delayed: number;
-    unknown: number;
-    /** Updates still owed this cycle (whole organisation); null between cycles. */
-    updatesOutstanding: number | null;
-  };
-  /** Top-level elements, or the scope's children. */
-  performance: ElementPerformance[];
-  matrix: {
-    lowValueThresholdPct: number;
-    quadrants: Record<ValueQuadrant, { count: number; items: MatrixPoint[] }>;
-  };
-  watchlist: RegisterItem[];
-  decisions: { items: DecisionView[]; total: number };
-  escalations: {
-    items: EscalationSummary[];
-    total: number;
-    /** Every level of the organisation's ladder, with its open count. */
-    byLevel: { level: number; name: string; count: number }[];
-  };
-  milestones: { items: MilestoneDue[]; total: number; overdue: number };
-}
 
 interface InitiativeRow {
   id: string;
@@ -155,7 +48,8 @@ interface InitiativeRow {
   rowId: string | null;
 }
 
-const STAGES: { key: StageKey; status: PeriodStatus | null }[] = [
+/** Each stage of the cycle tracker and the period status that means it is under way. */
+const STAGES: { key: CycleStageKey; status: PeriodStatus | null }[] = [
   { key: 'OWNER_SUBMISSION', status: 'OWNER_SUBMISSION' },
   { key: 'STRATEGY_REVIEW', status: 'STRATEGY_REVIEW' },
   { key: 'SPONSOR_REVIEW', status: 'SPONSOR_REVIEW' },
@@ -475,7 +369,7 @@ export class DashboardService {
 /** The cycle's stages with done / current / upcoming, from the period's status. */
 function stagesOf(period: PeriodSummary): CycleStage[] {
   const position = STAGE_ORDER.indexOf(period.status);
-  const due: Record<StageKey, string | null> = {
+  const due: Record<CycleStageKey, string | null> = {
     OWNER_SUBMISSION: period.deadlines.submissionDueAt,
     STRATEGY_REVIEW: period.deadlines.strategyReviewDueAt,
     SPONSOR_REVIEW: period.deadlines.sponsorReviewDueAt,
@@ -497,7 +391,7 @@ function matrixOf(
   threshold: number,
 ): Dashboard['matrix']['quadrants'] {
   const quadrants = Object.fromEntries(
-    QUADRANTS.map((q) => [q, { count: 0, items: [] as MatrixPoint[] }]),
+    VALUE_QUADRANTS.map((q) => [q, { count: 0, items: [] as MatrixPoint[] }]),
   ) as Dashboard['matrix']['quadrants'];
   for (const row of active) {
     const impactScore = toNumber(row.impactScore);

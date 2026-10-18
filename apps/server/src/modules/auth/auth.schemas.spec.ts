@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
-import { loginSchema, signupSchema } from './auth.schemas.js';
 import { slugify } from './auth.service.js';
+import { loginSchema, signupSchema } from '@sims/contracts';
 
 describe('auth input', () => {
   it('normalises email, country and currency, and applies defaults', () => {

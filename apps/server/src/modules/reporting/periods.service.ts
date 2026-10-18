@@ -27,36 +27,11 @@ import {
 } from '../../infrastructure/database/index.js';
 import { HealthRecalculationService } from '../delivery/health-recalculation.service.js';
 import { PlansService } from '../strategy/plans.service.js';
-import type { LockPeriodInput, OpenPeriodInput } from './reporting.schemas.js';
-
-export interface PeriodSummary {
-  id: string;
-  name: string;
-  status: PeriodStatus;
-  startDate: string;
-  endDate: string;
-  deadlines: {
-    submissionOpensAt: string | null;
-    submissionDueAt: string | null;
-    strategyReviewDueAt: string | null;
-    sponsorReviewDueAt: string | null;
-    reportIssueDueAt: string | null;
-  };
-  lockedAt: string | null;
-  /** "Day 6 of 8" while the cycle runs. */
-  cycleDay: { day: number; of: number } | null;
-  /** The cycle tracker: "29 of 32 in · 6 challenged · 3 pending". */
-  counts: {
-    owed: number;
-    in: number;
-    outstanding: number;
-    drafts: number;
-    awaitingVerification: number;
-    challenged: number;
-    awaitingSponsor: number;
-    approved: number;
-  };
-}
+import type {
+  LockPeriodInput,
+  OpenPeriodInput,
+  PeriodSummary,
+} from '@sims/contracts';
 
 /** Stages in order; locking is a separate, checked step. */
 const NEXT_STAGE: Partial<Record<PeriodStatus, PeriodStatus>> = {

@@ -13,7 +13,6 @@ import {
   nextKpiCode,
   validateKpiDefinition,
 } from '../../domain/kpis/kpi-definition.js';
-import type { Health } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
@@ -24,53 +23,19 @@ import type { AuthContext } from '../auth/index.js';
 import {
   assertActiveMembers,
   personSelect,
-  type PersonRef,
   toPersonRef,
 } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
-import {
-  kpiTargetsInclude,
-  type KpiSummary,
-  toKpiSummary,
-} from './kpi-view.js';
+import { kpiTargetsInclude, toKpiSummary } from './kpi-view.js';
 import type {
   CreateKpiInput,
+  ElementRef,
+  KpiDetail,
+  KpiListItem,
   KpiTargetInput,
   KpiTargetsInput,
   UpdateKpiInput,
-} from './kpis.schemas.js';
-
-type ElementRef = { id: string; code: string; title: string };
-
-export interface KpiListItem extends KpiSummary {
-  element: ElementRef;
-  /** The top-level element it rolls up to (e.g. its pillar). */
-  topLevel: ElementRef;
-  owner: PersonRef | null;
-}
-
-export interface KpiDetail extends KpiSummary {
-  planId: string;
-  element: ElementRef;
-  owner: PersonRef | null;
-  /** Most recent periods, oldest first (up to 12). */
-  actuals: {
-    period: string;
-    periodEnd: string;
-    value: number;
-    verified: boolean;
-    commentary: string | null;
-  }[];
-  /** Initiatives expected to move this KPI. */
-  linkedInitiatives: {
-    initiativeId: string;
-    code: string;
-    title: string;
-    health: Health;
-    expectedImpact: number | null;
-  }[];
-  hiddenLinkedInitiatives: number;
-}
+} from '@sims/contracts';
 
 const kpiNotFound = () =>
   new NotFoundException({ code: 'KPI_NOT_FOUND', message: 'KPI not found.' });

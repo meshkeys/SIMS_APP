@@ -1,11 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { type AuthContext, CurrentAuth } from '../auth/index.js';
-import { type Dashboard, DashboardService } from './dashboard.service.js';
+import { DashboardService } from './dashboard.service.js';
 import {
+  type Dashboard,
   type DashboardQuery,
   dashboardQuerySchema,
-} from './dashboard.schemas.js';
+} from '@sims/contracts';
 
 /** The Strategy Execution Command Centre. */
 @Controller('dashboard')

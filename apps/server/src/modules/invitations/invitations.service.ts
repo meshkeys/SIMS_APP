@@ -31,7 +31,6 @@ import {
   AuthService,
   hashPassword,
   type IssuedSession,
-  newPasswordSchema,
   verifyPassword,
 } from '../auth/index.js';
 import type { ClientMeta } from '../auth/tokens/refresh-token.service.js';
@@ -40,46 +39,18 @@ import {
   type InvitationByToken,
 } from './invitation-directory.js';
 import { invitationEmail } from './invitation-email.js';
-import type {
-  AcceptInvitationInput,
-  CreateInvitationInput,
-} from './invitations.schemas.js';
+import {
+  type AcceptInvitationInput,
+  type CreateInvitationInput,
+  type InvitationPreview,
+  type InvitationStatus,
+  type InvitationView,
+  type SentInvitation,
+  newPasswordSchema,
+} from '@sims/contracts';
 
 /** How long an emailed link stays valid. */
 const INVITATION_TTL_DAYS = 7;
-
-export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REVOKED' | 'EXPIRED';
-
-export interface InvitationView {
-  id: string;
-  email: string;
-  roles: Role[];
-  jobTitle: string | null;
-  departmentId: string | null;
-  status: InvitationStatus;
-  invitedBy: { id: string; name: string };
-  createdAt: string;
-  expiresAt: string;
-  acceptedAt: string | null;
-  revokedAt: string | null;
-}
-
-export interface SentInvitation extends InvitationView {
-  /** False when the email could not be sent: the invitation exists; resend later. */
-  emailDelivered: boolean;
-}
-
-/** What the public accept page shows before the invitee signs in. */
-export interface InvitationPreview {
-  organisationName: string;
-  email: string;
-  roles: Role[];
-  jobTitle: string | null;
-  invitedByName: string;
-  expiresAt: string;
-  /** true → ask for the existing password; false → ask for a name and new password. */
-  accountExists: boolean;
-}
 
 const invitationSelect = {
   id: true,

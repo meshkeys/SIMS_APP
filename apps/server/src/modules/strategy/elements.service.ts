@@ -9,65 +9,25 @@ import { isUniqueViolation } from '../../common/data/prisma-errors.js';
 import { uuidv7 } from '../../common/ids/uuidv7.js';
 import { canSeeInitiative } from '../../domain/access/initiative-visibility.js';
 import { nextElementCode } from '../../domain/strategy/element-codes.js';
-import type { Health, InitiativeStatus } from '../../generated/prisma/enums.js';
+import type { InitiativeStatus } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
   TenantPrismaService,
 } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
-import {
-  kpiTargetsInclude,
-  type KpiSummary,
-  toKpiSummary,
-} from '../kpis/kpi-view.js';
+import { kpiTargetsInclude, toKpiSummary } from '../kpis/kpi-view.js';
 import {
   assertActiveMembers,
   personSelect,
-  type PersonRef,
   toPersonRef,
 } from '../people/person.js';
 import { PlansService } from './plans.service.js';
 import type {
   CreateElementInput,
+  ElementDetail,
   UpdateElementInput,
-} from './strategy.schemas.js';
-
-export type ElementKpi = KpiSummary;
-
-export interface ElementContributor {
-  initiativeId: string;
-  code: string;
-  title: string;
-  status: InitiativeStatus;
-  health: Health;
-  verifiedProgress: number;
-  contributionWeight: number;
-  /** This element is the initiative's home objective. */
-  isPrimary: boolean;
-}
-
-export interface ElementDetail {
-  id: string;
-  planId: string;
-  code: string;
-  title: string;
-  description: string | null;
-  depth: number;
-  level: { id: string; label: string };
-  /** Ancestors from the top, e.g. [P1 Revenue Diversification]. */
-  breadcrumb: { id: string; code: string; title: string; levelLabel: string }[];
-  owner: PersonRef | null;
-  sponsor: PersonRef | null;
-  executionScore: number | null;
-  impactScore: number | null;
-  health: Health;
-  kpis: ElementKpi[];
-  contributors: ElementContributor[];
-  /** Sensitive initiatives the caller may not see, counted but not listed. */
-  hiddenContributors: number;
-  children: { id: string; code: string; title: string }[];
-}
+} from '@sims/contracts';
 
 /** Initiatives in these states are not (or no longer) delivering, so they are not listed. */
 const NOT_CONTRIBUTING: InitiativeStatus[] = ['DRAFT', 'PROPOSED', 'CANCELLED'];

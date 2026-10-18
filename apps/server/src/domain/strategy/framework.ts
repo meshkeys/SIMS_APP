@@ -1,7 +1,8 @@
+import { MAX_FRAMEWORK_LEVELS } from '@sims/contracts';
 import type { FrameworkTemplate } from '../../generated/prisma/enums.js';
 
-/** Hard ceiling on strategy levels; mirrored by a CHECK constraint. */
-export const MAX_FRAMEWORK_LEVELS = 10;
+/** Hard ceiling on strategy levels (part of the API contract); mirrored by a CHECK constraint. */
+export { MAX_FRAMEWORK_LEVELS };
 
 export interface LevelDefinition {
   label: string;

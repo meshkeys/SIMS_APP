@@ -370,3 +370,27 @@ the same function. Scores are stored, so reads stay cheap.
 initiatives. Every number on the dashboard can be traced to the initiatives and KPIs under
 it.
 
+---
+
+## ADR-023 — One contract package, zod for requests and responses
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** The web app needs the API's shapes: to validate forms the way the server does,
+and to type the data it receives. Hand-copied types drift; generating types from an OpenAPI
+file adds a code-generation step and loses zod's validation rules. Response shapes lived as
+TypeScript interfaces inside server services.
+
+**Decision.** A workspace package, `@sims/contracts`, holds every request **and response**
+shape as a zod schema, with types inferred from it. It depends only on zod. The server
+validates requests with these schemas and types every service result with the contract
+type; the web app imports the same package. Database enums are generated into it from the
+Prisma schema. The OpenAPI reference (slice 13b) will be generated from these schemas, not
+written by hand.
+
+**Consequences.** One source of truth: changing an API shape is a compile error everywhere
+it matters. Responses can be checked against their schemas at runtime (in tests). The
+package must be built before the server compiles; scripts do this automatically. Domain
+types stay separate from the contract on purpose, so business rules never depend on the
+wire format.
+

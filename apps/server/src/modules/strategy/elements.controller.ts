@@ -11,12 +11,13 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
-import { type ElementDetail, ElementsService } from './elements.service.js';
+import { ElementsService } from './elements.service.js';
 import {
+  type ElementDetail,
   idSchema,
   type UpdateElementInput,
   updateElementSchema,
-} from './strategy.schemas.js';
+} from '@sims/contracts';
 
 const elementId = new ZodValidationPipe(idSchema);
 

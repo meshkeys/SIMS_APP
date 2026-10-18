@@ -28,7 +28,8 @@ with its tests and documentation.
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
-| 13 | OpenAPI reference; shared API contracts package | Next |
+| 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
+| 13b | OpenAPI reference generated from the contracts; route and response drift tests | Next |
 | 14+ | Web app: design system and shell, then each screen | Planned |
 
 ## 10.3 Known follow-ups

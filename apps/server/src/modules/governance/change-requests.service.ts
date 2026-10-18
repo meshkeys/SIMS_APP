@@ -22,11 +22,7 @@ import {
   nextReference,
 } from '../../domain/governance/decisions.js';
 import type { Prisma } from '../../generated/prisma/client.js';
-import type {
-  ApprovalStatus,
-  ApprovalType,
-  Role,
-} from '../../generated/prisma/enums.js';
+import type { Role } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
@@ -37,29 +33,12 @@ import type { AuthContext } from '../auth/index.js';
 import { HealthRecalculationService } from '../delivery/health-recalculation.service.js';
 import { seesAllInitiatives } from '../delivery/visibility.js';
 import { loadForWrite } from '../delivery/write-access.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
+import { personSelect, toPersonRef } from '../people/person.js';
 import type {
   ChangeRequestQuery,
+  ChangeRequestView,
   CreateChangeRequestInput,
-} from './governance.schemas.js';
-
-export interface ChangeRequestView {
-  id: string;
-  reference: string;
-  type: ApprovalType;
-  status: ApprovalStatus;
-  initiative: { id: string; code: string; title: string };
-  changes: RequestedChanges;
-  /** The baseline values the change replaces. */
-  before: Record<string, unknown>;
-  justification: string | null;
-  requestedBy: PersonRef | null;
-  approver: PersonRef | null;
-  decisionId: string | null;
-  decisionReason: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-}
+} from '@sims/contracts';
 
 const TYPE_LABEL: Record<string, string> = {
   BASELINE_CHANGE: 'baseline change',

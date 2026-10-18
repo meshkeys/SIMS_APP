@@ -11,11 +11,6 @@ import { canSeeInitiative } from '../../domain/access/initiative-visibility.js';
 import { relationTo } from '../../domain/delivery/permissions.js';
 import { heatmap, severityFor } from '../../domain/governance/risks.js';
 import type { Prisma } from '../../generated/prisma/client.js';
-import type {
-  RiskStatus,
-  RiskType,
-  Severity,
-} from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
@@ -29,51 +24,15 @@ import { loadForWrite } from '../delivery/write-access.js';
 import {
   assertActiveMembers,
   personSelect,
-  type PersonRef,
   toPersonRef,
 } from '../people/person.js';
 import type {
   CreateRiskInput,
   RiskQuery,
+  RiskRegister,
+  RiskView,
   UpdateRiskInput,
-} from './governance.schemas.js';
-
-export interface RiskView {
-  id: string;
-  type: RiskType;
-  title: string;
-  description: string | null;
-  likelihood: number | null;
-  impact: number | null;
-  /** likelihood × impact (risks only). */
-  score: number | null;
-  severity: Severity;
-  status: RiskStatus;
-  initiative: { id: string; code: string; title: string } | null;
-  owner: PersonRef | null;
-  mitigation: string | null;
-  dueDate: string | null;
-  closedAt: string | null;
-  /** The open escalation it has raised, if any. */
-  escalation: { reference: string; level: number } | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface RiskRegister {
-  items: RiskView[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  /** Open risks on the 5×5 grid (rows: impact 5→1; columns: likelihood 1→5), under the other filters. */
-  heatmap: number[][];
-  counts: {
-    risks: number;
-    issues: number;
-    bySeverity: Record<Severity, number>;
-  };
-}
+} from '@sims/contracts';
 
 const riskInclude = {
   initiative: { select: { id: true, code: true, title: true } },

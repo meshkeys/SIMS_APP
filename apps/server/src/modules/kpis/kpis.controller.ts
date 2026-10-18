@@ -14,22 +14,20 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
+import { KpisService } from './kpis.service.js';
 import {
   type CreateKpiInput,
   createKpiSchema,
   idSchema,
+  type KpiDetail,
+  type KpiListItem,
   type KpiListQuery,
   kpiListQuerySchema,
   type KpiTargetsInput,
   kpiTargetsSchema,
   type UpdateKpiInput,
   updateKpiSchema,
-} from './kpis.schemas.js';
-import {
-  type KpiDetail,
-  type KpiListItem,
-  KpisService,
-} from './kpis.service.js';
+} from '@sims/contracts';
 
 const id = new ZodValidationPipe(idSchema);
 

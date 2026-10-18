@@ -14,6 +14,7 @@
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f",
+    "dev:contracts": "npm run dev -w @sims/contracts",
     "dev:server": "npm run start:dev -w @sims/server",
     "dev:client": "npm run dev -w @sims/client",
     "db:migrate": "npm run db:migrate -w @sims/server",
@@ -22,8 +23,9 @@
     "db:seed": "npm run db:seed -w @sims/server",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "docs:build": "node scripts/build-docs.mjs"
+    "build": "npm run build -w @sims/contracts && npm run build -w @sims/server && npm run build -w @sims/client",
+    "docs:build": "node scripts/build-docs.mjs",
+    "prepare": "npm run build -w @sims/contracts"
   },
   "allowScripts": {
     "@prisma/engines@7.10.1": true,

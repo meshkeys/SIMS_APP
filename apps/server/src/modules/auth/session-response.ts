@@ -1,13 +1,7 @@
 import type { Response } from 'express';
-import type { IssuedSession, SessionView } from './auth.service.js';
+import type { IssuedSession } from './auth.service.js';
 import { setRefreshCookie } from './refresh-cookie.js';
-
-/** Body of every endpoint that starts or renews a session. */
-export interface SessionResponse {
-  accessToken: string;
-  accessTokenExpiresAt: string;
-  session: SessionView;
-}
+import type { SessionResponse } from '@sims/contracts';
 
 /**
  * Puts the refresh token in its cookie and returns the response body.

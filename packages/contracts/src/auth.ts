@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { OrganisationSector } from '../../generated/prisma/enums.js';
+import { isoDateTime } from './common.js';
+import { OrganisationSector, OrganisationStatus, Role } from './enums.js';
+
+// ---------------------------------------------------------------------------
+// Requests
+// ---------------------------------------------------------------------------
 
 /** Trimmed and lower-cased before validation, so "  Ada@Example.com " is accepted. */
 export const emailSchema = z
@@ -74,3 +79,48 @@ export const switchOrganisationSchema = z.object({
   organisationId: z.uuid(),
 });
 export type SwitchOrganisationInput = z.output<typeof switchOrganisationSchema>;
+
+// ---------------------------------------------------------------------------
+// Responses
+// ---------------------------------------------------------------------------
+
+export const sessionViewSchema = z.object({
+  user: z.object({ id: z.uuid(), name: z.string(), email: z.string() }),
+  organisation: z.object({
+    id: z.uuid(),
+    name: z.string(),
+    slug: z.string(),
+    status: z.enum(OrganisationStatus),
+    currency: z.string(),
+    timezone: z.string(),
+    /** The organisation's own words for things (e.g. "Pillar" → "Theme"). */
+    terminology: z.unknown(),
+    onboardingStep: z.int(),
+  }),
+  membership: z.object({
+    id: z.uuid(),
+    roles: z.array(z.enum(Role)),
+    jobTitle: z.string().nullable(),
+  }),
+  /** Every workspace the user can switch to. */
+  organisations: z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      slug: z.string(),
+      roles: z.array(z.enum(Role)),
+    }),
+  ),
+});
+export type SessionView = z.infer<typeof sessionViewSchema>;
+
+/**
+ * Returned by sign-up, sign-in, refresh, switch and invitation acceptance.
+ * The refresh token travels separately, in an httpOnly cookie.
+ */
+export const sessionResponseSchema = z.object({
+  accessToken: z.string(),
+  accessTokenExpiresAt: isoDateTime,
+  session: sessionViewSchema,
+});
+export type SessionResponse = z.infer<typeof sessionResponseSchema>;

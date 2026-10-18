@@ -19,19 +19,8 @@ import {
 } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
 import { assertActiveMembers } from '../people/person.js';
-import type {
-  CreateDependencyInput,
-  CreateMilestoneInput,
-  CreateTaskInput,
-  UpdateDependencyInput,
-  UpdateMilestoneInput,
-  UpdateTaskInput,
-} from './delivery.schemas.js';
 import { HealthRecalculationService } from './health-recalculation.service.js';
-import {
-  type InitiativeDetail,
-  InitiativesService,
-} from './initiatives.service.js';
+import { InitiativesService } from './initiatives.service.js';
 import {
   baselineLocked,
   invalidField,
@@ -39,6 +28,15 @@ import {
   notYourInitiative,
   toDate,
 } from './write-access.js';
+import type {
+  CreateDependencyInput,
+  CreateMilestoneInput,
+  CreateTaskInput,
+  InitiativeDetail,
+  UpdateDependencyInput,
+  UpdateMilestoneInput,
+  UpdateTaskInput,
+} from '@sims/contracts';
 
 /** Changing these alters the agreed plan (locked once delivery starts). */
 const PLAN_FIELDS = [

@@ -2,6 +2,14 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — API contracts (slice 13a)
+- New package `@sims/contracts`: every request and response of the API as zod schemas with
+  TypeScript types, shared by the server and the web app (ADR-023).
+- The server's request schemas moved into the package; its services now return the
+  contract types, so the compiler enforces the API shape.
+- Database enums are copied into the contract on `db:generate`, with a test that fails if
+  they drift.
+
 ## 2026-10-18 — Command Centre dashboard (slice 10)
 - `GET /dashboard`: cycle tracker with stages, headline tiles, pillar performance,
   delivery-vs-value matrix, watchlist, decisions, escalations by ladder level and milestones

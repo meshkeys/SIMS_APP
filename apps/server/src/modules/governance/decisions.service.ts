@@ -16,7 +16,7 @@ import {
   nextReference,
 } from '../../domain/governance/decisions.js';
 import type { Prisma } from '../../generated/prisma/client.js';
-import type { DecisionOutcome, Role } from '../../generated/prisma/enums.js';
+import type { Role } from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
@@ -28,45 +28,16 @@ import { seesAllInitiatives } from '../delivery/visibility.js';
 import {
   assertActiveMembers,
   personSelect,
-  type PersonRef,
   toPersonRef,
 } from '../people/person.js';
 import { ChangeRequestsService } from './change-requests.service.js';
 import type {
   CreateDecisionInput,
   DecideInput,
+  DecisionPage,
   DecisionQuery,
-} from './governance.schemas.js';
-
-export interface DecisionView {
-  id: string;
-  reference: string;
-  title: string;
-  context: string | null;
-  kind: 'CHANGE_REQUEST' | 'DECISION';
-  initiative: { id: string; code: string; title: string } | null;
-  /** Role that must decide, and the named person when there is one. */
-  requiredFrom: Role;
-  decisionOwner: PersonRef | null;
-  dueDate: string | null;
-  /** Days past the due date while still open; 0 otherwise. */
-  overdueDays: number;
-  outcome: DecisionOutcome;
-  outcomeNotes: string | null;
-  deferredUntil: string | null;
-  decidedBy: PersonRef | null;
-  decidedAt: string | null;
-  changeRequestId: string | null;
-  /** Whether the caller may record the decision now. */
-  canDecide: boolean;
-}
-
-export interface DecisionPage {
-  items: DecisionView[];
-  page: number;
-  pageSize: number;
-  total: number;
-}
+  DecisionView,
+} from '@sims/contracts';
 
 const decisionInclude = {
   initiative: {

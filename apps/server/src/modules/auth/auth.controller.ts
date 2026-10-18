@@ -16,19 +16,21 @@ import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.j
 import { ENV } from '../../config/config.module.js';
 import type { Env } from '../../config/env.js';
 import type { AuthContext } from './auth-context.js';
+import { AuthService } from './auth.service.js';
+import { CurrentAuth, Public } from './decorators.js';
+import { clearRefreshCookie, readRefreshCookie } from './refresh-cookie.js';
+import { sendSession } from './session-response.js';
+import { clientMeta } from './client-meta.js';
 import {
   type LoginInput,
   loginSchema,
+  type SessionResponse,
+  type SessionView,
   type SignupInput,
   signupSchema,
   type SwitchOrganisationInput,
   switchOrganisationSchema,
-} from './auth.schemas.js';
-import { AuthService, type SessionView } from './auth.service.js';
-import { CurrentAuth, Public } from './decorators.js';
-import { clearRefreshCookie, readRefreshCookie } from './refresh-cookie.js';
-import { type SessionResponse, sendSession } from './session-response.js';
-import { clientMeta } from './client-meta.js';
+} from '@sims/contracts';
 
 const missingRefreshToken = () =>
   new UnauthorizedException({

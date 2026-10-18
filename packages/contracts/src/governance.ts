@@ -1,32 +1,43 @@
 import { z } from 'zod';
-import { Role, Severity } from '../../generated/prisma/enums.js';
+import {
+  clearableText,
+  commaList,
+  initiativeRefSchema,
+  isoDate,
+  isoDateTime,
+  pageMeta,
+  personRefSchema,
+} from './common.js';
+import {
+  ApprovalStatus,
+  ApprovalType,
+  DecisionOutcome,
+  RiskStatus,
+  RiskType,
+  Role,
+  Severity,
+} from './enums.js';
 
-const isoDate = z.iso.date('Use a date like 2026-12-31');
 const scale = z.int().min(1).max(5);
-const text = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .nullable()
-    .transform((value) => (value ? value : null));
 
-// ------------------------------------------------------------------ risks
+// ---------------------------------------------------------------------------
+// Risks and issues
+// ---------------------------------------------------------------------------
 
 export const createRiskSchema = z
   .object({
     /** Omit for a portfolio-level risk (Strategy Office). */
     initiativeId: z.uuid().nullable().default(null),
-    type: z.enum(['RISK', 'ISSUE']),
+    type: z.enum(RiskType),
     title: z.string().trim().min(3).max(200),
-    description: text(4000).default(null),
+    description: clearableText(4000).default(null),
     /** Risks: how likely (1–5) and how bad (1–5); severity follows from them. */
     likelihood: scale.nullable().default(null),
     impact: scale.nullable().default(null),
     /** Issues (already happening): severity is set directly. */
     severity: z.enum(Severity).optional(),
     ownerId: z.uuid().nullable().default(null),
-    mitigation: text(4000).default(null),
+    mitigation: clearableText(4000).default(null),
     dueDate: isoDate.nullable().default(null),
   })
   .superRefine((risk, ctx) => {
@@ -56,34 +67,23 @@ export type CreateRiskInput = z.output<typeof createRiskSchema>;
 export const updateRiskSchema = z
   .object({
     title: z.string().trim().min(3).max(200),
-    description: text(4000),
+    description: clearableText(4000),
     likelihood: scale,
     impact: scale,
     severity: z.enum(Severity),
     ownerId: z.uuid().nullable(),
-    mitigation: text(4000),
+    mitigation: clearableText(4000),
     dueDate: isoDate.nullable(),
-    status: z.enum(['OPEN', 'MITIGATED', 'CLOSED']),
+    status: z.enum(RiskStatus),
   })
   .partial()
   .refine((risk) => Object.keys(risk).length > 0, 'Nothing to update');
 export type UpdateRiskInput = z.output<typeof updateRiskSchema>;
 
-const list = <T extends string>(values: readonly [T, ...T[]]) =>
-  z
-    .string()
-    .transform((value) =>
-      value
-        .split(',')
-        .map((part) => part.trim().toUpperCase())
-        .filter(Boolean),
-    )
-    .pipe(z.array(z.enum(values)));
-
 export const riskQuerySchema = z.object({
-  type: z.enum(['RISK', 'ISSUE']).optional(),
-  severity: list(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  status: list(['OPEN', 'MITIGATED', 'CLOSED']).optional(),
+  type: z.enum(RiskType).optional(),
+  severity: commaList(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  status: commaList(['OPEN', 'MITIGATED', 'CLOSED']).optional(),
   initiativeId: z.uuid().optional(),
   ownerId: z.uuid().optional(),
   /** Heatmap cell filter. */
@@ -95,7 +95,51 @@ export const riskQuerySchema = z.object({
 });
 export type RiskQuery = z.output<typeof riskQuerySchema>;
 
-// -------------------------------------------------------------- decisions
+export const riskViewSchema = z.object({
+  id: z.uuid(),
+  type: z.enum(RiskType),
+  title: z.string(),
+  description: z.string().nullable(),
+  likelihood: z.int().nullable(),
+  impact: z.int().nullable(),
+  /** likelihood × impact (risks only). */
+  score: z.int().nullable(),
+  severity: z.enum(Severity),
+  status: z.enum(RiskStatus),
+  initiative: initiativeRefSchema.nullable(),
+  owner: personRefSchema.nullable(),
+  mitigation: z.string().nullable(),
+  dueDate: isoDate.nullable(),
+  closedAt: isoDateTime.nullable(),
+  /** The open escalation it has raised, if any. */
+  escalation: z.object({ reference: z.string(), level: z.int() }).nullable(),
+  createdAt: isoDateTime,
+  updatedAt: isoDateTime,
+});
+export type RiskView = z.infer<typeof riskViewSchema>;
+
+export const riskRegisterSchema = z.object({
+  items: z.array(riskViewSchema),
+  ...pageMeta,
+  totalPages: z.int().min(1),
+  /** Open risks on the 5×5 grid (rows: impact 5→1; columns: likelihood 1→5), under the other filters. */
+  heatmap: z.array(z.array(z.int().min(0)).length(5)).length(5),
+  counts: z.object({
+    risks: z.int().min(0),
+    issues: z.int().min(0),
+    bySeverity: z.object({
+      LOW: z.int().min(0),
+      MEDIUM: z.int().min(0),
+      HIGH: z.int().min(0),
+      CRITICAL: z.int().min(0),
+    }),
+  }),
+});
+export type RiskRegister = z.infer<typeof riskRegisterSchema>;
+
+// ---------------------------------------------------------------------------
+// Decisions
+// ---------------------------------------------------------------------------
 
 export const decisionQuerySchema = z.object({
   /** open: the "Decisions required" panel; log: decided items, newest first. */
@@ -107,7 +151,7 @@ export type DecisionQuery = z.output<typeof decisionQuerySchema>;
 
 export const createDecisionSchema = z.object({
   title: z.string().trim().min(5).max(300),
-  context: text(4000).default(null),
+  context: clearableText(4000).default(null),
   initiativeId: z.uuid().nullable().default(null),
   requiredFrom: z.enum(Role),
   requiredFromId: z.uuid().nullable().default(null),
@@ -139,13 +183,45 @@ export const decideSchema = z
   });
 export type DecideInput = z.output<typeof decideSchema>;
 
-// -------------------------------------------------------- change requests
+export const decisionViewSchema = z.object({
+  id: z.uuid(),
+  reference: z.string(),
+  title: z.string(),
+  context: z.string().nullable(),
+  kind: z.enum(['CHANGE_REQUEST', 'DECISION']),
+  initiative: initiativeRefSchema.nullable(),
+  /** Role that must decide, and the named person when there is one. */
+  requiredFrom: z.enum(Role),
+  decisionOwner: personRefSchema.nullable(),
+  dueDate: isoDate.nullable(),
+  /** Days past the due date while still open; 0 otherwise. */
+  overdueDays: z.int().min(0),
+  outcome: z.enum(DecisionOutcome),
+  outcomeNotes: z.string().nullable(),
+  deferredUntil: isoDate.nullable(),
+  decidedBy: personRefSchema.nullable(),
+  decidedAt: isoDateTime.nullable(),
+  changeRequestId: z.uuid().nullable(),
+  /** Whether the caller may record the decision now. */
+  canDecide: z.boolean(),
+});
+export type DecisionView = z.infer<typeof decisionViewSchema>;
 
-const changesSchema = z.object({
+export const decisionPageSchema = z.object({
+  items: z.array(decisionViewSchema),
+  ...pageMeta,
+});
+export type DecisionPage = z.infer<typeof decisionPageSchema>;
+
+// ---------------------------------------------------------------------------
+// Change requests (maker-checker)
+// ---------------------------------------------------------------------------
+
+export const requestedChangesSchema = z.object({
   baselineStart: isoDate.nullable().optional(),
   baselineEnd: isoDate.nullable().optional(),
   baselineBudget: z.number().finite().min(0).max(1e15).nullable().optional(),
-  scope: text(4000).optional(),
+  scope: clearableText(4000).optional(),
   milestones: z
     .array(
       z.object({
@@ -172,9 +248,17 @@ const changesSchema = z.object({
     .optional(),
   removeMilestoneIds: z.array(z.uuid()).max(50).optional(),
 });
+export type RequestedChanges = z.output<typeof requestedChangesSchema>;
+
+export const CHANGE_REQUEST_TYPES = [
+  'BASELINE_CHANGE',
+  'BUDGET_CHANGE',
+  'SCOPE_CHANGE',
+] as const;
+export type ChangeRequestType = (typeof CHANGE_REQUEST_TYPES)[number];
 
 /** What each kind of request may touch. */
-const ALLOWED_KEYS = {
+export const CHANGE_REQUEST_ALLOWED_KEYS = {
   BASELINE_CHANGE: [
     'baselineStart',
     'baselineEnd',
@@ -184,12 +268,15 @@ const ALLOWED_KEYS = {
   ],
   BUDGET_CHANGE: ['baselineBudget'],
   SCOPE_CHANGE: ['scope'],
-} as const;
+} as const satisfies Record<
+  ChangeRequestType,
+  readonly (keyof RequestedChanges)[]
+>;
 
 export const createChangeRequestSchema = z
   .object({
-    type: z.enum(['BASELINE_CHANGE', 'BUDGET_CHANGE', 'SCOPE_CHANGE']),
-    changes: changesSchema,
+    type: z.enum(CHANGE_REQUEST_TYPES),
+    changes: requestedChangesSchema,
     justification: z
       .string()
       .trim()
@@ -198,7 +285,9 @@ export const createChangeRequestSchema = z
     dueDate: isoDate.optional(),
   })
   .superRefine((request, ctx) => {
-    const allowed = ALLOWED_KEYS[request.type] as readonly string[];
+    const allowed = CHANGE_REQUEST_ALLOWED_KEYS[
+      request.type
+    ] as readonly string[];
     for (const key of Object.keys(request.changes)) {
       if (!allowed.includes(key)) {
         ctx.addIssue({
@@ -214,9 +303,26 @@ export type CreateChangeRequestInput = z.output<
 >;
 
 export const changeRequestQuerySchema = z.object({
-  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN']).optional(),
+  status: z.enum(ApprovalStatus).optional(),
   initiativeId: z.uuid().optional(),
 });
 export type ChangeRequestQuery = z.output<typeof changeRequestQuerySchema>;
 
-export const idSchema = z.uuid();
+export const changeRequestViewSchema = z.object({
+  id: z.uuid(),
+  reference: z.string(),
+  type: z.enum(ApprovalType),
+  status: z.enum(ApprovalStatus),
+  initiative: initiativeRefSchema,
+  changes: requestedChangesSchema,
+  /** The baseline values the change replaces. */
+  before: z.record(z.string(), z.unknown()),
+  justification: z.string().nullable(),
+  requestedBy: personRefSchema.nullable(),
+  approver: personRefSchema.nullable(),
+  decisionId: z.uuid().nullable(),
+  decisionReason: z.string().nullable(),
+  decidedAt: isoDateTime.nullable(),
+  createdAt: isoDateTime,
+});
+export type ChangeRequestView = z.infer<typeof changeRequestViewSchema>;

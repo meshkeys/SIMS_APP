@@ -3,63 +3,19 @@ import { CLOCK, type Clock } from '../../common/clock/clock.js';
 import { toIsoDate, toNumber } from '../../common/data/numbers.js';
 import type { HealthReason } from '../../domain/delivery/health.js';
 import { Prisma } from '../../generated/prisma/client.js';
-import type {
-  Health,
-  InitiativeStatus,
-  Trajectory,
-} from '../../generated/prisma/enums.js';
+import type { Health, InitiativeStatus } from '../../generated/prisma/enums.js';
 import { TenantPrismaService } from '../../infrastructure/database/index.js';
 import type { AuthContext } from '../auth/index.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
+import { personSelect, toPersonRef } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
+import { seesAllInitiatives } from './visibility.js';
 import {
   REGISTER_TABS,
+  type RegisterItem,
+  type RegisterPage,
   type RegisterQuery,
   type RegisterTab,
-} from './delivery.schemas.js';
-import { seesAllInitiatives } from './visibility.js';
-
-export interface RegisterItem {
-  id: string;
-  code: string;
-  title: string;
-  status: InitiativeStatus;
-  priority: number;
-  isSensitive: boolean;
-  /** The top-level element of its home objective (e.g. its pillar). */
-  pillar: { id: string; code: string; title: string } | null;
-  owner: PersonRef | null;
-  sponsor: PersonRef | null;
-  department: { id: string; name: string } | null;
-  dueDate: string | null;
-  forecastEnd: string | null;
-  verifiedProgress: number;
-  plannedProgress: number;
-  /** Verified minus planned, in percentage points (negative = behind). */
-  variancePp: number;
-  /** What to show: an unexpired override, otherwise the calculated status. */
-  health: Health;
-  calculatedHealth: Health;
-  overridden: boolean;
-  impactScore: number | null;
-  impactSummary: string | null;
-  trajectory: Trajectory;
-  lastUpdateAt: string | null;
-  /** Set when this period's update is past its deadline. */
-  updateOverdue: { periodName: string; detail: string } | null;
-}
-
-export interface RegisterPage {
-  items: RegisterItem[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  /** Counts for the tabs, under the current filters (health excluded). */
-  tabCounts: Record<RegisterTab, number>;
-  /** Counts for the health chips, within the current tab and filters. */
-  healthCounts: Record<Health, number>;
-}
+} from '@sims/contracts';
 
 const HEALTH_ORDER = Prisma.sql`CASE eff WHEN 'RED' THEN 0 WHEN 'AMBER' THEN 1 WHEN 'UNKNOWN' THEN 2 ELSE 3 END`;
 

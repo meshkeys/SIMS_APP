@@ -1,57 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { toIsoDate, toNumber } from '../../common/data/numbers.js';
-import type { Health, PlanStatus } from '../../generated/prisma/enums.js';
 import { TenantPrismaService } from '../../infrastructure/database/index.js';
-import { personSelect, type PersonRef, toPersonRef } from '../people/person.js';
-import { type LevelView, planNotFound } from './plans.service.js';
-
-export type HealthCounts = Record<Health, number>;
-
-export interface MapElement {
-  id: string;
-  parentId: string | null;
-  levelId: string;
-  depth: number;
-  code: string;
-  title: string;
-  sortOrder: number;
-  owner: PersonRef | null;
-  sponsor: PersonRef | null;
-  /** Rollups (0–100), null until there is something to measure. */
-  executionScore: number | null;
-  impactScore: number | null;
-  health: Health;
-  kpiCount: number;
-  /** First KPI, shown on the card: "Non-interest income: 18% → 30%". */
-  headlineKpi: {
-    name: string;
-    unit: string;
-    baseline: number | null;
-    target: number | null;
-  } | null;
-  /** Active initiatives linked to this element, by effective health. */
-  initiatives: { total: number; byHealth: HealthCounts };
-}
-
-export interface StrategyMap {
-  plan: {
-    id: string;
-    name: string;
-    status: PlanStatus;
-    version: number;
-    startDate: string;
-    endDate: string;
-    approvedAt: string | null;
-    vision: string | null;
-    mission: string | null;
-    values: string[];
-    aspiration: string | null;
-  };
-  levels: (LevelView & { elementCount: number })[];
-  totals: { kpis: number; activeInitiatives: number };
-  /** Flat list ordered for display (depth, then sort order); build the tree with parentId. */
-  elements: MapElement[];
-}
+import { personSelect, toPersonRef } from '../people/person.js';
+import { planNotFound } from './plans.service.js';
+import type { HealthCounts, StrategyMap } from '@sims/contracts';
 
 const emptyHealth = (): HealthCounts => ({
   GREEN: 0,

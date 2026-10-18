@@ -19,7 +19,7 @@ npm run docs:build    # → docs/dist/SIMS-Technical-Documentation.pdf
 apps/
   server/     NestJS API · Prisma · PostgreSQL (row-level security)
   client/     React 19 + Vite web app
-packages/     shared code (API contracts) — added as the API grows
+packages/contracts/   @sims/contracts — API request/response schemas and types (docs ch. 17)
 docker/       init scripts for local infrastructure
 ```
 

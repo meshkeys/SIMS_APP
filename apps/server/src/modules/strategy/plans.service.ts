@@ -11,7 +11,10 @@ import {
   FRAMEWORK_TEMPLATES,
   planLevelChanges,
 } from '../../domain/strategy/framework.js';
-import type { PlanStatus } from '../../generated/prisma/enums.js';
+import type {
+  FrameworkTemplate,
+  PlanStatus,
+} from '../../generated/prisma/enums.js';
 import { recordAudit } from '../../infrastructure/audit/record-audit.js';
 import {
   TenantContext,
@@ -21,30 +24,10 @@ import {
 import type {
   CreatePlanInput,
   LevelsInput,
+  LevelView,
+  PlanSummary,
   UpdatePlanInput,
-} from './strategy.schemas.js';
-
-export interface PlanSummary {
-  id: string;
-  name: string;
-  status: PlanStatus;
-  version: number;
-  template: string;
-  startDate: string;
-  endDate: string;
-  approvedAt: string | null;
-  /** The plan screens open by default. */
-  isCurrent: boolean;
-}
-
-export interface LevelView {
-  id: string;
-  depth: number;
-  label: string;
-  pluralLabel: string;
-  codePrefix: string | null;
-  allowsKpis: boolean;
-}
+} from '@sims/contracts';
 
 const planSelect = {
   id: true,
@@ -62,7 +45,7 @@ type PlanRow = {
   name: string;
   status: PlanStatus;
   version: number;
-  template: string;
+  template: FrameworkTemplate;
   startDate: Date;
   endDate: Date;
   approvedAt: Date | null;

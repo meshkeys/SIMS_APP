@@ -1,15 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import type { TenantTransactionClient } from '../../infrastructure/database/index.js';
-
-/**
- * How the API shows a person in an owner/sponsor slot. Screens usually show
- * the job title ("Sponsor: ED, Business"), with the name on hover.
- */
-export interface PersonRef {
-  membershipId: string;
-  name: string;
-  jobTitle: string | null;
-}
+import type { PersonRef } from '@sims/contracts';
 
 /** Prisma `select` that yields everything `toPersonRef` needs. */
 export const personSelect = {

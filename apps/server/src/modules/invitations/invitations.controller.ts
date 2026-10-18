@@ -23,26 +23,24 @@ import {
   CurrentAuth,
   Public,
   Roles,
-  type SessionResponse,
   sendSession,
 } from '../auth/index.js';
+import { InvitationsService } from './invitations.service.js';
 import {
   type AcceptInvitationInput,
   acceptInvitationSchema,
   type CreateInvitationInput,
   createInvitationSchema,
-  invitationIdSchema,
+  idSchema,
+  type InvitationPreview,
   type InvitationTokenInput,
   invitationTokenSchema,
-} from './invitations.schemas.js';
-import {
-  type InvitationPreview,
-  InvitationsService,
   type InvitationView,
   type SentInvitation,
-} from './invitations.service.js';
+  type SessionResponse,
+} from '@sims/contracts';
 
-const idPipe = new ZodValidationPipe(invitationIdSchema);
+const idPipe = new ZodValidationPipe(idSchema);
 
 @Controller('invitations')
 export class InvitationsController {

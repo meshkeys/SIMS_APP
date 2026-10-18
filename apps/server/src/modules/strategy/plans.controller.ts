@@ -12,27 +12,24 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
-import { type ElementDetail, ElementsService } from './elements.service.js';
-import {
-  type LevelView,
-  type PlanSummary,
-  PlansService,
-} from './plans.service.js';
-import {
-  type StrategyMap,
-  StrategyMapService,
-} from './strategy-map.service.js';
+import { ElementsService } from './elements.service.js';
+import { PlansService } from './plans.service.js';
+import { StrategyMapService } from './strategy-map.service.js';
 import {
   type CreateElementInput,
   createElementSchema,
   type CreatePlanInput,
   createPlanSchema,
+  type ElementDetail,
   idSchema,
   type LevelsInput,
   levelsSchema,
+  type LevelView,
+  type PlanSummary,
+  type StrategyMap,
   type UpdatePlanInput,
   updatePlanSchema,
-} from './strategy.schemas.js';
+} from '@sims/contracts';
 
 const planId = new ZodValidationPipe(idSchema);
 
