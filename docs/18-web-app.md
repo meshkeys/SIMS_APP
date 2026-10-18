@@ -75,3 +75,29 @@ tests run axe-core and fail on any WCAG 2.1 A/AA violation.
 | `npm run build -w @sims/client` | Production build in `apps/client/dist` |
 
 Screens not yet built show a "being built" placeholder inside the real shell.
+
+## 18.7 Screens
+
+Each screen lives in `features/<screen>/` and loads on demand (its own small bundle).
+Formatting is shared (`lib/format.ts`): calendar dates are shown as written; deadlines and
+timestamps in the **organisation's** time zone, so everyone sees the same deadline.
+
+### Command Centre (`/`)
+
+One call to `GET /dashboard` (chapter 16) feeds every panel:
+
+| Panel | Shows | Goes to |
+|---|---|---|
+| Cycle tracker | Each stage done / in progress / upcoming, its deadline and count ("29 of 32 in") | — |
+| Headline tiles | Active, on track (% of portfolio), at risk, delayed, unknown (only when any), updates outstanding | Register filtered by health; My updates |
+| Pillar performance | Execution (navy) and strategic impact (ochre) per pillar; "not measured yet" when there is no figure | Click a pillar to narrow the dashboard to it |
+| Delivery vs value | The four quadrants with counts; expandable list of initiatives per quadrant | Benefits view |
+| Initiative monitoring | Worst five initiatives: health, verified progress with the planned mark | Register |
+| Decisions required | Most urgent three, due/overdue; **Review** opens a dialog to approve, reject (with reason) or defer (with a date) — only for the person who must decide | — |
+| Escalations | Highest-level first, with the organisation's own ladder names and counts per level | Escalation centre |
+| Milestones · next 14 days | Due date, initiative, critical, slip; overdue count | — |
+
+**View** narrows everything to one pillar; it is kept in the URL (`/?elementId=…`), so a
+scoped dashboard can be bookmarked or shared. Loading shows a skeleton of the layout;
+failures explain themselves and offer **Try again** (server errors are retried twice
+automatically first); every panel has an empty state.

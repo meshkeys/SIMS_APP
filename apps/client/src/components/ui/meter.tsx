@@ -28,6 +28,18 @@ export function Meter({
   className?: string;
 }) {
   const clamp = (n: number) => Math.min(100, Math.max(0, n));
+  if (value === null) {
+    // A meter must have a value; with nothing measured, say so in words.
+    return (
+      <div className={cn('relative h-2 w-full', className)}>
+        <div
+          aria-hidden="true"
+          className="h-full w-full rounded-full border border-dashed border-border-strong"
+        />
+        <span className="sr-only">{label}: not measured yet</span>
+      </div>
+    );
+  }
   return (
     <div
       // A styled div: the native <meter> cannot be styled consistently across browsers.
@@ -36,23 +48,17 @@ export function Meter({
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={value === null ? undefined : Math.round(value)}
-      aria-valuetext={
-        value === null
-          ? 'Not measured yet'
-          : `${Math.round(value)}%${marker ? `, ${marker.label} ${Math.round(marker.value)}%` : ''}`
-      }
+      aria-valuenow={Math.round(value)}
+      aria-valuetext={`${Math.round(value)}%${marker ? `, ${marker.label} ${Math.round(marker.value)}%` : ''}`}
       className={cn(
         'relative h-2 w-full rounded-full bg-neutral-soft',
         className,
       )}
     >
-      {value !== null && (
-        <div
-          className={cn('h-full rounded-full', fills[tone])}
-          style={{ width: `${clamp(value)}%` }}
-        />
-      )}
+      <div
+        className={cn('h-full rounded-full', fills[tone])}
+        style={{ width: `${clamp(value)}%` }}
+      />
       {marker && (
         <div
           aria-hidden="true"

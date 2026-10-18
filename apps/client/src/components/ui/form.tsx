@@ -14,6 +14,16 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   );
 }
 
+/** A styled native select: keyboard, screen reader and mobile pickers for free. */
+export function Select({ className, ...props }: ComponentProps<'select'>) {
+  return (
+    <select
+      className={cn(control, 'h-10 cursor-pointer pr-8', className)}
+      {...props}
+    />
+  );
+}
+
 /**
  * A labelled form control with optional hint and error. Wires `id`,
  * `aria-describedby` and `aria-invalid` so screen readers announce the

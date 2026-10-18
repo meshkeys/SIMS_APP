@@ -43,7 +43,7 @@ const MY_UPDATES: MyUpdates = {
   })),
 };
 
-const json = (
+export const json = (
   status: number,
   body?: unknown,
   headers: Record<string, string> = {},
@@ -67,13 +67,27 @@ export const problem = (status: number, code: string, detail: string) =>
  * A small stand-in for the API: signed out until a correct sign-in, then
  * serving the session and "my updates". Records every call.
  */
-export function fakeApi(options: { signedIn?: boolean } = {}) {
+export type FakeRoute = (
+  init: RequestInit,
+  url: URL,
+) => Response | Promise<Response>;
+
+export function fakeApi(
+  options: {
+    signedIn?: boolean;
+    /** Extra endpoints, keyed "METHOD /api/v1/path". */
+    routes?: Record<string, FakeRoute>;
+  } = {},
+) {
   let signedIn = options.signedIn ?? false;
   const calls: string[] = [];
   const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
     const method = (init.method ?? 'GET').toUpperCase();
-    const path = new URL(url, 'http://localhost').pathname;
-    calls.push(`${method} ${path}`);
+    const parsed = new URL(url, 'http://localhost');
+    const path = parsed.pathname;
+    calls.push(`${method} ${path}${parsed.search}`);
+    const extra = options.routes?.[`${method} ${path}`];
+    if (extra) return extra(init, parsed);
     switch (`${method} ${path}`) {
       case 'POST /api/v1/auth/refresh':
         return signedIn

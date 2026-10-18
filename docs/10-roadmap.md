@@ -31,7 +31,8 @@ with its tests and documentation.
 | 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
 | 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |
-| 15 | Command Centre dashboard screen | Next |
+| 15 | Command Centre dashboard screen | Done |
+| 16 | Reporting cycle screen | Next |
 | 15+ | Web app: each screen, with the backend pieces it needs (8b, 9, 11, 12, 13) | Planned |
 
 ## 10.3 Known follow-ups
@@ -45,8 +46,7 @@ with its tests and documentation.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).
 - CI pipeline (lint, tests, build, docs) on every push.
-- Web app: load each screen on demand (route-level code splitting) as screens arrive; the
-  vendor bundle is 188 kB gzipped today.
+- Web app: the shared vendor bundle is 189 kB gzipped; screens already load on demand.
 - Web app: browser end-to-end tests (Playwright) once the first screens are in.
 - Prisma's query engine runs some relation loads concurrently inside its own per-query
   transaction, which `pg` reports as deprecated (removed in pg 9). Our code no longer does

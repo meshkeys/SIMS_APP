@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Command Centre screen (slice 15)
+- The dashboard screen: cycle tracker, headline tiles, pillar performance (execution and
+  impact), delivery-vs-value matrix, initiative monitoring, decisions, escalations and
+  milestones — all from one API call, with skeleton loading, empty and error states.
+- Decide in place: approve, reject (with reason) or defer (with a date) from "Decisions
+  required", validated with the contract's rules; only the decision owner sees **Review**.
+- "View" narrows the dashboard to one pillar and is kept in the URL.
+- Shared formatting (dates as written; deadlines in the organisation's time zone), a modal
+  dialog and a select control added to the design system; screens load on demand.
+- Accessibility: a bar with nothing measured is no longer announced as a meter without a
+  value (caught by the automated axe check).
+
 ## 2026-10-18 — Web app foundation (slice 14)
 - React app on TanStack Router and TanStack Query, styled with Tailwind v4 design tokens
   taken from the wireframes (all text pairs WCAG AA); Radix primitives for dialogs and menus.
