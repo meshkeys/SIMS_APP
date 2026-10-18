@@ -13,6 +13,7 @@
     "start": "nest start",
     "prestart:dev": "npm run build --prefix ../../packages/contracts",
     "start:dev": "nest start --watch",
+    "dev": "npm run start:dev",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "oxlint --type-aware src/ test/",

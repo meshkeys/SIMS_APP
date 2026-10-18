@@ -29,6 +29,8 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `npm run db:seed` | Load the Meridian demo tenant |
 | `npm run db:studio` | Browse data in Prisma Studio (as the owner role) |
 | `npm run dev:server` | API with hot reload |
+| `npm run dev:client` | Web app on http://localhost:5173 (proxies `/api` to the API) |
+| `npm test -w @sims/client` | Web app tests (including accessibility checks) |
 | `npm run dev:contracts` | Rebuild `@sims/contracts` on save (while editing API shapes) |
 | `npm run db:generate` | Regenerate the Prisma client and the contract enums |
 | `npm test -w @sims/server` | Unit tests |

@@ -1,0 +1,88 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import 'tailwindcss';
+
+/*
+ * SIMS design tokens. Every text/background pair used together meets
+ * WCAG AA (4.5:1) — check new pairs before adding them.
+ */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  /* Surfaces */
+  --color-canvas: #f4f3ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f7f4;
+  --color-border: #e6e3dc;
+  --color-border-strong: #d2cec4;
+
+  /* Text */
+  --color-ink: #1d1c1a;
+  --color-ink-muted: #5c5a54;
+  --color-ink-subtle: #6b6862;
+
+  /* Sidebar */
+  --color-sidebar: #1c1c1b;
+  --color-sidebar-hover: #2a2a28;
+  --color-sidebar-active: #34342f;
+  --color-sidebar-text: #e4e2dc;
+  --color-sidebar-muted: #a19e96;
+
+  /* Brand: navy = action and execution, ochre = strategic impact */
+  --color-primary: #1f3a5c;
+  --color-primary-hover: #172d48;
+  --color-primary-soft: #e7ecf2;
+  --color-impact: #c9862c;
+  --color-impact-text: #8f5b14;
+
+  /* Status (text on its own tint; dot/bar for graphics) */
+  --color-success: #24663f;
+  --color-success-soft: #e3efe6;
+  --color-success-dot: #2f8a55;
+  --color-warning: #7a4f00;
+  --color-warning-soft: #fbefd4;
+  --color-warning-dot: #d99a2b;
+  --color-danger: #9b2c25;
+  --color-danger-soft: #f8e1de;
+  --color-danger-dot: #c0392b;
+  --color-neutral: #4c4a45;
+  --color-neutral-soft: #ecebe6;
+  --color-neutral-dot: #8d8a83;
+
+  --radius-card: 0.5rem;
+  --shadow-card: 0 1px 2px rgb(29 28 26 / 0.04);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  /* One visible focus style everywhere, keyboard only. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Numbers line up in tables and tiles. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

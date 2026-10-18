@@ -2,6 +2,20 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Web app foundation (slice 14)
+- React app on TanStack Router and TanStack Query, styled with Tailwind v4 design tokens
+  taken from the wireframes (all text pairs WCAG AA); Radix primitives for dialogs and menus.
+- Design system: Button, Card, Badge and HealthBadge, Field/Input/Textarea, Alert, Meter,
+  PageHeader, Skeleton, EmptyState, ErrorState, Spinner.
+- App shell: grouped sidebar with "due" badge, mobile drawer, account menu with workspace
+  switching and sign-out, skip link.
+- Sign-in with the contract's validation; sessions restored from the refresh cookie; access
+  token in memory only; one shared refresh, serialised across tabs; safe post-sign-in
+  redirects (ADR-025).
+- Typed API client and query hooks generated from `API_ROUTES`.
+- Tests: sign-in flow, session restore, client refresh behaviour, and axe accessibility
+  checks.
+
 ## 2026-10-18 — OpenAPI reference and drift tests (slice 13b)
 - `API_ROUTES` in `@sims/contracts` describes all 76 endpoints (access, schemas, status);
   role lists and labels moved into the contract.

@@ -415,3 +415,27 @@ page-specific CSP with a nonce. Reference and document are off in production by 
 takes one more entry in the registry. The web app's API client can be typed directly from
 `API_ROUTES`. Upgrading Scalar means updating the version and its integrity hash together.
 
+---
+
+## ADR-025 — Web app stack and session handling
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** The web app needs type-safe access to ~76 endpoints, data-heavy screens with
+filters in the URL, accessible interactive components, and sessions that survive reloads
+without exposing tokens to scripts.
+
+**Decision.** TanStack Router (typed routes and search params) and TanStack Query (server
+state) on React 19; Tailwind CSS v4 with design tokens as CSS variables; Radix UI primitives
+for anything interactive beyond a button; react-hook-form validating with the contract's zod
+schemas. One API client, `request(operationId, input)`, typed entirely from `API_ROUTES`. The
+access token lives in memory only; the refresh token stays in its httpOnly cookie. Token
+refresh happens once per expiry, shared by concurrent requests and serialised across tabs
+with the Web Locks API, because rotating refresh tokens with reuse detection would otherwise
+sign out users with two tabs open.
+
+**Consequences.** API changes surface as compile errors in screens. No token is readable from
+storage. Browsers without Web Locks (very old ones) fall back to per-tab refresh. Building our
+own components on Radix costs more up front than a ready-made kit but matches the wireframes
+exactly and keeps accessibility under our control.
+
