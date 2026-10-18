@@ -25,10 +25,10 @@ with its tests and documentation.
 | 8a | Governance: risks and issues, decisions, change requests (maker-checker) | Done |
 | 8b | Governance: automatic escalation ladder, rulesets admin with impact preview | Planned |
 | 9 | Benefits realisation and KPI actuals | Planned |
-| 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Next |
+| 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
-| 13 | OpenAPI reference; shared API contracts package | Planned |
+| 13 | OpenAPI reference; shared API contracts package | Next |
 | 14+ | Web app: design system and shell, then each screen | Planned |
 
 ## 10.3 Known follow-ups
@@ -42,3 +42,6 @@ with its tests and documentation.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).
 - CI pipeline (lint, tests, build, docs) on every push.
+- Prisma's query engine runs some relation loads concurrently inside its own per-query
+  transaction, which `pg` reports as deprecated (removed in pg 9). Our code no longer does
+  this; recheck on the next Prisma upgrade before moving to pg 9.

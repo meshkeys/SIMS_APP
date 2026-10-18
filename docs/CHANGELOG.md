@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Command Centre dashboard (slice 10)
+- `GET /dashboard`: cycle tracker with stages, headline tiles, pillar performance,
+  delivery-vs-value matrix, watchlist, decisions, escalations by ladder level and milestones
+  due in the next 14 days — for the whole plan or one pillar/objective, respecting
+  sensitive-initiative visibility.
+- Pillar and objective scores and health are now calculated from initiatives and KPIs and
+  kept current after every recalculation and status change (ADR-022). The demo seed uses the
+  same code, so its pillar figures are calculated rather than copied from the wireframes.
+- Queries inside one transaction now run one at a time (a transaction is one connection).
+
 ## 2026-10-18 — Governance (slice 8a)
 - Risks and issues: register with the 5×5 heatmap, filters and counts; risks scored from
   likelihood × impact; health re-runs when items change (critical-issue cap).

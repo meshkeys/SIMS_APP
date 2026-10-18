@@ -302,6 +302,8 @@ export class InitiativeWritesService {
       });
       if (input.status === 'ACTIVE')
         await this.recalculation.recalculateIn(tx, [id]);
+      // Joining or leaving delivery changes what pillars and objectives roll up.
+      await this.recalculation.recalculateRollups(tx, [initiative.planId]);
     });
     return this.initiatives.detail(caller, id);
   }
@@ -318,14 +320,12 @@ export class InitiativeWritesService {
       baselineEnd: Date | null;
     },
   ) {
-    const [primary, weighted] = await Promise.all([
-      tx.initiativeObjectiveLink.count({
-        where: { initiativeId: initiative.id, isPrimary: true },
-      }),
-      tx.milestone.count({
-        where: { initiativeId: initiative.id, weight: { gt: 0 } },
-      }),
-    ]);
+    const primary = await tx.initiativeObjectiveLink.count({
+      where: { initiativeId: initiative.id, isPrimary: true },
+    });
+    const weighted = await tx.milestone.count({
+      where: { initiativeId: initiative.id, weight: { gt: 0 } },
+    });
     const gaps = activationGaps({
       ownerId: initiative.ownerId,
       sponsorId: initiative.sponsorId,

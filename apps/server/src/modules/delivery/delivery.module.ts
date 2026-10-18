@@ -19,6 +19,6 @@ import { WorkItemsService } from './work-items.service.js';
     InitiativeWritesService,
     WorkItemsService,
   ],
-  exports: [HealthRecalculationService],
+  exports: [HealthRecalculationService, InitiativeRegisterService],
 })
 export class DeliveryModule {}

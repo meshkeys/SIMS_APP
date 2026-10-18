@@ -80,6 +80,8 @@ describe('Initiatives (e2e)', () => {
         checked: 32,
         changed: 0,
         healthChanges: [],
+        // Pillar and objective rollups were seeded by the same code, too.
+        elementsChanged: 0,
       });
     });
 

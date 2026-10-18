@@ -349,3 +349,24 @@ against the current baseline before applying it.
 and a before/after record. Urgent fixes need an approver available; the request shows in
 their "Decisions required" with a due date.
 
+---
+
+## ADR-022 — Pillar and objective scores are calculated, never typed in
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** The demo seed carried hand-typed execution and impact scores for pillars and
+objectives, copied from the wireframes. Nothing kept them in step with the initiatives and
+KPIs beneath them, so the dashboard could contradict the register.
+
+**Decision.** One shared function (`recalculateElementRollups`) calculates every element's
+execution score (verified ÷ planned progress, weighted by contribution), health (weighted
+pp behind, banded by the organisation's RAG thresholds) and impact (average KPI % to
+target). It runs after every health recalculation and status change, and the demo seed calls
+the same function. Scores are stored, so reads stay cheap.
+
+**Consequences.** The demo's pillar figures now differ from the wireframe illustrations
+(e.g. Revenue Diversification 95.9 rather than 78) because they reflect the actual demo
+initiatives. Every number on the dashboard can be traced to the initiatives and KPIs under
+it.
+

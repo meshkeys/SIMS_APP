@@ -31,7 +31,7 @@ regardless of plan size:
 - `totals` — KPIs and active initiatives;
 - `elements` — a **flat list** ordered by depth then position, each with `parentId` (the
   client builds the tree), owner and sponsor (`name`, `jobTitle`), stored rollups
-  (`executionScore`, `impactScore`, `health`), `kpiCount`, a `headlineKpi` for the card
+  (`executionScore`, `impactScore`, `health` — calculated, chapter 16.3), `kpiCount`, a `headlineKpi` for the card
   ("Non-interest income: 18% → 30%") and `initiatives` (`total` and `byHealth`).
 
 Rollups are read from stored columns maintained by background recalculation (delivery

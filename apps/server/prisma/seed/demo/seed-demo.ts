@@ -2,15 +2,13 @@ import type {
   Prisma,
   PrismaClient,
 } from '../../../src/generated/prisma/client.js';
-import type {
-  Health,
-  Trajectory,
-} from '../../../src/generated/prisma/enums.js';
+import type { Trajectory } from '../../../src/generated/prisma/enums.js';
 import {
   DEFAULT_RULESET_CONFIG,
   parseRulesetConfig,
   type RulesetConfig,
 } from '../../../src/domain/rulesets/ruleset-config.js';
+import { recalculateElementRollups } from '../../../src/modules/delivery/element-rollups.js';
 import {
   DIG_004_BENEFIT,
   MILLION,
@@ -396,16 +394,6 @@ async function writeDemo(
   });
   const elementIds: Record<string, string> = {};
   for (const e of [...PILLARS, ...OBJECTIVES]) elementIds[e.code] = uuidv7();
-  const rollup = (e: {
-    executionScore: number;
-    impactScore: number;
-    health: Health;
-  }) => ({
-    executionScore: e.executionScore,
-    impactScore: e.impactScore,
-    health: e.health,
-    rolledUpAt: AS_OF,
-  });
   await tx.strategyElement.createMany({
     data: [
       ...PILLARS.map((p, i) => ({
@@ -417,7 +405,6 @@ async function writeDemo(
         title: p.title,
         sponsorId: member[p.sponsor],
         sortOrder: i,
-        ...rollup(p),
       })),
       ...OBJECTIVES.map((o, i) => ({
         id: elementIds[o.code],
@@ -429,7 +416,6 @@ async function writeDemo(
         title: o.title,
         ownerId: member[o.owner],
         sortOrder: i,
-        ...rollup(o),
       })),
     ],
   });
@@ -1430,6 +1416,10 @@ async function writeDemo(
       },
     ].map((n) => ({ id: uuidv7(), ...org, ...n })),
   });
+
+  // ----------------------------------------------------------- rollups
+  // Pillar and objective scores come from the same code the API runs.
+  await recalculateElementRollups(tx, planId, ruleset, AS_OF);
 
   return {
     organisationId,

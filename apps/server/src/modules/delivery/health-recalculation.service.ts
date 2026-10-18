@@ -3,6 +3,10 @@ import { CLOCK, type Clock } from '../../common/clock/clock.js';
 import { toNumber } from '../../common/data/numbers.js';
 import { stableStringify } from '../../common/data/stable-json.js';
 import {
+  loadActiveRules,
+  recalculateElementRollups,
+} from './element-rollups.js';
+import {
   calculateHealth,
   type HealthFacts,
   type HealthResult,
@@ -11,11 +15,7 @@ import {
   plannedCompletion,
   verifiedCompletion,
 } from '../../domain/delivery/progress.js';
-import {
-  DEFAULT_RULESET_CONFIG,
-  parseRulesetConfig,
-  type RulesetConfig,
-} from '../../domain/rulesets/ruleset-config.js';
+import type { RulesetConfig } from '../../domain/rulesets/ruleset-config.js';
 import {
   owesUpdate,
   SUBMITTED_STATUSES,
@@ -31,6 +31,8 @@ export interface RecalculationSummary {
   changed: number;
   /** Codes whose status changed, with old → new. */
   healthChanges: { code: string; from: string; to: string }[];
+  /** Pillars/objectives whose rolled-up scores or health changed. */
+  elementsChanged: number;
 }
 
 /** Statuses an initiative has once submitted (anything but a draft counts as "in"). */
@@ -235,6 +237,7 @@ export class HealthRecalculationService {
       checked: items.length,
       changed: 0,
       healthChanges: [],
+      elementsChanged: 0,
     };
     for (const { initiative, verified, planned, facts } of items) {
       const result = calculateHealth(facts, rules.config);
@@ -259,7 +262,24 @@ export class HealthRecalculationService {
         },
       });
     }
+    summary.elementsChanged = await this.recalculateRollups(tx, [
+      ...new Set(items.map((item) => item.initiative.planId)),
+    ]);
     return summary;
+  }
+
+  /** Re-rolls pillar/objective scores for plans (e.g. after a status change). */
+  async recalculateRollups(
+    tx: TenantTransactionClient,
+    planIds: string[],
+  ): Promise<number> {
+    const rules = await this.loadActiveRules(tx);
+    const now = this.clock.now();
+    let changed = 0;
+    for (const planId of planIds) {
+      changed += await recalculateElementRollups(tx, planId, rules.config, now);
+    }
+    return changed;
   }
 
   private differs(
@@ -286,13 +306,7 @@ export class HealthRecalculationService {
   async loadActiveRules(
     tx: TenantTransactionClient,
   ): Promise<{ version: number | null; config: RulesetConfig }> {
-    const active = await tx.ruleset.findFirst({
-      where: { status: 'ACTIVE' },
-      select: { version: true, config: true },
-    });
-    return active
-      ? { version: active.version, config: parseRulesetConfig(active.config) }
-      : { version: null, config: DEFAULT_RULESET_CONFIG };
+    return loadActiveRules(tx);
   }
 
   /** Per plan: the most recent locked period, and the open period whose deadline has passed. */

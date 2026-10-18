@@ -11,5 +11,6 @@ import { UpdatesService } from './updates.service.js';
   imports: [StrategyModule, DeliveryModule, GovernanceModule],
   controllers: [ReportingController],
   providers: [PeriodsService, UpdatesService],
+  exports: [PeriodsService],
 })
 export class ReportingModule {}

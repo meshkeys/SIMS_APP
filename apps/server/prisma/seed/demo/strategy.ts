@@ -1,5 +1,4 @@
 import type {
-  Health,
   KpiDirection,
   Trajectory,
 } from '../../../src/generated/prisma/enums.js';
@@ -42,19 +41,13 @@ export const LEVELS = [
   },
 ] as const;
 
-interface Rollup {
-  executionScore: number;
-  impactScore: number;
-  health: Health;
-}
-
-export interface PillarSpec extends Rollup {
+export interface PillarSpec {
   code: string;
   title: string;
   sponsor: PersonKey;
 }
 
-export interface ObjectiveSpec extends Rollup {
+export interface ObjectiveSpec {
   code: string;
   pillar: string;
   title: string;
@@ -78,41 +71,26 @@ export const PILLARS: PillarSpec[] = [
     code: 'P1',
     title: 'Revenue Diversification',
     sponsor: 'edBusiness',
-    executionScore: 78,
-    impactScore: 64,
-    health: 'GREEN',
   },
   {
     code: 'P2',
     title: 'Digital Transformation',
     sponsor: 'edTech',
-    executionScore: 62,
-    impactScore: 48,
-    health: 'AMBER',
   },
   {
     code: 'P3',
     title: 'Operational Excellence',
     sponsor: 'coo',
-    executionScore: 85,
-    impactScore: 80,
-    health: 'GREEN',
   },
   {
     code: 'P4',
     title: 'Customer Experience',
     sponsor: 'edRetail',
-    executionScore: 54,
-    impactScore: 41,
-    health: 'RED',
   },
   {
     code: 'P5',
     title: 'People & Capabilities',
     sponsor: 'cpo',
-    executionScore: 70,
-    impactScore: 72,
-    health: 'GREEN',
   },
 ];
 
@@ -122,90 +100,60 @@ export const OBJECTIVES: ObjectiveSpec[] = [
     pillar: 'P1',
     title: 'Grow non-interest income share',
     owner: 'headBizDev',
-    executionScore: 74,
-    impactScore: 52,
-    health: 'GREEN',
   },
   {
     code: 'O1.2',
     pillar: 'P1',
     title: 'Build the institutional client base',
     owner: 'headBizDev',
-    executionScore: 81,
-    impactScore: 70,
-    health: 'GREEN',
   },
   {
     code: 'O2.1',
     pillar: 'P2',
     title: 'Shift transactions to digital channels',
     owner: 'headDigital',
-    executionScore: 66,
-    impactScore: 45,
-    health: 'AMBER',
   },
   {
     code: 'O2.2',
     pillar: 'P2',
     title: 'Modernise core platforms',
     owner: 'headTech',
-    executionScore: 57,
-    impactScore: 52,
-    health: 'RED',
   },
   {
     code: 'O3.1',
     pillar: 'P3',
     title: 'Reduce cost-to-income ratio',
     owner: 'headFinance',
-    executionScore: 84,
-    impactScore: 78,
-    health: 'GREEN',
   },
   {
     code: 'O3.2',
     pillar: 'P3',
     title: 'Cut process turnaround times',
     owner: 'headOps',
-    executionScore: 86,
-    impactScore: 82,
-    health: 'GREEN',
   },
   {
     code: 'O4.1',
     pillar: 'P4',
     title: 'Raise customer satisfaction',
     owner: 'headCX',
-    executionScore: 58,
-    impactScore: 38,
-    health: 'AMBER',
   },
   {
     code: 'O4.2',
     pillar: 'P4',
     title: 'Resolve complaints faster',
     owner: 'headService',
-    executionScore: 48,
-    impactScore: 44,
-    health: 'RED',
   },
   {
     code: 'O5.1',
     pillar: 'P5',
     title: 'Build a performance culture',
     owner: 'headHR',
-    executionScore: 76,
-    impactScore: 88,
-    health: 'GREEN',
   },
   {
     code: 'O5.2',
     pillar: 'P5',
     title: 'Develop digital skills',
     owner: 'headLearning',
-    executionScore: 64,
-    impactScore: 55,
-    health: 'GREEN',
   },
 ];
 

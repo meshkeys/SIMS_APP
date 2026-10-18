@@ -112,7 +112,9 @@ describe('Strategy API (e2e)', () => {
 
       const p1 = elements.find((e) => e.code === 'P1')!;
       expect(p1).toMatchObject({
-        executionScore: 78,
+        // Rolled up from its initiatives by the engine (delivered ÷ planned).
+        executionScore: 95.91,
+        health: 'GREEN',
         sponsor: { jobTitle: 'ED, Business' },
         parentId: null,
       });

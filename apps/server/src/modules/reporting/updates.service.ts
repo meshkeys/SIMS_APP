@@ -827,51 +827,47 @@ export class UpdatesService {
       });
     }
 
-    const [details, update, rules] = await Promise.all([
-      tx.initiative.findUniqueOrThrow({
-        where: { id: initiativeId },
-        select: {
-          baselineStart: true,
-          owner: personSelect,
-          sponsor: personSelect,
-          milestones: {
-            where: { status: { not: 'CANCELLED' } },
-            orderBy: [{ sortOrder: 'asc' }, { baselineDate: 'asc' }],
-          },
-          risks: {
-            where: { status: 'OPEN' },
-            select: { id: true, type: true, title: true, severity: true },
-          },
+    const details = await tx.initiative.findUniqueOrThrow({
+      where: { id: initiativeId },
+      select: {
+        baselineStart: true,
+        owner: personSelect,
+        sponsor: personSelect,
+        milestones: {
+          where: { status: { not: 'CANCELLED' } },
+          orderBy: [{ sortOrder: 'asc' }, { baselineDate: 'asc' }],
         },
-      }),
-      tx.statusUpdate.findUnique({
-        where: { initiativeId_periodId: { initiativeId, periodId } },
-        include: { lines: true, submittedBy: personSelect },
-      }),
-      this.recalculation.loadActiveRules(tx),
-    ]);
+        risks: {
+          where: { status: 'OPEN' },
+          select: { id: true, type: true, title: true, severity: true },
+        },
+      },
+    });
+    const update = await tx.statusUpdate.findUnique({
+      where: { initiativeId_periodId: { initiativeId, periodId } },
+      include: { lines: true, submittedBy: personSelect },
+    });
+    const rules = await this.recalculation.loadActiveRules(tx);
     const milestoneIds = details.milestones.map((m) => m.id);
     const lineIds = update?.lines.map((l) => l.id) ?? [];
-    const [evidence, comments] = await Promise.all([
-      tx.document.groupBy({
-        by: ['entityId'],
-        where: {
-          deletedAt: null,
-          OR: [
-            { entityType: 'Milestone', entityId: { in: milestoneIds } },
-            { entityType: 'StatusUpdateLine', entityId: { in: lineIds } },
-          ],
-        },
-        _count: { _all: true },
-      }),
-      update
-        ? tx.comment.findMany({
-            where: { entityType: 'StatusUpdate', entityId: update.id },
-            orderBy: { createdAt: 'asc' },
-            include: { author: personSelect },
-          })
-        : Promise.resolve([]),
-    ]);
+    const evidence = await tx.document.groupBy({
+      by: ['entityId'],
+      where: {
+        deletedAt: null,
+        OR: [
+          { entityType: 'Milestone', entityId: { in: milestoneIds } },
+          { entityType: 'StatusUpdateLine', entityId: { in: lineIds } },
+        ],
+      },
+      _count: { _all: true },
+    });
+    const comments = update
+      ? await tx.comment.findMany({
+          where: { entityType: 'StatusUpdate', entityId: update.id },
+          orderBy: { createdAt: 'asc' },
+          include: { author: personSelect },
+        })
+      : [];
     const evidenceCount = new Map(
       evidence.map((e) => [e.entityId, e._count._all]),
     );

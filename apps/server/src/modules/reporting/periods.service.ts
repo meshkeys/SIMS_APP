@@ -86,9 +86,13 @@ export class PeriodsService {
       where: { planId: plan },
       orderBy: { startDate: 'desc' },
     });
-    return this.db.transaction((tx) =>
-      Promise.all(periods.map((p) => this.summarise(tx, p))),
-    );
+    return this.db.transaction(async (tx) => {
+      const summaries: PeriodSummary[] = [];
+      // One at a time: a transaction is one connection.
+      for (const period of periods)
+        summaries.push(await this.summarise(tx, period));
+      return summaries;
+    });
   }
 
   /** The period in progress (not yet locked), or null between cycles. */
@@ -132,10 +136,10 @@ export class PeriodsService {
             message: `${running.name} is still in progress. Lock it before opening the next cycle.`,
           });
         }
-        const [rules, organisation] = await Promise.all([
-          this.recalculation.loadActiveRules(tx),
-          tx.organisation.findFirstOrThrow({ select: { timezone: true } }),
-        ]);
+        const rules = await this.recalculation.loadActiveRules(tx);
+        const organisation = await tx.organisation.findFirstOrThrow({
+          select: { timezone: true },
+        });
         const deadlines = cycleDeadlines(
           input.opensOn,
           rules.config.reportingCycle,
@@ -407,28 +411,28 @@ export class PeriodsService {
       lockedAt: Date | null;
     },
   ): Promise<PeriodSummary> {
-    const [initiatives, updates, rules, organisation] = await Promise.all([
-      tx.initiative.findMany({
-        where: {
-          planId: period.planId,
-          status: { in: ['ACTIVE', 'ON_HOLD', 'CLOSED'] },
-        },
-        select: {
-          id: true,
-          activatedAt: true,
-          baselineStart: true,
-          status: true,
-          actualEnd: true,
-        },
-      }),
-      tx.statusUpdate.groupBy({
-        by: ['status'],
-        where: { periodId: period.id },
-        _count: { _all: true },
-      }),
-      this.recalculation.loadActiveRules(tx),
-      tx.organisation.findFirstOrThrow({ select: { timezone: true } }),
-    ]);
+    const initiatives = await tx.initiative.findMany({
+      where: {
+        planId: period.planId,
+        status: { in: ['ACTIVE', 'ON_HOLD', 'CLOSED'] },
+      },
+      select: {
+        id: true,
+        activatedAt: true,
+        baselineStart: true,
+        status: true,
+        actualEnd: true,
+      },
+    });
+    const updates = await tx.statusUpdate.groupBy({
+      by: ['status'],
+      where: { periodId: period.id },
+      _count: { _all: true },
+    });
+    const rules = await this.recalculation.loadActiveRules(tx);
+    const organisation = await tx.organisation.findFirstOrThrow({
+      select: { timezone: true },
+    });
     // Closed initiatives owed the period only if they were still open at its end.
     const owed = initiatives.filter(
       (i) =>

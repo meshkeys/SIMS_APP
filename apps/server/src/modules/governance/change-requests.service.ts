@@ -485,16 +485,14 @@ export class ChangeRequestsService {
   }
 
   private async allReferences(tx: TenantTransactionClient): Promise<string[]> {
-    const [approvals, decisions] = await Promise.all([
-      tx.approval.findMany({
-        where: { reference: { startsWith: 'CR-' } },
-        select: { reference: true },
-      }),
-      tx.decision.findMany({
-        where: { reference: { startsWith: 'CR-' } },
-        select: { reference: true },
-      }),
-    ]);
+    const approvals = await tx.approval.findMany({
+      where: { reference: { startsWith: 'CR-' } },
+      select: { reference: true },
+    });
+    const decisions = await tx.decision.findMany({
+      where: { reference: { startsWith: 'CR-' } },
+      select: { reference: true },
+    });
     return [
       ...approvals.map((a) => a.reference!),
       ...decisions.map((d) => d.reference),

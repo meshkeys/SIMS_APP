@@ -105,12 +105,7 @@ export class DecisionsService {
 
   async list(viewer: AuthContext, query: DecisionQuery): Promise<DecisionPage> {
     const today = this.today();
-    const open: Prisma.DecisionWhereInput = {
-      OR: [
-        { outcome: 'PENDING' },
-        { outcome: 'DEFERRED', deferredUntil: { lte: today } },
-      ],
-    };
+    const open = this.openWhere(today);
     const where: Prisma.DecisionWhereInput = {
       AND: [
         this.visibility(viewer),
@@ -139,6 +134,38 @@ export class DecisionsService {
       pageSize: query.pageSize,
       total,
     };
+  }
+
+  /**
+   * The first open decisions (most urgent first) and how many are open, for
+   * the dashboard; `initiativeIds` limits them to those initiatives.
+   */
+  async openSummary(
+    viewer: AuthContext,
+    initiativeIds: string[] | null,
+    take: number,
+  ): Promise<{ items: DecisionView[]; total: number }> {
+    const today = this.today();
+    const where: Prisma.DecisionWhereInput = {
+      AND: [
+        this.visibility(viewer),
+        this.openWhere(today),
+        initiativeIds ? { initiativeId: { in: initiativeIds } } : {},
+      ],
+    };
+    const [total, rows] = await Promise.all([
+      this.db.client.decision.count({ where }),
+      this.db.client.decision.findMany({
+        where,
+        include: decisionInclude,
+        orderBy: [
+          { dueDate: { sort: 'asc', nulls: 'last' } },
+          { createdAt: 'asc' },
+        ],
+        take,
+      }),
+    ]);
+    return { items: rows.map((row) => this.toView(viewer, row, today)), total };
   }
 
   async get(viewer: AuthContext, decisionId: string): Promise<DecisionView> {
@@ -390,6 +417,16 @@ export class DecisionsService {
           requestedById: row.approval?.requestedById ?? null,
           isChangeRequest: row.approval !== null,
         }) !== null,
+    };
+  }
+
+  /** Pending, or deferred to a date that has now come. */
+  private openWhere(today: Date): Prisma.DecisionWhereInput {
+    return {
+      OR: [
+        { outcome: 'PENDING' },
+        { outcome: 'DEFERRED', deferredUntil: { lte: today } },
+      ],
     };
   }
 

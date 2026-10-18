@@ -196,16 +196,16 @@ export class InvitationsService {
       });
 
       if (subscription) {
-        const [members, pending] = await Promise.all([
-          tx.membership.count({ where: { status: 'ACTIVE' } }),
-          tx.invitation.count({
-            where: {
-              acceptedAt: null,
-              revokedAt: null,
-              expiresAt: { gt: new Date() },
-            },
-          }),
-        ]);
+        const members = await tx.membership.count({
+          where: { status: 'ACTIVE' },
+        });
+        const pending = await tx.invitation.count({
+          where: {
+            acceptedAt: null,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+        });
         if (members + pending >= subscription.seats) {
           throw new ConflictException({
             code: 'SEAT_LIMIT_REACHED',
