@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — Delivery API, read side (slice 6b)
+- Initiative register: tabs and health chips with counts, filters (element subtree,
+  department, search on code/title/owner), sorting (worst first by default), pages;
+  sensitive initiatives excluded from rows and counts.
+- Initiative detail: execution, health with reasons and override, milestones with
+  contribution and overdue days, risks, dependencies, KPIs, history, readable activity.
+- Health recalculation service (reports what changed); manual trigger for the Strategy Office.
+- Overrides with role rules from the ruleset (sponsors only on their own initiatives),
+  mandatory reason, capped expiry.
+- Injectable clock for all date-dependent logic.
+- Fix found by tests: compare stored JSON canonically (jsonb reorders keys).
+
 ## 2026-10-18 — Rules engine (slice 6a)
 - Verified and planned completion from milestones (planned from each milestone's window).
 - Health: progress band, critical-issue and blocked-dependency caps, overdue critical

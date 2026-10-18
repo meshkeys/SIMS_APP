@@ -16,6 +16,7 @@ Strategic Initiative Management System · Strategy Execution Command Centre
 | 10 | [Roadmap and status](10-roadmap.md) | Everyone |
 | 11 | [Architecture decision records](11-decision-records.md) | Engineers, reviewers |
 | 12 | [Strategy and KPI API](12-strategy-api.md) | Engineers (API and web) |
+| 13 | [Delivery API](13-delivery-api.md) | Engineers (API and web) |
 | — | [Changelog](CHANGELOG.md) | Everyone |
 
 ## Downloadable copy

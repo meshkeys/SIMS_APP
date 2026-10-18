@@ -31,6 +31,7 @@ const CHAPTERS = [
   '10-roadmap.md',
   '11-decision-records.md',
   '12-strategy-api.md',
+  '13-delivery-api.md',
   'CHANGELOG.md',
 ];
 

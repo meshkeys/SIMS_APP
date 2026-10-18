@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ClockModule } from './common/clock/clock.js';
 import { rateLimitOptions } from './common/http/rate-limit.js';
 import { ConfigModule, ENV } from './config/config.module.js';
 import type { Env } from './config/env.js';
@@ -14,12 +15,14 @@ import {
   TenantContextInterceptor,
 } from './modules/auth/index.js';
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
+import { DeliveryModule } from './modules/delivery/delivery.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
 import { StrategyModule } from './modules/strategy/strategy.module.js';
 
 @Module({
   imports: [
     ConfigModule,
+    ClockModule,
     DatabaseModule,
     MailModule,
     ThrottlerModule.forRootAsync({
@@ -31,6 +34,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     InvitationsModule,
     StrategyModule,
     KpisModule,
+    DeliveryModule,
   ],
   providers: [
     // Global guards run in this order: rate limit → authentication → roles.

@@ -255,3 +255,37 @@ late); Board packs never carry unverifiable figures. Because planned progress ke
 rising, an initiative that goes silent drifts worse on its own. The flag depends on the
 clock, so health must be recalculated at least daily (delivery slice).
 
+---
+
+## ADR-017 — An injectable clock for business time
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Planned progress, overdue milestones, overdue updates and override expiry all
+depend on "now". Code that calls `new Date()` directly cannot be tested at a chosen moment,
+and results would drift as real time passes.
+
+**Decision.** Business logic asks a `Clock` (injected with the `CLOCK` token). Production
+binds the system clock; tests bind a `FixedClock` they can move.
+
+**Consequences.** Deterministic tests at any date (the suite runs at the wireframes' moment
+and moves forward to test expiry and drift). One rule for reviewers: no `new Date()` for
+"now" in business logic.
+
+---
+
+## ADR-018 — Page-numbered pagination for registers
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** The Initiative register shows "Page 1 of 4" with jumps between pages, sorted by
+computed effective health. Cursor pagination cannot jump to page N and is awkward with
+computed sort keys.
+
+**Decision.** Registers of bounded size per tenant (initiatives, risks, KPIs) use
+page/pageSize with totals, computed in one indexed SQL statement. Unbounded streams
+(activity, audit, notifications) will use cursors.
+
+**Consequences.** Matches the screen's interaction; deep offsets are cheap at tenant scale.
+Revisit if a single tenant's register grows past tens of thousands of rows.
+
