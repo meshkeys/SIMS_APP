@@ -6,6 +6,7 @@
  */
 export * from './enums.js';
 export * from './common.js';
+export * from './roles.js';
 export * from './auth.js';
 export * from './invitations.js';
 export * from './strategy.js';
@@ -14,3 +15,5 @@ export * from './delivery.js';
 export * from './reporting.js';
 export * from './governance.js';
 export * from './dashboard.js';
+export * from './routes.js';
+export * from './openapi.js';

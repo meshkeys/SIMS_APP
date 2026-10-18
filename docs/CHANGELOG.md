@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-18 — OpenAPI reference and drift tests (slice 13b)
+- `API_ROUTES` in `@sims/contracts` describes all 76 endpoints (access, schemas, status);
+  role lists and labels moved into the contract.
+- Generated OpenAPI 3.1 document at `/api/openapi.json` and an interactive reference at
+  `/api/docs` (Scalar, pinned with SRI under a nonce-based CSP); off in production unless
+  `API_DOCS=true` (ADR-024).
+- Drift tests: every server route must be in the contract with matching access, status,
+  rate limit and schemas; every e2e response is validated against its schema; the document
+  is validated against the OpenAPI 3.1 specification.
+
 ## 2026-10-18 — API contracts (slice 13a)
 - New package `@sims/contracts`: every request and response of the API as zod schemas with
   TypeScript types, shared by the server and the web app (ADR-023).

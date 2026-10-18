@@ -7,6 +7,8 @@ Every endpoint follows these rules, so clients can rely on one behaviour everywh
 - Base path: `/api/v1/<resource>`. A breaking change ships as `/api/v2` alongside v1.
 - `/health` is unversioned and public, for load balancers (`200` healthy, `503` when the
   database is unreachable).
+- The full reference is generated from `@sims/contracts`: `/api/openapi.json` (OpenAPI 3.1)
+  and `/api/docs` (interactive), outside production (chapter 17).
 
 ## 6.2 Authentication and roles
 

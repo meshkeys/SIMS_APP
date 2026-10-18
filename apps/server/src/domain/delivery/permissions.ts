@@ -6,13 +6,8 @@ export type InitiativeRelation = 'OFFICE' | 'SPONSOR' | 'OWNER' | 'NONE';
 
 const OFFICE_ROLES: readonly Role[] = ['STRATEGY_OFFICE', 'SYSTEM_ADMIN'];
 
-/** Roles that may propose new initiatives. */
-export const PROPOSER_ROLES = [
-  'STRATEGY_OFFICE',
-  'SYSTEM_ADMIN',
-  'EXECUTIVE_SPONSOR',
-  'INITIATIVE_OWNER',
-] as const satisfies readonly Role[];
+/** Roles that may propose new initiatives (part of the API contract). */
+export { PROPOSER_ROLES } from '@sims/contracts';
 
 export function relationTo(
   caller: { membershipId: string; roles: readonly Role[] },

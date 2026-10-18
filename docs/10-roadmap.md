@@ -29,8 +29,9 @@ with its tests and documentation.
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
 | 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
-| 13b | OpenAPI reference generated from the contracts; route and response drift tests | Next |
-| 14+ | Web app: design system and shell, then each screen | Planned |
+| 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
+| 14 | Web app foundation: design system, app shell, sign-in, typed API client | Next |
+| 15+ | Web app: each screen, with the backend pieces it needs (8b, 9, 11, 12, 13) | Planned |
 
 ## 10.3 Known follow-ups
 

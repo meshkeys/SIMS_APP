@@ -27,7 +27,15 @@ describe('loadEnv', () => {
       TRUST_PROXY: 0,
       RATE_LIMIT_PER_MINUTE: 300,
       RATE_LIMIT_AUTH_PER_MINUTE: 10,
+      API_DOCS: true,
     });
+  });
+
+  it('turns the API reference off in production unless asked for', () => {
+    expect(loadEnv({ ...valid, NODE_ENV: 'production' }).API_DOCS).toBe(false);
+    expect(
+      loadEnv({ ...valid, NODE_ENV: 'production', API_DOCS: 'true' }).API_DOCS,
+    ).toBe(true);
   });
 
   it('parses comma-separated CORS origins', () => {

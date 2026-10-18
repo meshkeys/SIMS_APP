@@ -394,3 +394,24 @@ package must be built before the server compiles; scripts do this automatically.
 types stay separate from the contract on purpose, so business rules never depend on the
 wire format.
 
+---
+
+## ADR-024 — The API reference is generated and enforced, not written
+
+**Status:** Accepted · 2026-10-18
+
+**Context.** Hand-written API documentation drifts from the code within weeks. Decorator-
+based generators (e.g. `@nestjs/swagger`) duplicate every shape in decorators, which drift
+too, and they cannot prove that real responses match.
+
+**Decision.** `@sims/contracts` holds a route registry (`API_ROUTES`) next to the schemas, and
+the OpenAPI 3.1 document is generated from it. Tests compare the registry with Nest's route
+metadata (paths, access, status, rate limits, the exact validation schemas) and validate
+every e2e response against its schema. The interactive reference (Scalar) is loaded from a
+CDN — it is a 49 MB package — pinned to a version with Subresource Integrity, under a
+page-specific CSP with a nonce. Reference and document are off in production by default.
+
+**Consequences.** The reference cannot be wrong without a failing test. Adding an endpoint
+takes one more entry in the registry. The web app's API client can be typed directly from
+`API_ROUTES`. Upgrading Scalar means updating the version and its integrity hash together.
+

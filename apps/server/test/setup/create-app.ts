@@ -4,8 +4,9 @@ import { Test } from '@nestjs/testing';
 import type { Response } from 'supertest';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/app.setup.js';
+import { ContractCheckInterceptor } from './contract-check.js';
 
-/** The real application, configured exactly as in production. */
+/** The real application, configured exactly as in production (plus contract checks). */
 export async function createTestApp(
   options: {
     controllers?: Type[];
@@ -24,6 +25,8 @@ export async function createTestApp(
   const app = configureApp(
     moduleRef.createNestApplication<NestExpressApplication>(),
   );
+  // Every response is checked against @sims/contracts (contract-check.ts).
+  app.useGlobalInterceptors(new ContractCheckInterceptor(options.controllers));
   await app.init();
   return app;
 }

@@ -59,10 +59,14 @@ export const envSchema = z
     RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(300),
     /** Requests per minute per client IP on sign-up, sign-in and refresh. */
     RATE_LIMIT_AUTH_PER_MINUTE: z.coerce.number().int().min(1).default(10),
+
+    /** Serve /api/openapi.json and the /api/docs reference. Defaults to off in production. */
+    API_DOCS: z.stringbool().optional(),
   })
   .transform((env) => ({
     ...env,
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
+    API_DOCS: env.API_DOCS ?? env.NODE_ENV !== 'production',
   }))
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.COOKIE_SECURE) {

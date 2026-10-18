@@ -5,6 +5,7 @@ import { ClockModule } from './common/clock/clock.js';
 import { rateLimitOptions } from './common/http/rate-limit.js';
 import { ConfigModule, ENV } from './config/config.module.js';
 import type { Env } from './config/env.js';
+import { ApiDocsModule } from './api-docs/api-docs.module.js';
 import { HealthModule } from './health/health.module.js';
 import { DatabaseModule } from './infrastructure/database/index.js';
 import { MailModule } from './infrastructure/mail/index.js';
@@ -33,6 +34,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
       useFactory: (env: Env) => rateLimitOptions(env),
     }),
     HealthModule,
+    ApiDocsModule,
     AuthModule,
     InvitationsModule,
     StrategyModule,

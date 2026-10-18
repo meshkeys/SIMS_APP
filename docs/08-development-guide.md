@@ -14,7 +14,7 @@ npm install                 # all workspaces; generates the Prisma client, build
 npm run infra:up            # Postgres :5433, Redis :6379, Mailpit :1025 (UI :8025)
 npm run db:migrate          # apply migrations
 npm run db:seed             # demo organisation (re-runnable)
-npm run dev:server          # API on http://localhost:3000
+npm run dev:server          # API on http://localhost:3000 (reference: /api/docs)
 npm run dev:client          # web app on http://localhost:5173
 ```
 
@@ -53,6 +53,7 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `TRUST_PROXY` | 0 | Number of proxies in front of the API |
 | `RATE_LIMIT_PER_MINUTE` | 300 | General limit per IP |
 | `RATE_LIMIT_AUTH_PER_MINUTE` | 10 | Sign-in/up/refresh limit per IP |
+| `API_DOCS` | on, off in production | Serve `/api/openapi.json` and `/api/docs` |
 | `APP_URL` | http://localhost:5173 | Web app address, used in email links |
 | `SMTP_HOST` / `SMTP_PORT` | localhost / 1025 | Outgoing mail server (Mailpit locally) |
 | `SMTP_SECURE` | false | `true` for implicit TLS (port 465); STARTTLS is used when offered |
@@ -83,7 +84,8 @@ every number shown in the wireframes).
 ## 8.7 How-to
 
 **Add an endpoint.** Define the request and response schemas in
-`packages/contracts/src/<area>.ts` (chapter 17); create/extend a module in
+`packages/contracts/src/<area>.ts` and add the route to `API_ROUTES` (chapter 17);
+create/extend a module in
 `src/modules/<feature>/`; use `@Body(new ZodValidationPipe(schema))` and type the service's
 return with the contract type; use `TenantPrismaService`; add `@Roles(...)` where needed;
 throw Nest exceptions with a `code`; add e2e tests.

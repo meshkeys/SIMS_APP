@@ -2,7 +2,7 @@ import { ExecutionContext, SetMetadata } from '@nestjs/common';
 import type { ThrottlerModuleOptions } from '@nestjs/throttler';
 import type { Env } from '../../config/env.js';
 
-const STRICT_RATE_LIMIT = 'rateLimit:strict';
+export const STRICT_RATE_LIMIT = 'rateLimit:strict';
 
 /**
  * Applies the strict limit (RATE_LIMIT_AUTH_PER_MINUTE) to a route, on top of

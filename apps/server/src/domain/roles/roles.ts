@@ -1,34 +1,14 @@
+import { ADMIN_ONLY_ROLES } from '@sims/contracts';
 import type { Role } from '../../generated/prisma/enums.js';
 
-/** Human-readable role names, used in emails and (later) the web app. */
-export const ROLE_LABELS: Record<Role, string> = {
-  BOARD: 'Board member',
-  CEO: 'MD/CEO',
-  STRATEGY_OFFICE: 'Strategy Office',
-  EXECUTIVE_SPONSOR: 'Executive sponsor',
-  INITIATIVE_OWNER: 'Initiative owner',
-  TASK_OWNER: 'Task owner',
-  SYSTEM_ADMIN: 'System administrator',
-  INTERNAL_AUDIT: 'Internal audit',
-};
-
-/** Roles that may invite people into an organisation. */
-export const INVITER_ROLES = [
-  'SYSTEM_ADMIN',
-  'STRATEGY_OFFICE',
-] as const satisfies readonly Role[];
-
-/** Roles that may change the strategic plan, its framework and elements. */
-export const STRATEGY_EDITOR_ROLES = [
-  'STRATEGY_OFFICE',
-  'SYSTEM_ADMIN',
-] as const satisfies readonly Role[];
-
-/**
- * Roles only a System Administrator can hand out. Stops anyone with invite
- * rights from creating a new administrator (privilege escalation).
- */
-export const ADMIN_ONLY_ROLES: readonly Role[] = ['SYSTEM_ADMIN'];
+// Role lists are part of the API contract (the web app shows and hides
+// actions with them); they are re-exported here for the server's rules.
+export {
+  ADMIN_ONLY_ROLES,
+  INVITER_ROLES,
+  ROLE_LABELS,
+  STRATEGY_EDITOR_ROLES,
+} from '@sims/contracts';
 
 /** Returns the roles in `requested` that `callerRoles` is not allowed to grant. */
 export function rolesCallerCannotGrant(

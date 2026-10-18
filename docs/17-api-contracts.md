@@ -18,6 +18,9 @@ change to this package, and the compiler shows every place on both sides that mu
 | `reporting.ts` | Periods, updates (form, queue, my updates) |
 | `governance.ts` | Risks and issues, decisions, change requests |
 | `dashboard.ts` | The Command Centre |
+| `roles.ts` | Role labels and role lists (who may invite, edit strategy, propose initiatives) |
+| `routes.ts` | Every endpoint (`API_ROUTES`) |
+| `openapi.ts` | The OpenAPI 3.1 generator |
 
 Naming: `xxxSchema` is the zod schema; the type has the same name without `Schema`
 (`initiativeDetailSchema` → `InitiativeDetail`). Request types are the schema's **output**
@@ -50,8 +53,47 @@ Naming: `xxxSchema` is the zod schema; the type has the same name without `Schem
 The package compiles to `packages/contracts/dist` (ignored by git); `npm install` builds it
 once through the root `prepare` script.
 
-## 17.4 Next: OpenAPI reference (slice 13b)
+## 17.4 Route registry
 
-The same schemas will generate an OpenAPI 3.1 document served with an interactive reference
-page, and tests will fail if a route exists without a contract (or the other way round), or
-if a real response does not match its schema.
+`routes.ts` lists **every endpoint** as `API_ROUTES`, keyed by operation id (`getDashboard`,
+`submitUpdate`…): method, path, tag, summary, who may call it (`public`, `member` or a role
+list such as `STRATEGY_EDITOR_ROLES`), whether the strict rate limit applies, the query and
+body schemas, the success status and the response schema. Role lists and their labels live in
+`roles.ts`, so the web app shows and hides actions with the same lists the server enforces.
+
+## 17.5 OpenAPI reference
+
+`buildOpenApiDocument()` turns the registry into an **OpenAPI 3.1** document: named
+response shapes become components (`InitiativeDetail`, `RiskRegister`…), requests are
+described as the client sends them (defaults optional), and every operation lists who may
+call it and the Problem Details error response.
+
+| URL | What |
+|---|---|
+| `/api/openapi.json` | The document — import it into Postman, Insomnia or a code generator |
+| `/api/docs` | Interactive reference (Scalar) |
+
+Both are on by default in development and test, and **off in production** unless
+`API_DOCS=true` (the API's shape is not secret, but there is no reason to advertise it).
+The reference page is the only page allowed to load a script from a CDN: Scalar is pinned to
+an exact version with a Subresource Integrity hash, under a page-specific Content Security
+Policy with a per-request nonce (ADR-024).
+
+## 17.6 Drift tests
+
+Three checks keep the contract and the server identical; each fails the e2e suite:
+
+1. **Every route is described, and only those.** The test reads Nest's own route metadata
+   and compares method and path with `API_ROUTES` in both directions.
+2. **Every route matches its description:** public or not, required roles, success status,
+   strict rate limit, and that the controller validates with **the very same** body and query
+   schema objects.
+3. **Every real response matches its schema.** In the e2e suites an interceptor checks each
+   successful response — as it goes over the wire — against the route's response schema, and
+   fails the test file on any mismatch (or on an `/api/v1` route with no contract).
+
+The generated document is also validated against the OpenAPI 3.1 specification.
+
+**Adding an endpoint** therefore means: schemas in the contract, an entry in `API_ROUTES`
+(named response shapes also in `apiComponents`), then the controller. The tests say what is
+missing.

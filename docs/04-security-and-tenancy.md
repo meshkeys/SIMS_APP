@@ -73,6 +73,9 @@ Detailed in chapter 5.
 ## 4.6 HTTP hardening
 
 - Security headers via helmet; `X-Powered-By` removed.
+- The one exception to the strict Content Security Policy is the API reference page
+  (`/api/docs`, off in production): it may load one pinned, integrity-checked script from
+  jsdelivr, with a per-request nonce (ADR-024).
 - CORS limited to configured origins, with credentials.
 - Rate limiting per client IP: 300 requests/minute overall, 10/minute on sign-in, sign-up
   and refresh (both configurable). `429` responses include `Retry-After`.
