@@ -2,6 +2,14 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Evidence on the update and review screens (slice 20c)
+- **Upload evidence** per milestone on the monthly update, see this period's files, download
+  them and remove them until reviewed. Unsaved claims survive an upload.
+- The **review panel** lists the evidence for download and marks what is missing.
+- **Evidence is now required**: an update cannot be submitted while a claim above last
+  month's verified figure has no evidence uploaded this period.
+- Downloads keep their full (UTF-8) file names.
+
 ## 2026-10-19 — Documents and evidence API (slice 12a)
 - **File storage** on local disk (development, tests) or any S3-compatible service
   (production), chosen by settings.

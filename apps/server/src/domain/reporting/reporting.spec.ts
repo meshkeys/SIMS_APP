@@ -209,13 +209,32 @@ describe('evaluateUpdate', () => {
       },
       DEFAULT_RULESET_CONFIG,
     );
-    // Evidence is reported but not yet blocking.
-    expect(written.canSubmit).toBe(true);
+    // Commentary written, but the testing claim still has no evidence.
+    expect(written.canSubmit).toBe(false);
+    expect(written.checklist.find((c) => !c.ok)).toMatchObject({
+      key: 'EVIDENCE',
+      blocking: true,
+      message: 'Evidence needed for: Testing and deployment',
+    });
+
+    const withEvidence = evaluateUpdate(
+      lines.map((l) =>
+        l.milestoneId === 'test' ? { ...l, evidenceCount: 1 } : l,
+      ),
+      74,
+      {
+        progressNarrative: 'Technology build continued; UAT started.',
+        varianceExplanation: 'Vendor contract signature slipped by two weeks.',
+        recoveryAction: 'Parallel UAT with a second test team.',
+      },
+      DEFAULT_RULESET_CONFIG,
+    );
+    expect(withEvidence.canSubmit).toBe(true);
   });
 
   it('needs no variance explanation when on plan', () => {
     const result = evaluateUpdate(
-      lines,
+      lines.map((l) => ({ ...l, evidenceCount: 1 })),
       66,
       { ...noCommentary, progressNarrative: 'All on track this month.' },
       DEFAULT_RULESET_CONFIG,

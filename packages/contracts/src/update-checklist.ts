@@ -54,8 +54,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const filled = (text: string | null) => !!text && text.trim().length >= 10;
 
 /**
- * Evidence is reported but not yet blocking: uploads arrive with the
- * documents module, after which it becomes blocking.
+ * Evidence is blocking: a milestone that needs evidence and claims more
+ * than last month's verified figure needs a file uploaded this period.
  *
  * @param varianceThresholdPp how far behind plan (pp) an update may be before
  *   a variance explanation and recovery action are required (the
@@ -103,7 +103,7 @@ export function evaluateUpdate(
     {
       key: 'EVIDENCE',
       ok: needsEvidence.length === 0,
-      blocking: false,
+      blocking: true,
       message:
         needsEvidence.length === 0
           ? 'Evidence attached where progress was claimed'

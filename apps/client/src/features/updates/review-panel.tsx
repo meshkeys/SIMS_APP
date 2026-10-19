@@ -12,6 +12,7 @@ import { cn } from '@/lib/cn';
 import { formatPercent } from '@/lib/format';
 import { HEALTH_DISPLAY } from '@/lib/health';
 import { Conversation } from './conversation';
+import { EvidenceCell } from './evidence-cell';
 import { useApplyForm } from './use-apply-form';
 
 const STAGE: Record<NonNullable<UpdateForm['update']>['status'], string> = {
@@ -191,19 +192,13 @@ export function ReviewPanel({ form }: { form: UpdateForm }) {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3 pr-5 text-xs">
-                        {line.evidenceCount > 0 ? (
-                          <span className="text-ink-muted">
-                            {line.evidenceCount} file
-                            {line.evidenceCount === 1 ? '' : 's'}
-                          </span>
-                        ) : line.needsEvidence ? (
-                          <span className="font-medium text-danger">
-                            Missing
-                          </span>
-                        ) : (
-                          <span className="text-ink-muted">—</span>
-                        )}
+                      <td className="px-3 py-3 pr-5">
+                        <EvidenceCell
+                          form={form}
+                          line={line}
+                          needsEvidence={line.needsEvidence}
+                          canUpload={false}
+                        />
                       </td>
                     </tr>
                   );

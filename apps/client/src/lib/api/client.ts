@@ -104,7 +104,10 @@ async function send(
   signal?: AbortSignal,
 ): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // A FormData body sets its own multipart Content-Type (with the boundary).
+  const multipart = body instanceof FormData;
+  if (body !== undefined && !multipart)
+    headers['Content-Type'] = 'application/json';
   const token = currentToken();
   if (token && route.access !== 'public') {
     headers.Authorization = `Bearer ${token.accessToken}`;
@@ -113,7 +116,12 @@ async function send(
     return await fetch(url, {
       method: route.method.toUpperCase(),
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : multipart
+            ? body
+            : JSON.stringify(body),
       credentials: 'same-origin',
       signal,
     });
@@ -224,6 +232,43 @@ export async function download<Id extends DownloadOperation>(
   );
   const response = await call(route, url, undefined, options.signal);
   const disposition = response.headers.get('Content-Disposition') ?? '';
-  const fileName = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'download';
-  return { blob: await response.blob(), fileName };
+  return { blob: await response.blob(), fileName: fileNameFrom(disposition) };
+}
+
+/** The UTF-8 name (filename*) when given, else the plain one. */
+export function fileNameFrom(disposition: string): string {
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded);
+    } catch {
+      // Fall through to the plain name.
+    }
+  }
+  return /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'download';
+}
+
+/** File-upload operations (e.g. evidence on a milestone). */
+type UploadOperation = {
+  [Id in OperationId]: (typeof API_ROUTES)[Id] extends { uploadField: string }
+    ? Id
+    : never;
+}[OperationId];
+
+/** Uploads one file as multipart form data, with the usual sign-in handling. */
+export async function upload<Id extends UploadOperation>(
+  id: Id,
+  input: ApiInput<Id>,
+  file: File,
+  options: RequestOptions = {},
+): Promise<ApiResult<Id>> {
+  const route = API_ROUTES[id] as ApiRoute & { uploadField: string };
+  const url = buildUrl(
+    route,
+    (input as { params?: Record<string, string> }).params,
+  );
+  const form = new FormData();
+  form.append(route.uploadField, file, file.name);
+  const response = await call(route, url, form, options.signal);
+  return (await response.json()) as ApiResult<Id>;
 }

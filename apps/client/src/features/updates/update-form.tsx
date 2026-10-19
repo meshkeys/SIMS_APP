@@ -18,6 +18,7 @@ import { formatInstantDate, formatPercent } from '@/lib/format';
 import { HEALTH_DISPLAY } from '@/lib/health';
 import { AddRiskDialog } from './add-risk-dialog';
 import { Conversation } from './conversation';
+import { EvidenceCell } from './evidence-cell';
 import { useApplyForm } from './use-apply-form';
 
 interface Draft {
@@ -63,12 +64,18 @@ export function UpdateForm({ form }: { form: Form }) {
   const [addingRisk, setAddingRisk] = useState(false);
   const editable = form.can.edit;
 
-  // A fresh copy from the server (after save or submit) replaces the draft.
+  // A fresh copy from the server (after save or submit) replaces the draft;
+  // one that only differs in its evidence (an upload) keeps what is typed.
   const [source, setSource] = useState(form);
   if (form !== source) {
+    const sameUpdate =
+      form.update?.savedAt === source.update?.savedAt &&
+      form.update?.status === source.update?.status;
     setSource(form);
-    setDraft(fromForm(form));
-    setDirty(false);
+    if (!sameUpdate) {
+      setDraft(fromForm(form));
+      setDirty(false);
+    }
   }
 
   // Warn before leaving with unsaved changes.
@@ -233,27 +240,13 @@ export function UpdateForm({ form }: { form: Form }) {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3 pr-5 text-xs">
-                        {line.locked ? (
-                          <span className="text-ink-muted">
-                            Verified · locked
-                          </span>
-                        ) : line.evidenceCount > 0 ? (
-                          <span className="text-ink-muted">
-                            {line.evidenceCount} file
-                            {line.evidenceCount === 1 ? '' : 's'} uploaded
-                          </span>
-                        ) : needsEvidence ? (
-                          <span className="font-medium text-danger">
-                            Upload required
-                          </span>
-                        ) : line.evidenceRequired ? (
-                          <span className="text-ink-muted">
-                            If progress is claimed
-                          </span>
-                        ) : (
-                          <span className="text-ink-muted">Not required</span>
-                        )}
+                      <td className="px-3 py-3 pr-5">
+                        <EvidenceCell
+                          form={form}
+                          line={line}
+                          needsEvidence={needsEvidence}
+                          canUpload={editable}
+                        />
                       </td>
                     </tr>
                   );

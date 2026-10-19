@@ -70,7 +70,7 @@ One response carries everything the screen needs:
 | Progress described this period | Yes |
 | Variance explanation — when more than the Green limit behind plan | Yes |
 | Recovery action — same condition | Yes |
-| Evidence attached where a claim rose above the last verified figure | **Not yet**: uploads exist (chapter 21) and count per period; it becomes blocking with the upload screen (next slice) |
+| Evidence uploaded this period where a claim rose above the last verified figure (on milestones that need evidence) | Yes (chapter 21) |
 
 - **Open risks and issues**, the **comment thread**, and `can` — which actions the caller may
   take right now (edit, submit, verify, challenge, approve, comment), so the screen shows

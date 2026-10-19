@@ -128,3 +128,10 @@ export function currencySymbol(currency: string): string {
       .find((part) => part.type === 'currency')?.value ?? `${currency} `
   );
 }
+
+/** 412331 → "403 KB", 2_500_000 → "2.4 MB" */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1_048_576) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1_048_576).toFixed(1)} MB`;
+}

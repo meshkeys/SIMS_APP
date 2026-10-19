@@ -1,4 +1,5 @@
 import {
+  type DocumentView,
   myUpdatesSchema,
   type UpdateForm,
   updateFormSchema,
@@ -15,9 +16,13 @@ import {
   MY_UPDATES,
   PERIOD_ID,
   REV_005,
+  SPRINT_REPORT,
 } from './updates.fixture';
 
 type Sent = { route: string; body: Record<string, unknown> };
+
+const saveFile = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/save-file', () => ({ saveFile }));
 
 function renderUpdates(
   options: { form?: UpdateForm; path?: string; noPeriod?: boolean } = {},
@@ -38,12 +43,56 @@ function renderUpdates(
     } satisfies UpdateForm);
   };
   const base = `/api/v1/periods/${PERIOD_ID}/updates`;
+  // Evidence uploaded during the test, by milestone.
+  const uploaded: Record<string, DocumentView[]> = {};
+  const removed = new Set<string>();
+  const withUploads = (form: UpdateForm): UpdateForm => ({
+    ...form,
+    lines: form.lines.map((l) => {
+      const evidence = [
+        ...(uploaded[l.milestoneId] ?? []),
+        ...l.evidence,
+      ].filter((d) => !removed.has(d.id));
+      return { ...l, evidence, evidenceCount: evidence.length };
+    }),
+  });
   const api = fakeApi({
     signedIn: true,
     routes: {
       'GET /api/v1/my-updates': () =>
         json(200, options.noPeriod ? { period: null, items: [] } : MY_UPDATES),
-      [`GET ${base}/${DIG_004}`]: () => json(200, options.form ?? FORM),
+      [`GET ${base}/${DIG_004}`]: () =>
+        json(200, withUploads(options.form ?? FORM)),
+      ...Object.fromEntries(
+        FORM.lines.map((l) => [
+          `POST /api/v1/milestones/${l.milestoneId}/documents`,
+          (init: RequestInit) => {
+            const file = (init.body as FormData).get('file') as File;
+            sent.push({ route: 'upload', body: { name: file.name } });
+            const doc: DocumentView = {
+              ...SPRINT_REPORT,
+              id: `0192a1b2-c3d4-7e5f-8a9b-${String(160 + Object.keys(uploaded).length).padStart(12, '0')}`,
+              fileName: file.name,
+              sizeBytes: file.size,
+            };
+            uploaded[l.milestoneId] = [doc, ...(uploaded[l.milestoneId] ?? [])];
+            return json(201, doc);
+          },
+        ]),
+      ),
+      [`DELETE /api/v1/documents/${SPRINT_REPORT.id}`]: () => {
+        sent.push({ route: 'delete', body: {} });
+        removed.add(SPRINT_REPORT.id);
+        return json(204);
+      },
+      [`GET /api/v1/documents/${SPRINT_REPORT.id}/download`]: () =>
+        new Response(new Blob(['%PDF-1.7']), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="Sprint 14 report.pdf"; filename*=UTF-8''Sprint%2014%20report.pdf`,
+          },
+        }),
       [`GET ${base}/${REV_005}`]: () =>
         json(200, {
           ...FORM,
@@ -176,6 +225,22 @@ describe('Monthly progress update', () => {
     );
     await user.click(screen.getByLabelText(/I need a management decision/));
     const submit = screen.getByRole('button', { name: 'Submit for review' });
+    // Testing rose above last month's 30% with nothing attached yet.
+    expect(submit).toBeDisabled();
+    const testing = screen.getByRole('row', { name: /Testing and deployment/ });
+    expect(within(testing).getByText('Upload required')).toBeVisible();
+
+    await user.upload(
+      testing.querySelector<HTMLInputElement>('input[type="file"]')!,
+      new File(['%PDF-1.7'], 'UAT log.pdf', { type: 'application/pdf' }),
+    );
+
+    expect(await within(testing).findByText('1 file uploaded')).toBeVisible();
+    expect(
+      within(testing).getByRole('button', { name: /^UAT log\.pdf/ }),
+    ).toBeVisible();
+    // What was typed survives the refresh.
+    expect(claim('Testing and deployment')).toHaveValue(44);
     expect(submit).toBeEnabled();
     await user.click(submit);
 
@@ -195,6 +260,30 @@ describe('Monthly progress update', () => {
     expect(
       screen.queryByRole('button', { name: 'Submit for review' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('downloads and removes evidence', async () => {
+    const { user, sent } = renderUpdates();
+    const technology = await screen.findByRole('row', {
+      name: /Technology development/,
+    });
+    await user.click(
+      within(technology).getByRole('button', {
+        name: /^Sprint 14 report\.pdf/,
+      }),
+    );
+    await waitFor(() => expect(saveFile).toHaveBeenCalled());
+    expect(saveFile.mock.calls.at(-1)![1]).toBe('Sprint 14 report.pdf');
+
+    await user.click(
+      within(technology).getByRole('button', {
+        name: 'Remove Sprint 14 report.pdf',
+      }),
+    );
+    expect(
+      await within(technology).findByText('If progress is claimed'),
+    ).toBeVisible();
+    expect(sent.map((s) => s.route)).toEqual(['delete']);
   });
 
   it('shows why an update was challenged and lets the owner change it', async () => {

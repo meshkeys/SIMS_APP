@@ -53,8 +53,9 @@ data, which lists files without storing them) answers `404 DOCUMENT_FILE_MISSING
   part of the verified record: it can no longer be removed (`409 DOCUMENT_REVIEWED`).
 - **Removing** is a soft delete. The file disappears from lists and counts but the row stays
   for the audit trail. Purging the stored bytes is left to a clean-up job (slice 11).
-- Evidence becomes a **blocking** checklist item in the next slice, when the update form
-  can upload files.
+- Evidence is a **blocking** checklist item: an update cannot be submitted while a milestone
+  that needs evidence claims more than last month's verified figure with no file uploaded
+  this period (chapter 14.4).
 
 ## 21.5 Storage
 

@@ -1,5 +1,6 @@
 import {
   dateParts,
+  formatBytes,
   formatDate,
   formatDayMonth,
   formatDeadline,
@@ -52,5 +53,13 @@ describe('format', () => {
     expect(formatMoney(50_000_000, 'NGN')).toBe('₦50m');
     expect(formatMoney(1_250_000_000, 'NGN')).toBe('₦1.3bn');
     expect(formatMoney(null, 'NGN')).toBe('—');
+  });
+});
+
+describe('formatBytes', () => {
+  it('uses the largest sensible unit', () => {
+    expect(formatBytes(512)).toBe('512 B');
+    expect(formatBytes(412_331)).toBe('403 KB');
+    expect(formatBytes(2_500_000)).toBe('2.4 MB');
   });
 });

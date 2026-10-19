@@ -45,6 +45,18 @@ describe('Reporting cycle (e2e)', () => {
       .auth(bearer, { type: 'bearer' })
       .send(body);
   };
+  /** Attaches a small PDF as evidence to a milestone. */
+  const uploadEvidence = async (
+    as: string,
+    milestoneId: string,
+    fileName: string,
+  ) => {
+    const bearer = await token(as);
+    return request(app.getHttpServer())
+      .post(`/api/v1/milestones/${milestoneId}/documents`)
+      .auth(bearer, { type: 'bearer' })
+      .attach('file', Buffer.from('%PDF-1.7\n%%EOF\n'), fileName);
+  };
   const form = (as: string, code: string) =>
     call(as, 'get', `/periods/${october}/updates/${ids[code]}`);
   const updatePath = (code: string, action = '') =>
@@ -131,16 +143,34 @@ describe('Reporting cycle (e2e)', () => {
         'CHALLENGE',
         'RESPONSE',
       ]);
+      // Testing rose from 30% to 48% with no evidence uploaded this period.
+      expect(
+        body.evaluation.checklist.find(
+          (c: { key: string }) => c.key === 'EVIDENCE',
+        ),
+      ).toMatchObject({
+        ok: false,
+        blocking: true,
+        message: 'Evidence needed for: Testing and deployment',
+      });
       expect(body.can).toMatchObject({
         edit: true,
-        submit: true,
+        submit: false,
         verify: false,
         approve: false,
       });
     });
 
     it('revise a challenged update and resubmit it', async () => {
+      const testing = (
+        (await form(HASSAN, 'DIG-004')).body.lines as Line[]
+      ).find((l) => l.title === 'Testing and deployment')!;
+      expect(
+        (await uploadEvidence(HASSAN, testing.milestoneId, 'UAT log.pdf'))
+          .status,
+      ).toBe(201);
       const { body } = await form(HASSAN, 'DIG-004');
+      expect(body.can.submit).toBe(true);
       const lines = (body.lines as Line[])
         .filter((l) => !l.locked)
         .map((l) => ({
@@ -206,6 +236,7 @@ describe('Reporting cycle (e2e)', () => {
       expect(response.body.errors.map((e: { path: string }) => e.path)).toEqual(
         [
           'ALL_MILESTONES',
+          'EVIDENCE',
           'NARRATIVE',
           'VARIANCE_EXPLANATION',
           'RECOVERY_ACTION',
@@ -214,6 +245,12 @@ describe('Reporting cycle (e2e)', () => {
     });
 
     it('goes in once complete, clearing the overdue flag', async () => {
+      const claimed = lines.filter((l) => !l.locked)[0]!;
+      await uploadEvidence(
+        AISHA,
+        claimed.milestoneId,
+        'Configuration sign-off.pdf',
+      );
       const response = await call(
         AISHA,
         'post',

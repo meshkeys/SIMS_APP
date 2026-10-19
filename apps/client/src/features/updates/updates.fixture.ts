@@ -1,4 +1,4 @@
-import type { MyUpdates, UpdateForm } from '@sims/contracts';
+import type { DocumentView, MyUpdates, UpdateForm } from '@sims/contracts';
 
 const id = (n: number) =>
   `0192a1b2-c3d4-7e5f-8a9b-${String(n).padStart(12, '0')}`;
@@ -39,6 +39,22 @@ export const MY_UPDATES: MyUpdates = {
       submittedAt: null,
     },
   ],
+};
+
+/** Evidence already uploaded for Technology development this period. */
+export const SPRINT_REPORT: DocumentView = {
+  id: id(150),
+  fileName: 'Sprint 14 report.pdf',
+  mimeType: 'application/pdf',
+  sizeBytes: 230_874,
+  uploadedBy: {
+    membershipId: id(151),
+    name: 'Kemi Adeyemi',
+    jobTitle: 'Product Manager',
+  },
+  uploadedAt: '2026-10-11T08:30:00.000Z',
+  reviewed: false,
+  can: { delete: true },
 };
 
 const line = (
@@ -104,7 +120,10 @@ export const FORM: UpdateForm = {
   },
   lines: [
     line(1, 'Business case approved', 20, 100, { locked: true, claimed: 100 }),
-    line(2, 'Technology development', 40, 75, { evidenceCount: 1 }),
+    line(2, 'Technology development', 40, 75, {
+      evidenceCount: 1,
+      evidence: [SPRINT_REPORT],
+    }),
     line(3, 'Testing and deployment', 25, 30),
     line(4, 'Commercial launch', 15, 0, { evidenceRequired: false }),
   ],

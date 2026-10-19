@@ -255,6 +255,10 @@ From `GET /my-updates` and `GET`/`PUT /periods/:periodId/updates/:initiativeId`
   (completed milestones locked at 100%), evidence ("1 file uploaded", "Upload required",
   "Not required"); calculated completion, planned today, variance and the calculated
   health from the last save.
+- **Evidence** per milestone: this period's files (select one to download), **Upload**
+  (PDF, images, Office files, CSV or text; the server checks type and content) and
+  **Remove** until the Strategy Office has reviewed it. Uploading refreshes the counts and
+  the checklist at once, and keeps whatever has been typed but not yet saved.
 - **2 · Commentary:** progress this period, variance explanation, recovery action (required
   when more than the organisation's Green threshold behind — a warning says so), planned
   for next period.
@@ -263,7 +267,8 @@ From `GET /my-updates` and `GET`/`PUT /periods/:periodId/updates/:initiativeId`
 - **Before you submit:** the checklist, live as the owner types. It runs the **same code the
   server runs** (`evaluateUpdate` in `@sims/contracts`), with the organisation's threshold
   returned in the form, so the screen and the server can never disagree.
-- **Save draft** at any time; **Submit for review** once the checklist is complete. A
+- **Save draft** at any time; **Submit for review** once the checklist is complete,
+  including evidence for every claim above last month's verified figure. A
   warning appears before leaving the page with unsaved changes.
 - **States:** submitted (read-only, waiting for verification), challenged (the challenge
   shown, editable again), verified (waiting for the sponsor), approved, period locked.
@@ -281,7 +286,8 @@ the MD/CEO. The stage and the open update are in the URL (`?stage=…&initiative
   sponsors on what waits for them. Sponsors see only initiatives they sponsor (or own).
 - **Queue:** initiative, owner, status, claimed (red when below plan), planned, verified,
   missing evidence and when it was submitted, oldest first; **Review** opens it below.
-- **Review panel:** the owner's claims beside the last verified figures and evidence;
+- **Review panel:** the owner's claims beside the last verified figures and the evidence
+  files (select one to download; "Missing" where it is needed and absent);
   the owner's commentary, management-decision flag and open risks; the conversation.
   - **Strategy Office:** enters verified completion per milestone (starts at the claim;
     the verified completion recalculates live) and **Verifies**, or **Challenges** with a
