@@ -23,6 +23,7 @@ export const registerSearchSchema = z.object({
   health: z.enum(Health).optional().catch(undefined),
   q: z.string().trim().max(100).optional().catch(undefined),
   elementId: z.uuid().optional().catch(undefined),
+  departmentId: z.uuid().optional().catch(undefined),
   sort: z
     .enum(Object.keys(SORTS) as [keyof typeof SORTS, ...(keyof typeof SORTS)[]])
     .optional()

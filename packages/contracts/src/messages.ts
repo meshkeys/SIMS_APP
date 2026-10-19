@@ -14,7 +14,10 @@ export const friendlyErrors: z.core.$ZodErrorMap = (issue) => {
         : undefined;
     case 'too_small':
       if (issue.origin === 'string') {
-        return Number(issue.minimum) <= 1
+        // An empty field is "Required", whatever its minimum length.
+        const empty =
+          typeof issue.input === 'string' && issue.input.trim() === '';
+        return Number(issue.minimum) <= 1 || empty
           ? 'Required'
           : `Use at least ${issue.minimum} characters`;
       }

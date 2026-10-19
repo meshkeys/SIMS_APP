@@ -139,6 +139,7 @@ bookmarked or shared, and the dashboard's tiles open it pre-filtered
 | Tabs: Active · Pipeline (awaiting approval) · Closed (benefits tracking) · Cancelled | `tab` | With counts; switching tab clears the health filter |
 | Search by name, ID or owner | `q` | Applied after a 300 ms pause; replaces the history entry instead of adding one per keystroke |
 | Pillar (the plan's own top-level label) | `elementId` | Includes everything under the pillar |
+| Department | `departmentId` | From `GET /departments` |
 | Health chips: All · Delayed · At risk · On track (· Unknown when any) | `health` | Counts within the current tab; press again to clear |
 | Sort: health then due date · due date · latest due · furthest behind · ID | `sort` | |
 | Previous / Next, "Page 1 of 4" | `page` | Any other change returns to page 1 |
@@ -149,7 +150,32 @@ with the planned tick and "−9 pp vs plan", health (and "Overridden"), impact s
 "% of target" or "Not yet measurable", and last update ("overdue" in red). The table scrolls
 sideways on narrow screens. Loading shows skeleton rows; no matches offers **Clear filters**.
 
-Not yet on the register (they need endpoints from later slices): the **department** filter
-(needs a departments list), **Propose initiative** (needs a people picker for owner and
-sponsor) and **Export to Excel** (reports slice).
+**Export to Excel** downloads exactly the current view — every page, same filters, order
+and visibility (chapter 13.2.1) — with the same sign-in handling as other calls.
+**Propose initiative** is shown to the roles allowed to propose; after proposing, the
+register opens on the Pipeline tab with a confirmation ("REV-009 · … was submitted to the
+Strategy Office for approval").
+
+### Propose initiative (`/initiatives/new`)
+
+One page in four numbered sections, validated with the contract's `createInitiativeSchema`
+(the server's own rules), with a "What happens next" panel:
+
+1. **Details** — title, description, business case, scope, priority (1 highest), optional
+   code (suggested from the primary objective otherwise), and **Restricted**.
+2. **Strategic fit** — one or more objectives (grouped under their pillar) with weights;
+   one is marked **primary** (it decides the pillar and the suggested code).
+3. **People** — owner (empty = the proposer, unless Strategy Office), executive sponsor
+   (only people with that role are offered), benefits owner, department.
+4. **Baseline and budget** — start, end and budget in the organisation's currency; locked
+   at activation, changed afterwards only through a change request.
+
+**Save draft** or **Submit proposal**. Blank optional fields are sent as "not given",
+never as empty text. Errors from the server land on their fields (e.g. a code already
+taken appears under Code).
+
+**People picker** (`components/ui/people-picker.tsx`): type to search the directory
+(`GET /members`) by name, email or job title; choose with mouse or keyboard (↑ ↓ Enter,
+Esc); shows job title and department; can be limited to a role; clearable. Built on
+Downshift's accessible combobox, and reused wherever someone is assigned.
 

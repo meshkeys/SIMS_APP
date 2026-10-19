@@ -35,8 +35,8 @@ with its tests and documentation.
 | 16 | Strategy map screen; dashboard sidebar cycle widget and legend | Done |
 | 17 | Initiative register screen | Done |
 | 18a | API: people directory (search members by name, role, department), departments list, register export to Excel (same filters and visibility as the register) | Done |
-| 18b | Web app: department filter, **Propose initiative** (guided form: details → objectives and weights → people → baseline and budget, with a reusable people picker), **Export to Excel** | Next |
-| 19 | Initiative detail screen | Planned |
+| 18b | Web app: department filter, **Propose initiative** (guided form: details → objectives and weights → people → baseline and budget, with a reusable people picker), **Export to Excel** | Done |
+| 19 | Initiative detail screen | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

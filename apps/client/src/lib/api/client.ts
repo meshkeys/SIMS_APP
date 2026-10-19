@@ -134,6 +134,32 @@ export function setSignedOutHandler(handler: () => void): void {
  * result are all typed from `@sims/contracts`; an expired access token is
  * renewed once, transparently.
  */
+/**
+ * Sends a request with the access token, renewing it once if it expired.
+ * Resolves only for success; any error answer becomes an ApiError.
+ */
+async function call(
+  route: ApiRoute,
+  url: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const needsAuth = route.access !== 'public';
+  if (needsAuth && currentToken() && tokenExpiring()) await refreshSession();
+
+  let response = await send(route, url, body, signal);
+  if (response.status === 401 && needsAuth) {
+    const renewed = await refreshSession();
+    if (!renewed) {
+      onSignedOut();
+      throw await toApiError(response);
+    }
+    response = await send(route, url, body, signal);
+  }
+  if (!response.ok) throw await toApiError(response);
+  return response;
+}
+
 type RequestOptions = { signal?: AbortSignal };
 type RequestArgs<Id extends OperationId> = Id extends NoInputOperation
   ? [input?: ApiInput<Id>, options?: RequestOptions]
@@ -153,20 +179,7 @@ export async function request<Id extends OperationId>(
     input.params,
     input.query as Record<string, unknown> | undefined,
   );
-  const needsAuth = route.access !== 'public';
-
-  if (needsAuth && currentToken() && tokenExpiring()) await refreshSession();
-
-  let response = await send(route, url, input.body, options.signal);
-  if (response.status === 401 && needsAuth) {
-    const renewed = await refreshSession();
-    if (!renewed) {
-      onSignedOut();
-      throw await toApiError(response);
-    }
-    response = await send(route, url, input.body, options.signal);
-  }
-  if (!response.ok) throw await toApiError(response);
+  const response = await call(route, url, input.body, options.signal);
   if (response.status === 204 || route.response === null)
     return undefined as ApiResult<Id>;
 
@@ -182,4 +195,35 @@ export async function request<Id extends OperationId>(
     }
   }
   return data as ApiResult<Id>;
+}
+
+/** File-download operations (e.g. the Excel export). */
+type DownloadOperation = {
+  [Id in OperationId]: (typeof API_ROUTES)[Id] extends { produces: string }
+    ? Id
+    : never;
+}[OperationId];
+
+/**
+ * Downloads a file from the API (with the same sign-in handling as JSON
+ * calls) and returns it with the file name the server chose.
+ */
+export async function download<Id extends DownloadOperation>(
+  id: Id,
+  ...args: RequestArgs<Id>
+): Promise<{ blob: Blob; fileName: string }> {
+  const [input = {}, options = {}] = args as [
+    { params?: Record<string, string>; query?: object }?,
+    RequestOptions?,
+  ];
+  const route = API_ROUTES[id] as ApiRoute;
+  const url = buildUrl(
+    route,
+    input.params,
+    input.query as Record<string, unknown> | undefined,
+  );
+  const response = await call(route, url, undefined, options.signal);
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const fileName = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'download';
+  return { blob: await response.blob(), fileName };
 }

@@ -4,21 +4,59 @@ import userEvent from '@testing-library/user-event';
 import { App } from '@/app';
 import { setSession } from '@/lib/api/session-token';
 import { axeViolations } from '@/test/axe';
-import { fakeApi, json } from '@/test/fake-api';
+import { fakeApi, json, SESSION } from '@/test/fake-api';
 import { STRATEGY_MAP } from '../dashboard/dashboard.fixture';
 import { ITEMS, page } from './register.fixture';
 
 /** Renders the register; `respond` decides the page for each query. */
+const saveFile = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/save-file', () => ({ saveFile }));
+
+const DEPARTMENT = '0192a1b2-c3d4-7e5f-8a9b-000000000601';
+
 function renderRegister(
   path = '/initiatives',
   respond: (query: URLSearchParams) => RegisterPage = (query) =>
     page(ITEMS, { page: Number(query.get('page') ?? 1) }),
+  options: { roles?: (typeof SESSION.session.membership.roles)[number][] } = {},
 ) {
   window.history.replaceState(null, '', path);
   const queries: URLSearchParams[] = [];
+  const exports: URLSearchParams[] = [];
   const api = fakeApi({
     signedIn: true,
+    session: options.roles
+      ? {
+          ...SESSION,
+          session: {
+            ...SESSION.session,
+            membership: { ...SESSION.session.membership, roles: options.roles },
+          },
+        }
+      : undefined,
     routes: {
+      'GET /api/v1/initiatives/export': (_init, url) => {
+        exports.push(url.searchParams);
+        return new Response(new Blob(['xlsx-bytes']), {
+          status: 200,
+          headers: {
+            'Content-Type':
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition':
+              'attachment; filename="initiative-register-2026-10-19.xlsx"',
+          },
+        });
+      },
+      'GET /api/v1/departments': () =>
+        json(200, [
+          {
+            id: DEPARTMENT,
+            name: 'Digital Business',
+            code: null,
+            parentId: null,
+            memberCount: 3,
+          },
+        ]),
       'GET /api/v1/initiatives': (_init, url) => {
         queries.push(url.searchParams);
         return json(200, respond(url.searchParams));
@@ -27,7 +65,7 @@ function renderRegister(
     },
   });
   const last = () => queries.at(-1)!;
-  return { ...api, last, ...render(<App />), user: userEvent.setup() };
+  return { ...api, last, exports, ...render(<App />), user: userEvent.setup() };
 }
 
 beforeEach(() => setSession(null));
@@ -183,5 +221,50 @@ describe('Initiative register', () => {
     );
     await screen.findByRole('table');
     expect(last().toString()).toBe('tab=active&sort=health&page=1&pageSize=10');
+  });
+
+  it('filters by department', async () => {
+    const { user, last } = renderRegister();
+    const select = await screen.findByRole('combobox', { name: 'Department' });
+    await screen.findByRole('option', { name: 'Digital Business' });
+    await user.selectOptions(select, 'Digital Business');
+    await waitFor(() => expect(last().get('departmentId')).toBe(DEPARTMENT));
+    expect(window.location.search).toBe(`?departmentId=${DEPARTMENT}`);
+  });
+
+  it('exports exactly the current view to Excel', async () => {
+    saveFile.mockClear();
+    const { user, exports } = renderRegister(
+      '/initiatives?health=RED&sort=code&page=2',
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Export to Excel' }),
+    );
+
+    await waitFor(() => expect(saveFile).toHaveBeenCalledTimes(1));
+    expect(saveFile.mock.calls[0]![1]).toBe(
+      'initiative-register-2026-10-19.xlsx',
+    );
+    expect(saveFile.mock.calls[0]![0]).toBeInstanceOf(Blob);
+    // Every page of the filtered view: no page number is sent.
+    expect(exports[0]!.toString()).toBe('tab=active&sort=code&health=RED');
+  });
+
+  it('offers Propose initiative only to people who may propose', async () => {
+    renderRegister();
+    expect(
+      await screen.findByRole('link', { name: 'Propose initiative' }),
+    ).toHaveAttribute('href', '/initiatives/new');
+  });
+
+  it('hides Propose initiative from people who may not propose', async () => {
+    renderRegister('/initiatives', undefined, { roles: ['TASK_OWNER'] });
+    await screen.findByRole('table');
+    expect(
+      screen.queryByRole('link', { name: 'Propose initiative' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Export to Excel' }),
+    ).toBeVisible();
   });
 });

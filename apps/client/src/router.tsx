@@ -101,6 +101,15 @@ const initiativesRoute = createRoute({
   ),
 });
 
+const proposeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/initiatives/new',
+  component: lazyRouteComponent(
+    () => import('@/features/initiatives/propose-page'),
+    'ProposePage',
+  ),
+});
+
 const initiativeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/initiatives/$id',
@@ -113,6 +122,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute,
     strategyRoute,
     initiativesRoute,
+    proposeRoute,
     initiativeRoute,
     screen('/performance', 'KPIs & benefits realisation', 'Performance'),
     screen('/risks', 'Risks & escalations'),
@@ -132,6 +142,10 @@ export function createAppRouter(auth: Auth) {
 }
 
 declare module '@tanstack/react-router' {
+  /** A one-off message for the next page, e.g. "DIG-016 was submitted". */
+  interface HistoryState {
+    notice?: string;
+  }
   interface Register {
     router: ReturnType<typeof createAppRouter>;
   }

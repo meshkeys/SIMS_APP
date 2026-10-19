@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Propose initiative, department filter, export (slice 18b)
+- **Propose initiative** page: details, strategic fit (objectives with weights and a
+  primary), people, baseline and budget; save as draft or submit; server errors shown on
+  their fields; confirmation on the register's Pipeline tab.
+- Reusable, accessible **people picker** (searches the directory; optional role filter).
+- Register: **department** filter, **Export to Excel** of the current view, **Propose
+  initiative** button for the roles allowed to propose.
+- API client: file downloads with the same sign-in and refresh handling as JSON calls.
+- Validation: an empty field now reads "Required" even when its minimum is longer.
+
 ## 2026-10-19 — People, departments and register export (slice 18a)
 - `GET /members`: people directory for pickers — active members by name, searchable by
   name, email or job title, filterable by role and department, paged.

@@ -3,9 +3,16 @@ import type {
   RegisterItem,
   RegisterPage as Page,
 } from '@sims/contracts';
-import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
-import { Search, X } from 'lucide-react';
+import { PROPOSER_ROLES } from '@sims/contracts';
+import {
+  getRouteApi,
+  Link,
+  useNavigate,
+  useRouterState,
+} from '@tanstack/react-router';
+import { Download, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Alert } from '@/components/ui/alert';
 import { HealthBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,7 +20,11 @@ import { Input, Select } from '@/components/ui/form';
 import { Meter } from '@/components/ui/meter';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/states';
+import { hasAnyRole } from '@/lib/access';
+import { download } from '@/lib/api/client';
+import { errorMessage } from '@/lib/api/errors';
 import { useApiQuery } from '@/lib/api/query';
+import { saveFile } from '@/lib/save-file';
 import { cn } from '@/lib/cn';
 import { useSession } from '@/auth/use-auth';
 import {
@@ -43,6 +54,17 @@ export function RegisterPage() {
   const search = route.useSearch();
   const navigate = useNavigate();
   const tab = search.tab ?? 'active';
+  const session = useSession();
+  const canPropose = hasAnyRole(session, PROPOSER_ROLES);
+  // "DIG-016 was submitted…", handed over by the propose page.
+  const notice = useRouterState({ select: (s) => s.location.state.notice });
+  const dismissNotice = () =>
+    void navigate({
+      to: '/initiatives',
+      search: (previous) => previous,
+      state: {},
+      replace: true,
+    });
   const sort = search.sort ?? 'health';
 
   /** Changes filters; any change but paging goes back to page 1. */
@@ -65,6 +87,7 @@ export function RegisterPage() {
         health: search.health,
         q: search.q,
         elementId: search.elementId,
+        departmentId: search.departmentId,
         page: search.page ?? 1,
         pageSize: PAGE_SIZE,
       },
@@ -77,7 +100,32 @@ export function RegisterPage() {
       <PageHeader
         eyebrow="Initiatives · Approved portfolio"
         title="Initiative register"
+        actions={
+          <>
+            <ExportButton search={search} tab={tab} sort={sort} />
+            {canPropose && (
+              <Button asChild>
+                <Link to="/initiatives/new">Propose initiative</Link>
+              </Button>
+            )}
+          </>
+        }
       />
+
+      {notice && (
+        <Alert tone="success">
+          <span className="flex items-start justify-between gap-3">
+            {notice}
+            <button
+              type="button"
+              onClick={dismissNotice}
+              className="shrink-0 underline underline-offset-4"
+            >
+              Dismiss
+            </button>
+          </span>
+        </Alert>
+      )}
 
       {register.data && (
         <Tabs
@@ -113,9 +161,21 @@ export function RegisterPage() {
           />
         ) : register.data.items.length === 0 ? (
           <NoResults
-            filtered={!!(search.q || search.health || search.elementId)}
+            filtered={
+              !!(
+                search.q ||
+                search.health ||
+                search.elementId ||
+                search.departmentId
+              )
+            }
             onClear={() =>
-              update({ q: undefined, health: undefined, elementId: undefined })
+              update({
+                q: undefined,
+                health: undefined,
+                elementId: undefined,
+                departmentId: undefined,
+              })
             }
           />
         ) : (
@@ -186,6 +246,7 @@ function Filters({
   const map = useApiQuery('getCurrentStrategyMap', {});
   const pillars = map.data?.elements.filter((e) => e.parentId === null) ?? [];
   const pillarLabel = map.data?.levels[0];
+  const departments = useApiQuery('listDepartments', {});
 
   // Typing updates the URL after a short pause, without filling the history.
   const [text, setText] = useState(search.q ?? '');
@@ -237,6 +298,23 @@ function Filters({
           {pillars.map((p) => (
             <option key={p.id} value={p.id}>
               {p.title}
+            </option>
+          ))}
+        </Select>
+      </label>
+      <label className="flex items-center gap-2 text-sm text-ink-muted md:w-64">
+        <span className="shrink-0">Department</span>
+        <Select
+          value={search.departmentId ?? ''}
+          disabled={!departments.data}
+          onChange={(event) =>
+            onChange({ departmentId: event.target.value || undefined })
+          }
+        >
+          <option value="">All</option>
+          {(departments.data ?? []).map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
             </option>
           ))}
         </Select>
@@ -544,6 +622,58 @@ function TableSkeleton() {
       {Array.from({ length: 6 }, (_, i) => (
         <Skeleton key={i} className="h-12" />
       ))}
+    </div>
+  );
+}
+
+/** Downloads the register as shown (every page) as an Excel workbook. */
+function ExportButton({
+  search,
+  tab,
+  sort,
+}: {
+  search: RegisterSearch;
+  tab: NonNullable<RegisterSearch['tab']>;
+  sort: keyof typeof SORTS;
+}) {
+  const [state, setState] = useState<{ busy: boolean; error: string | null }>({
+    busy: false,
+    error: null,
+  });
+  const run = async () => {
+    setState({ busy: true, error: null });
+    try {
+      const file = await download('exportInitiatives', {
+        query: {
+          tab,
+          sort,
+          health: search.health,
+          q: search.q,
+          elementId: search.elementId,
+          departmentId: search.departmentId,
+        },
+      });
+      saveFile(file.blob, file.fileName);
+      setState({ busy: false, error: null });
+    } catch (error) {
+      setState({ busy: false, error: errorMessage(error) });
+    }
+  };
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Button
+        variant="secondary"
+        loading={state.busy}
+        onClick={() => void run()}
+      >
+        {!state.busy && <Download aria-hidden="true" />}
+        Export to Excel
+      </Button>
+      {state.error && (
+        <p role="alert" className="text-xs text-danger">
+          Export failed: {state.error}
+        </p>
+      )}
     </div>
   );
 }
