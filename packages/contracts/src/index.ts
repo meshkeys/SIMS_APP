@@ -23,6 +23,7 @@ export * from './rulesets.js';
 export * from './ruleset-changes.js';
 export * from './rulesets-api.js';
 export * from './admin.js';
+export * from './onboarding.js';
 export * from './dashboard.js';
 export * from './performance.js';
 export * from './update-checklist.js';

@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Workspace set-up API (slice 26a)
+- **Set-up progress:** where set-up stands, with what each step needs, so the wizard
+  resumes where it stopped.
+- **One save per step:** organisation (with the financial year), strategy framework
+  (template, levels, terminology; the first save creates the plan), vision and plan
+  period, and the starting rules, applied directly while setting up.
+- **Finish set-up:** the workspace becomes active; set-up steps close afterwards.
+- **Custom fields:** add and remove extra fields such as "Budget code" on initiatives.
+
 ## 2026-10-19 — Administration screens: people, departments, organisation, audit (slice 25b)
 - **Sections by role:** Administration now shows each person only what their roles allow;
   internal audit sees the audit log.

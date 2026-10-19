@@ -82,6 +82,16 @@ import {
   updateOrganisationSchema,
 } from './admin.js';
 import {
+  createCustomFieldSchema,
+  customFieldSchema,
+  ONBOARDING_ROLES,
+  onboardingFrameworkSchema,
+  onboardingGovernanceSchema,
+  onboardingOrganisationSchema,
+  onboardingStateSchema,
+  onboardingVisionSchema,
+} from './onboarding.js';
+import {
   proposeRulesetSchema,
   rulesetImpactSchema,
   rulesetPreviewSchema,
@@ -191,6 +201,7 @@ const TAGS = {
   reports: 'Reports and board packs',
   rulesets: 'Rules (rulesets)',
   admin: 'Administration',
+  onboarding: 'Workspace set-up',
   dashboard: 'Dashboard',
   performance: 'Performance and benefits',
 } as const;
@@ -1053,6 +1064,106 @@ export const API_ROUTES = {
     query: auditQuerySchema,
     status: 200,
     response: auditPageSchema,
+  }),
+
+  // ---------------------------------------------------------- onboarding
+  getOnboarding: route({
+    method: 'get',
+    path: '/onboarding',
+    tag: TAGS.onboarding,
+    summary: 'Where workspace set-up stands, with everything each step shows',
+    access: ONBOARDING_ROLES,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+  saveOnboardingOrganisation: route({
+    method: 'put',
+    path: '/onboarding/organisation',
+    tag: TAGS.onboarding,
+    summary:
+      'Step 1: name, sector, country, currency, time zone, financial year',
+    description: 'Set-up only: once finished, `409 ONBOARDING_FINISHED`.',
+    access: ONBOARDING_ROLES,
+    body: onboardingOrganisationSchema,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+  saveOnboardingFramework: route({
+    method: 'put',
+    path: '/onboarding/framework',
+    tag: TAGS.onboarding,
+    summary: 'Step 2: starting framework, strategy levels and terminology',
+    description:
+      'Creates the first plan on first save. Choosing another framework later replaces the levels, unless KPIs or initiatives already use them (`409 FRAMEWORK_IN_USE`).',
+    access: ONBOARDING_ROLES,
+    body: onboardingFrameworkSchema,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+  saveOnboardingVision: route({
+    method: 'put',
+    path: '/onboarding/vision',
+    tag: TAGS.onboarding,
+    summary: 'Step 3: plan period, vision, mission, values and aspiration',
+    access: ONBOARDING_ROLES,
+    body: onboardingVisionSchema,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+  saveOnboardingGovernance: route({
+    method: 'put',
+    path: '/onboarding/governance',
+    tag: TAGS.onboarding,
+    summary: 'Step 4: the starting rules (RAG, cycles, escalation)',
+    description:
+      'Applied directly to the starting ruleset, since there is no MD/CEO to approve yet. After set-up, rule changes follow maker-checker.',
+    access: ONBOARDING_ROLES,
+    body: onboardingGovernanceSchema,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+  completeOnboarding: route({
+    method: 'post',
+    path: '/onboarding/complete',
+    tag: TAGS.onboarding,
+    summary: 'Finish set-up: the workspace becomes active',
+    description:
+      'Needs the framework step saved (`409 SETUP_INCOMPLETE`). Signed-in people see the change at their next session refresh.',
+    access: ONBOARDING_ROLES,
+    status: 200,
+    response: onboardingStateSchema,
+  }),
+
+  // ---------------------------------------------------------- custom fields
+  listCustomFields: route({
+    method: 'get',
+    path: '/custom-fields',
+    tag: TAGS.onboarding,
+    summary: 'The organisation’s extra fields, by record type and order',
+    access: 'member',
+    status: 200,
+    response: z.array(customFieldSchema),
+  }),
+  createCustomField: route({
+    method: 'post',
+    path: '/custom-fields',
+    tag: TAGS.onboarding,
+    summary: 'Add an extra field, e.g. "Budget code" on initiatives',
+    description:
+      'The label must be unique per record type (`409 FIELD_EXISTS`).',
+    access: ONBOARDING_ROLES,
+    body: createCustomFieldSchema,
+    status: 201,
+    response: customFieldSchema,
+  }),
+  deleteCustomField: route({
+    method: 'delete',
+    path: '/custom-fields/{id}',
+    tag: TAGS.onboarding,
+    summary: 'Remove an extra field (values already saved stay in history)',
+    access: ONBOARDING_ROLES,
+    status: 204,
+    response: null,
   }),
 
   // ---------------------------------------------------------- rulesets

@@ -20,6 +20,7 @@ import {
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
 import { DeliveryModule } from './modules/delivery/delivery.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { PeopleModule } from './modules/people/people.module.js';
@@ -56,6 +57,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     DocumentsModule,
     ReportsModule,
     AdminModule,
+    OnboardingModule,
     PeopleModule,
   ],
   providers: [

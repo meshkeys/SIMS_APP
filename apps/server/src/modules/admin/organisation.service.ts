@@ -19,6 +19,34 @@ const DEFAULT_TERMS = {
   task: 'Task',
 };
 
+/** Time zones must be IANA names and currencies ISO 4217 codes the runtime knows. */
+export function assertLocale(input: {
+  timezone?: string;
+  currency?: string;
+}): void {
+  const errors = [
+    input.timezone !== undefined &&
+      !TIME_ZONES.has(input.timezone) && {
+        path: 'timezone',
+        message: 'Choose a time zone such as Africa/Lagos',
+        code: 'custom',
+      },
+    input.currency !== undefined &&
+      !CURRENCIES.has(input.currency) && {
+        path: 'currency',
+        message: 'Choose a currency code such as NGN or USD',
+        code: 'custom',
+      },
+  ].filter(Boolean);
+  if (errors.length) {
+    throw new BadRequestException({
+      code: 'VALIDATION_FAILED',
+      message: 'Some fields are missing or invalid.',
+      errors,
+    });
+  }
+}
+
 /**
  * The organisation's own settings. Currency and time zone change how
  * figures and deadlines are shown; dates already stored never move.
@@ -51,27 +79,7 @@ export class OrganisationService {
   }
 
   async update(input: UpdateOrganisationInput): Promise<OrganisationSettings> {
-    const errors = [
-      input.timezone !== undefined &&
-        !TIME_ZONES.has(input.timezone) && {
-          path: 'timezone',
-          message: 'Choose a time zone such as Africa/Lagos',
-          code: 'custom',
-        },
-      input.currency !== undefined &&
-        !CURRENCIES.has(input.currency) && {
-          path: 'currency',
-          message: 'Choose a currency code such as NGN or USD',
-          code: 'custom',
-        },
-    ].filter(Boolean);
-    if (errors.length) {
-      throw new BadRequestException({
-        code: 'VALIDATION_FAILED',
-        message: 'Some fields are missing or invalid.',
-        errors,
-      });
-    }
+    assertLocale(input);
     const before = await this.get();
     await this.db.transaction(async (tx) => {
       await tx.organisation.update({

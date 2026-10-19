@@ -53,6 +53,7 @@ import {
   memberAdminSchema,
   organisationSettingsSchema,
 } from './admin.js';
+import { customFieldSchema, onboardingStateSchema } from './onboarding.js';
 import {
   rulesetImpactSchema,
   rulesetsOverviewSchema,
@@ -164,6 +165,8 @@ const named: [string, z.ZodType][] = [
   ['OrganisationSettings', organisationSettingsSchema],
   ['AuditEvent', auditEventSchema],
   ['AuditPage', auditPageSchema],
+  ['OnboardingState', onboardingStateSchema],
+  ['CustomField', customFieldSchema],
   ['RulesetView', rulesetViewSchema],
   ['RulesetsOverview', rulesetsOverviewSchema],
   ['RulesetImpact', rulesetImpactSchema],

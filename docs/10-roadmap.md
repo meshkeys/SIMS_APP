@@ -52,7 +52,9 @@ with its tests and documentation.
 | 24 | Administration screen, rules (wireframe page 10): RAG & health rules with impact preview, escalation rules, reporting cycles, rule versions, proposals | Done |
 | 25a | Administration API: members (roles, details, deactivate/reactivate with last-admin protection), departments (create, rename, nest, delete empty), organisation settings, audit log | Done |
 | 25b | Administration screens: users and roles (with invitations), departments, organisation, audit log; sections shown by role | Done |
-| 26 | Workspace onboarding (wireframe page 11) | Next |
+| 26a | Workspace set-up API (wireframe page 11): progress and resume, one save per step, framework and terminology, starting rules applied directly, finish; custom field definitions | Done |
+| 26b | Sign-up and invitation acceptance screens | Next |
+| 26c | Workspace set-up wizard screen (wireframe page 11) | Planned |
 | 20+ | Remaining work: benefits management and benefits review (9b), scheduled jobs and notifications (11) | Planned |
 
 ## 10.3 Known follow-ups

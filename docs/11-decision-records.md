@@ -566,3 +566,21 @@ validates exactly as the server does.
 changes. Approval of a large portfolio's rules does its recalculation inside the decision's
 transaction; if that becomes slow it can move to a background job behind a "recalculating"
 state.
+
+## ADR-032 — Starting rules are set directly during workspace set-up
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** After set-up, rule changes are proposed by the Strategy Office and approved by
+the MD/CEO (ADR-031). During set-up the founder is usually the only member, there is no
+MD/CEO to approve, and nothing is measured yet, so a proposal could never be decided and
+would protect nothing.
+
+**Decision.** While the organisation is `ONBOARDING`, the governance step rewrites the
+starting ruleset (version 1) in place, with an audit event listing the changes. Every set-up
+write is refused once set-up is finished (`409 ONBOARDING_FINISHED`), so this path cannot be
+used to bypass maker-checker later.
+
+**Consequences.** New workspaces start with the rules they chose, as version 1, and the rule
+history begins clean. An organisation that finishes set-up and then changes its mind uses
+the normal proposal and approval route.

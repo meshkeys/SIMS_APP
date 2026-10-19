@@ -14,5 +14,6 @@ import { OrganisationService } from './organisation.service.js';
     OrganisationService,
     AuditLogService,
   ],
+  exports: [OrganisationService],
 })
 export class AdminModule {}
