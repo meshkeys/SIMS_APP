@@ -290,3 +290,40 @@ the MD/CEO. The stage and the open update are in the URL (`?stage=…&initiative
   - An optional note is recorded with verify and approve. Every button follows the
     server's `can` for this person and this update.
 
+### KPIs & benefits realisation (`/performance`)
+
+"Performance & benefits" in the sidebar, for everyone. The year is in the URL (`?year=2025`);
+the period picker lists the plan's years, the current one as "FY2026 YTD".
+
+- **Headline figures:** benefits expected in the year (approved business cases), realised to
+  date with the % of the year-to-date expectation, KPIs on trajectory ("9 / 18", with the
+  number off trajectory), and how many delivered initiatives need a benefits review.
+- **Expected vs realised benefits:** bars per quarter in millions of the organisation's
+  currency: expected (grey), realised (ochre), and the re-forecast as a dashed outline for
+  the quarter still running. The sentence under it is worked out from the quarters that have
+  ended: "Realisation is falling behind from Q3: 57% … against 87% in Q1" when the capture
+  rate drops by 10 points or more. Screen readers get the summary and a table of the figures.
+- **Delivered, but not creating value** (highlighted): closed or on-plan initiatives whose
+  impact is below the organisation's threshold, with delivery %, the impact summary and a
+  link to review the business case. (The "Request benefits review" workflow is slice 9b.)
+- **Strategic KPI scorecard:** KPI, pillar, baseline, the year's target, latest verified
+  reading, a trend line of the last six readings (described in words for screen readers)
+  and the trajectory badge.
+- **Record KPI actuals** appears for the Strategy Office and KPI owners.
+
+### Record KPI actuals (`/performance/actuals`)
+
+One reporting period's readings; the period is in the URL (`?period=…`) and defaults to the
+cycle in progress.
+
+- The Strategy Office sees every KPI; an owner sees only the KPIs they own.
+- Each row shows the pillar, owner, the previous verified reading, the target due and the
+  status (not recorded · awaiting verification · verified). Readings and notes are typed in
+  place; **Save n readings** sends only the rows that changed. Entries are checked first
+  ("Enter a number, like 23.5"; a saved reading cannot be cleared) and errors are tied to
+  their inputs.
+- The Strategy Office verifies an owner's reading per row or with **Verify all**; verifying
+  waits until unsaved changes are saved.
+- A locked period is read-only, with a note saying so.
+- After saving or verifying, the page shows the server's new sheet at once and refreshes the
+  scorecard, dashboard and strategy map, whose figures may have moved.

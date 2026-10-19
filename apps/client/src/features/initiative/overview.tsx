@@ -11,7 +11,7 @@ import {
   formatInstantDay,
   formatPercent,
 } from '@/lib/format';
-import { HEALTH_DISPLAY } from '@/lib/health';
+import { HEALTH_DISPLAY, TRAJECTORY_DISPLAY } from '@/lib/health';
 import { ProgressChart } from './progress-chart';
 
 const SEVERITY_TONE = {
@@ -19,13 +19,6 @@ const SEVERITY_TONE = {
   HIGH: 'warning',
   MEDIUM: 'neutral',
   LOW: 'neutral',
-} as const;
-
-const TRAJECTORY_WORDS = {
-  ON_TRAJECTORY: 'On trajectory',
-  SLIGHTLY_BEHIND: 'Slightly behind',
-  OFF_TRAJECTORY: 'Off trajectory',
-  NOT_MEASURABLE: 'Not yet measurable',
 } as const;
 
 /** Execution against plan: verified progress, with the planned mark. */
@@ -100,7 +93,7 @@ export function ImpactCard({ initiative }: { initiative: InitiativeDetail }) {
           className="mt-3"
         />
         <p className="mt-2 text-sm text-impact-text">
-          {summary ?? TRAJECTORY_WORDS[trajectory]}
+          {summary ?? TRAJECTORY_DISPLAY[trajectory].label}
         </p>
       </CardBody>
     </Card>

@@ -1,4 +1,4 @@
-import type { Health } from '@sims/contracts';
+import type { Health, Trajectory } from '@sims/contracts';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 
@@ -16,4 +16,15 @@ export const OBJECTIVE_HEALTH_WORDS: Record<Health, string> = {
   AMBER: 'watch',
   RED: 'off track',
   UNKNOWN: 'not yet measured',
+};
+
+/** How a KPI's trajectory reads and looks (scorecards, initiative impact). */
+export const TRAJECTORY_DISPLAY: Record<
+  Trajectory,
+  { label: string; tone: Tone }
+> = {
+  ON_TRAJECTORY: { label: 'On trajectory', tone: 'success' },
+  SLIGHTLY_BEHIND: { label: 'Slightly behind', tone: 'warning' },
+  OFF_TRAJECTORY: { label: 'Off trajectory', tone: 'danger' },
+  NOT_MEASURABLE: { label: 'Not yet measurable', tone: 'neutral' },
 };

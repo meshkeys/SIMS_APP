@@ -96,15 +96,7 @@ export function formatKpiValue(value: number | null, unit: string): string {
   if (BARE_UNITS.has(unit)) return num(value);
   const currency = CURRENCY_SCALE.exec(unit);
   if (currency) {
-    const symbol =
-      new Intl.NumberFormat(LOCALE, {
-        style: 'currency',
-        currency: currency[1],
-        currencyDisplay: 'narrowSymbol',
-      })
-        .formatToParts(0)
-        .find((part) => part.type === 'currency')?.value ?? `${currency[1]} `;
-    return `${symbol}${num(value)}${currency[2] ?? ''}`;
+    return `${currencySymbol(currency[1]!)}${num(value)}${currency[2] ?? ''}`;
   }
   const scaled = /^(k|m|bn) (.+)$/.exec(unit);
   if (scaled) return `${num(value)}${scaled[1]} ${scaled[2]}`;
@@ -122,4 +114,17 @@ export function formatMoney(value: number | null, currency: string): string {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+/** "NGN" → "₦", "USD" → "$"; the code itself when there is no symbol. */
+export function currencySymbol(currency: string): string {
+  return (
+    new Intl.NumberFormat(LOCALE, {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'narrowSymbol',
+    })
+      .formatToParts(0)
+      .find((part) => part.type === 'currency')?.value ?? `${currency} `
+  );
 }

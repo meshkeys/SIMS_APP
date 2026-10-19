@@ -155,6 +155,29 @@ const initiativeRoute = createRoute({
   ),
 });
 
+const performanceRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/performance',
+  // The year on show is in the URL, so a view can be shared.
+  validateSearch: z.object({
+    year: z.coerce.number().int().optional().catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/performance/performance-page'),
+    'PerformancePage',
+  ),
+});
+
+const kpiActualsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/performance/actuals',
+  validateSearch: z.object({ period: z.uuid().optional().catch(undefined) }),
+  component: lazyRouteComponent(
+    () => import('@/features/performance/kpi-actuals-page'),
+    'KpiActualsPage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([
@@ -163,7 +186,8 @@ const routeTree = rootRoute.addChildren([
     initiativesRoute,
     proposeRoute,
     initiativeRoute,
-    screen('/performance', 'KPIs & benefits realisation', 'Performance'),
+    performanceRoute,
+    kpiActualsRoute,
     screen('/risks', 'Risks & escalations'),
     screen('/reports', 'Reports'),
     myUpdatesRoute,

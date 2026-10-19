@@ -2,6 +2,14 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — KPIs & benefits screen (slice 21)
+- **KPIs & benefits realisation** page: headline figures, expected vs realised benefits by
+  quarter with the forecast and a plain-language reading of the trend, delivered work that
+  is not creating value, and the strategic KPI scorecard with trend lines. Year picker in
+  the URL.
+- **Record KPI actuals** sheet: owners enter their own KPIs, the Strategy Office enters any
+  and verifies, with checks before saving; locked periods are read-only.
+
 ## 2026-10-19 — KPI actuals and performance API (slice 9a)
 - **KPI actuals** per reporting period: owners record their own KPIs, the Strategy Office
   records any KPI and verifies; locked periods are frozen.

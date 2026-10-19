@@ -42,8 +42,9 @@ with its tests and documentation.
 | 19c | Initiative detail: dependencies (with an initiative picker), **Request change** for active baselines, withdraw a pending request | Done |
 | 20a | Monthly progress update (owner): My updates, milestone claims, commentary, risks, live checklist, save and submit | Done |
 | 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Done |
-| 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Next |
-| 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
+| 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Done |
+| 8b + 22 | Escalation ladder automation and rulesets admin (API), then the Risks & escalations screen | Next |
+| 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups
 
