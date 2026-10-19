@@ -1,4 +1,4 @@
-import type { LoginInput, SessionView } from '@sims/contracts';
+import type { LoginInput, SessionResponse, SessionView } from '@sims/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   type ReactNode,
@@ -39,6 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(await request('login', { body: input }));
   }, []);
 
+  const startSession = useCallback(
+    (response: SessionResponse) => {
+      // Someone else may have been signed in on this browser.
+      queryClient.clear();
+      setSession(response);
+    },
+    [queryClient],
+  );
+
   const signOut = useCallback(async () => {
     try {
       await request('logout');
@@ -61,8 +70,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<Auth>(
-    () => ({ status, session, signIn, signOut, switchOrganisation }),
-    [status, session, signIn, signOut, switchOrganisation],
+    () => ({
+      status,
+      session,
+      signIn,
+      startSession,
+      signOut,
+      switchOrganisation,
+    }),
+    [status, session, signIn, startSession, signOut, switchOrganisation],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

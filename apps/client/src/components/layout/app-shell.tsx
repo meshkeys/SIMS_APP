@@ -5,7 +5,7 @@ import { Dialog, DropdownMenu, VisuallyHidden } from 'radix-ui';
 import { useState } from 'react';
 import { useAuth, useSession } from '@/auth/use-auth';
 import { Button } from '@/components/ui/button';
-import { Brand } from '@/features/auth/login-page';
+import { Brand } from '@/features/auth/auth-layout';
 import { hasAnyRole } from '@/lib/access';
 import { useApiQuery } from '@/lib/api/query';
 import { cn } from '@/lib/cn';

@@ -82,6 +82,26 @@ Each screen lives in `features/<screen>/` and loads on demand (its own small bun
 Formatting is shared (`lib/format.ts`): calendar dates are shown as written; deadlines and
 timestamps in the **organisation's** time zone, so everyone sees the same deadline.
 
+### Signed-out pages (`/login`, `/signup`, `/accept-invitation`)
+
+All three share one layout: the brand panel on wide screens and a single form column.
+
+- **Sign in** links to sign-up ("Set up a workspace for your organisation").
+- **Sign up** (`/signup`, signed-out only) creates an organisation's workspace and its
+  first administrator. *Your organisation:* name, optional workspace address, sector,
+  country, currency and time zone (the browser's own zone when known). *Your account:* name,
+  job title, work email and a password of at least 12 characters. Fields are checked with
+  the contract's sign-up schema before anything is sent. An email that already has an
+  account shows on the email field with a "Sign in instead" link; a taken address shows on
+  its field. Success signs the founder in.
+- **Accept an invitation** (`/accept-invitation?token=…`, where invitation emails link;
+  open whether signed in or not) looks the invitation up first and shows the organisation,
+  who invited them, their roles, job title and expiry. Someone new gives their name and a
+  password (12+ characters); someone who already uses SIMS gives their existing password,
+  and the workspace is added to their account. Signed in as someone else, a note says
+  accepting switches account. A missing, invalid, used, expired or closed link gets its own
+  explanation and a link to sign in. Success signs them into the organisation.
+
 ### Command Centre (`/`)
 
 One call to `GET /dashboard` (chapter 16) feeds every panel:

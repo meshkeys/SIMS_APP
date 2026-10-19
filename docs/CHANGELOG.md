@@ -2,6 +2,13 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Sign up and accept invitations (slice 26b)
+- **Sign up:** organisations create their own workspace from the sign-in page, with the
+  founder as administrator.
+- **Accept an invitation:** the link in invitation emails now opens a page that shows the
+  invitation and lets people join with a new account or their existing one, with clear
+  messages for used, expired or invalid links.
+
 ## 2026-10-19 — Workspace set-up API (slice 26a)
 - **Set-up progress:** where set-up stands, with what each step needs, so the wizard
   resumes where it stopped.

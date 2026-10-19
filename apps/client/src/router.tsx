@@ -42,6 +42,29 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signup',
+  beforeLoad: ({ context }) => {
+    if (context.auth.status === 'authenticated') throw redirect({ to: '/' });
+  },
+  component: lazyRouteComponent(
+    () => import('@/features/auth/signup-page'),
+    'SignupPage',
+  ),
+});
+
+/** Where invitation emails link. Open whether signed in or not. */
+const acceptInvitationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/accept-invitation',
+  validateSearch: z.object({ token: z.string().optional().catch(undefined) }),
+  component: lazyRouteComponent(
+    () => import('@/features/auth/accept-invitation-page'),
+    'AcceptInvitationPage',
+  ),
+});
+
 /** Everything behind sign-in shares the shell. */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -225,6 +248,8 @@ const adminRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  signupRoute,
+  acceptInvitationRoute,
   appRoute.addChildren([
     dashboardRoute,
     strategyRoute,

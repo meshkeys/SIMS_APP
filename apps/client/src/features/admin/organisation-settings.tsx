@@ -13,15 +13,13 @@ import { ErrorState, Skeleton } from '@/components/ui/states';
 import { ApiError, errorMessage } from '@/lib/api/errors';
 import { useApiMutation, useApiQuery } from '@/lib/api/query';
 import { hasAnyRole } from '@/lib/access';
-
-const MONTHS = Array.from({ length: 12 }, (_, i) =>
-  new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }).format(
-    new Date(Date.UTC(2026, i, 1)),
-  ),
-);
-const TIME_ZONES = Intl.supportedValuesOf('timeZone');
-const CURRENCIES = Intl.supportedValuesOf('currency');
-const currencyName = new Intl.DisplayNames(['en'], { type: 'currency' });
+import {
+  CURRENCIES,
+  currencyLabel,
+  MONTHS,
+  TIME_ZONES,
+  timeZoneLabel,
+} from '@/lib/locale-options';
 
 const TERMS = [
   { key: 'kpi', label: 'KPIs are called' },
@@ -189,7 +187,7 @@ function OrganisationForm({
                 >
                   {CURRENCIES.map((code) => (
                     <option key={code} value={code}>
-                      {code} · {currencyName.of(code)}
+                      {currencyLabel(code)}
                     </option>
                   ))}
                 </Select>
@@ -207,7 +205,7 @@ function OrganisationForm({
                   )}
                   {TIME_ZONES.map((zone) => (
                     <option key={zone} value={zone}>
-                      {zone.replaceAll('_', ' ')}
+                      {timeZoneLabel(zone)}
                     </option>
                   ))}
                 </Select>

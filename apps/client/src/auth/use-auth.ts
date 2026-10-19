@@ -1,4 +1,4 @@
-import type { LoginInput, SessionView } from '@sims/contracts';
+import type { LoginInput, SessionResponse, SessionView } from '@sims/contracts';
 import { createContext, useContext } from 'react';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
@@ -7,6 +7,8 @@ export interface Auth {
   status: AuthStatus;
   session: SessionView | null;
   signIn: (input: LoginInput) => Promise<void>;
+  /** Starts the session a sign-up or an accepted invitation returned. */
+  startSession: (response: SessionResponse) => void;
   signOut: () => Promise<void>;
   switchOrganisation: (organisationId: string) => Promise<void>;
 }
