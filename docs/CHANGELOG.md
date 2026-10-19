@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Report packs API (slice 12b)
+- **Locking a cycle now freezes everything packs need**: initiatives, the strategy tree
+  with its scores, KPIs, open decisions, escalations and the year's benefits.
+- **Templates and sections** (monthly management report, quarterly Board pack, pillar deep
+  dive) shared between the builder and the server.
+- **Preview** returns exactly what a pack will contain, with its page count; the Board sees
+  sensitive initiatives only as pillar totals.
+- **Request packs** in PDF, PowerPoint or Excel; repeats get the next version. **Issued
+  packs** list, with Board members seeing the Board's packs only.
+
 ## 2026-10-19 — Evidence on the update and review screens (slice 20c)
 - **Upload evidence** per milestone on the monthly update, see this period's files, download
   them and remove them until reviewed. Unsaved claims survive an upload.

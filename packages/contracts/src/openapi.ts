@@ -47,6 +47,12 @@ import {
 } from './kpis.js';
 import { documentViewSchema } from './documents.js';
 import {
+  packContentSchema,
+  packSectionSchema,
+  reportPackSchema,
+  reportSnapshotSchema,
+} from './reports.js';
+import {
   escalationCentreSchema,
   escalationDetailSchema,
   escalationItemSchema,
@@ -141,6 +147,10 @@ const named: [string, z.ZodType][] = [
   ['ScorecardRow', scorecardRowSchema],
   ['Performance', performanceSchema],
   ['Document', documentViewSchema],
+  ['ReportSnapshot', reportSnapshotSchema],
+  ['PackSection', packSectionSchema],
+  ['PackContent', packContentSchema],
+  ['ReportPack', reportPackSchema],
   ['EscalationItem', escalationItemSchema],
   ['LadderLevel', ladderLevelSchema],
   ['EscalationCentre', escalationCentreSchema],

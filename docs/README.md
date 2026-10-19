@@ -25,6 +25,7 @@ Strategic Initiative Management System · Strategy Execution Command Centre
 | 19 | [People and departments API](19-people-api.md) | Engineers (API and web) |
 | 20 | [Performance and KPI actuals API](20-performance-api.md) | Engineers (API and web) |
 | 21 | [Documents and evidence API](21-documents-api.md) | Engineers (API and web) |
+| 22 | [Reports and board packs API](22-reports-api.md) | Engineers (API and web) |
 | — | [Changelog](CHANGELOG.md) | Everyone |
 
 ## Downloadable copy

@@ -14,6 +14,7 @@ import {
 } from '../../../src/domain/governance/escalation-ladder.js';
 import { recalculateElementRollups } from '../../../src/modules/delivery/element-rollups.js';
 import { recalculateKpiPositions } from '../../../src/modules/kpis/kpi-positions.js';
+import { captureReportSnapshot } from '../../../src/modules/reporting/report-snapshot.js';
 import {
   DIG_004_BENEFIT,
   MILLION,
@@ -1199,24 +1200,25 @@ async function writeDemo(
   }
 
   // ----------------------------------------------------------- reports
-  const snapshot = async (period: string, kind: string) => {
-    const id = uuidv7();
-    await tx.reportSnapshot.create({
-      data: {
-        id,
-        ...org,
-        periodId: periodIds[period],
-        kind,
-        createdById: member.strategyHead,
-        data: { period, initiatives: active.length },
-      },
+  // Every locked month has its reporting snapshot, as locking produces one.
+  // (Demo snapshots all hold today's figures; real ones freeze each month.)
+  const lockedPeriods = await tx.reportingPeriod.findMany({
+    where: { organisationId, status: 'LOCKED' },
+    orderBy: { startDate: 'asc' },
+  });
+  const snapshotIds: Record<string, string> = {};
+  for (const period of lockedPeriods) {
+    snapshotIds[period.name] = await captureReportSnapshot(tx, {
+      organisationId,
+      period,
+      rules: ruleset,
+      now: period.lockedAt ?? period.endDate,
+      createdById: member.strategyHead,
     });
-    return id;
-  };
+  }
   const packs = [
     {
       period: 'June 2026',
-      kind: 'QUARTERLY_BOARD',
       template: 'QUARTERLY_BOARD',
       title: 'Q2 2026 Board pack',
       audience: 'BOARD',
@@ -1226,7 +1228,6 @@ async function writeDemo(
     },
     {
       period: 'August 2026',
-      kind: 'PERIOD_LOCK',
       template: 'MONTHLY_MANAGEMENT',
       title: 'August management report',
       audience: 'EXCO',
@@ -1236,7 +1237,6 @@ async function writeDemo(
     },
     {
       period: 'September 2026',
-      kind: 'PERIOD_LOCK',
       template: 'MONTHLY_MANAGEMENT',
       title: 'September management report',
       audience: 'EXCO',
@@ -1246,7 +1246,7 @@ async function writeDemo(
     },
   ] as const;
   for (const p of packs) {
-    const snapshotId = await snapshot(p.period, p.kind);
+    const snapshotId = snapshotIds[p.period];
     const id = uuidv7();
     await tx.reportPack.create({
       data: {

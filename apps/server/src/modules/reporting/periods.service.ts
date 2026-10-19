@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CLOCK, type Clock } from '../../common/clock/clock.js';
-import { toIsoDate, toNumber } from '../../common/data/numbers.js';
+import { toIsoDate } from '../../common/data/numbers.js';
 import { isUniqueViolation } from '../../common/data/prisma-errors.js';
 import { uuidv7 } from '../../common/ids/uuidv7.js';
 import { effectiveHealth } from '../../domain/delivery/health.js';
@@ -14,7 +14,6 @@ import {
   owesUpdate,
   SUBMITTED_STATUSES,
 } from '../../domain/reporting/obligations.js';
-import type { Prisma } from '../../generated/prisma/client.js';
 import type {
   PeriodStatus,
   UpdateStatus,
@@ -26,6 +25,7 @@ import {
   type TenantTransactionClient,
 } from '../../infrastructure/database/index.js';
 import { HealthRecalculationService } from '../delivery/health-recalculation.service.js';
+import { captureReportSnapshot } from './report-snapshot.js';
 import { PlansService } from '../strategy/plans.service.js';
 import type {
   LockPeriodInput,
@@ -282,7 +282,13 @@ export class PeriodsService {
 
   private async snapshot(
     tx: TenantTransactionClient,
-    period: { id: string; planId: string; name: string },
+    period: {
+      id: string;
+      planId: string;
+      name: string;
+      startDate: Date;
+      endDate: Date;
+    },
     now: Date,
   ) {
     const { organisationId, membershipId } = TenantContext.require();
@@ -332,40 +338,13 @@ export class PeriodsService {
         },
       });
     }
-    const byHealth = { GREEN: 0, AMBER: 0, RED: 0, UNKNOWN: 0 };
-    const rows = initiatives.map((i) => {
-      const health = effectiveHealth(i, now);
-      byHealth[health.health] += 1;
-      return {
-        initiativeId: i.id,
-        code: i.code,
-        title: i.title,
-        status: i.status,
-        isSensitive: i.isSensitive,
-        homeElementId: i.objectiveLinks[0]?.elementId ?? null,
-        health: health.health,
-        calculatedHealth: i.calculatedHealth,
-        overridden: health.overridden,
-        verifiedProgress: toNumber(i.verifiedProgress),
-        plannedProgress: toNumber(i.plannedProgress),
-        impactScore: toNumber(i.impactScore),
-        impactSummary: i.impactSummary,
-      };
-    });
-    await tx.reportSnapshot.create({
-      data: {
-        id: uuidv7(),
-        organisationId,
-        periodId: period.id,
-        kind: 'PERIOD_LOCK',
-        createdById: membershipId ?? null,
-        data: {
-          period: period.name,
-          lockedAt: now.toISOString(),
-          totals: { initiatives: rows.length, byHealth },
-          initiatives: rows,
-        } as Prisma.InputJsonValue,
-      },
+    // Everything reports need, frozen as approved (board packs read only this).
+    await captureReportSnapshot(tx, {
+      organisationId,
+      period,
+      rules: (await this.recalculation.loadActiveRules(tx)).config,
+      now,
+      createdById: membershipId ?? null,
     });
   }
 

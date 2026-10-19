@@ -30,8 +30,8 @@ with its tests and documentation.
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12a | Documents API: storage (local disk or any S3), evidence upload/download/remove with type and content checks, evidence per period, reviewed on verification | Done |
-| 12b | Report pack API: templates and sections, snapshots, audience rules, pack requests, issued packs, pack content for the preview | Next |
-| 12c | Pack rendering as background jobs: PDF (headless Chrome), PowerPoint, Excel appendix; job queue | Planned |
+| 12b | Report pack API: templates and sections, snapshots (frozen at lock), audience rules, preview content, pack requests and versions, issued packs | Done |
+| 12c | Pack rendering as background jobs: PDF (headless Chrome), PowerPoint, Excel appendix; job queue | Next |
 | 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
 | 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |

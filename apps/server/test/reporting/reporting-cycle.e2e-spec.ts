@@ -460,10 +460,30 @@ describe('Reporting cycle (e2e)', () => {
       });
 
       const { rows } = await admin.query(
-        `SELECT data->'totals' AS totals FROM "ReportSnapshot" WHERE "periodId" = $1 AND kind = 'PERIOD_LOCK'`,
+        `SELECT data FROM "ReportSnapshot" WHERE "periodId" = $1 AND kind = 'PERIOD_LOCK'`,
         [october],
       );
-      expect(rows[0].totals.initiatives).toBe(32);
+      // Everything board packs need is frozen as approved.
+      const { data } = rows[0];
+      expect(data).toMatchObject({
+        version: 2,
+        period: { name: 'October 2026' },
+        lockedAt: DEMO_NOW.toISOString(),
+        totals: { initiatives: 32 },
+        thresholds: { lowValueThresholdPct: 50 },
+        benefits: { currency: 'NGN', year: 2026 },
+      });
+      expect(data.initiatives).toHaveLength(32);
+      expect(data.kpis).toHaveLength(18);
+      expect(data.elements.length).toBeGreaterThan(5);
+      expect(
+        data.escalations.byLevel.map((l: { name: string }) => l.name),
+      ).toEqual([
+        'Initiative owner',
+        'Executive sponsor',
+        'MD/CEO · EXCO',
+        'Board',
+      ]);
     });
 
     it('turns initiatives that never reported Unknown, unless a hard fact forces Red', async () => {

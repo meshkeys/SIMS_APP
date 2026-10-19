@@ -25,6 +25,7 @@ import { GovernanceModule } from './modules/governance/governance.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
 import { PerformanceModule } from './modules/performance/performance.module.js';
 import { ReportingModule } from './modules/reporting/reporting.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
 import { StrategyModule } from './modules/strategy/strategy.module.js';
 
 @Module({
@@ -50,6 +51,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     DashboardModule,
     PerformanceModule,
     DocumentsModule,
+    ReportsModule,
     PeopleModule,
   ],
   providers: [

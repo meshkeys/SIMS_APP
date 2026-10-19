@@ -503,3 +503,23 @@ a JavaScript library and the Excel appendix uses exceljs.
 **Consequences.** No storage service to run locally; production picks a provider by
 configuration. Downloads use API bandwidth rather than pre-signed URLs; pre-signed links can
 be added for large packs later. The production image must include Chromium for PDF packs.
+
+## ADR-029 — Packs are assembled from a frozen snapshot by one content model
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** A board pack must show the figures management approved when the cycle locked,
+not whatever the live data says weeks later. The builder's preview and the generated files
+(PDF, PowerPoint, Excel) must never disagree.
+
+**Decision.** Locking a period stores a version 2 snapshot with every figure a pack uses
+(initiatives, strategy tree and scores, KPIs, open decisions, escalations, benefits). Packs
+read nothing else. A single pure function, `assemblePack(snapshot, definition)`, produces
+the pack content, including the audience rule (the Board sees sensitive initiatives only as
+pillar totals) and page estimates. The preview endpoint returns that content, and the
+renderers in slice 12c will print the same content.
+
+**Consequences.** Packs are reproducible and auditable: re-generating a version gives the
+same numbers. Snapshots are larger (a few hundred kilobytes for a large portfolio). Cycles
+locked before version 2 cannot produce packs. Demo snapshots are captured at seed time, so
+every demo month holds the same figures.

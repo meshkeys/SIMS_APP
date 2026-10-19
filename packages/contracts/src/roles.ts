@@ -24,6 +24,19 @@ export const STRATEGY_EDITOR_ROLES = [
   'SYSTEM_ADMIN',
 ] as const satisfies readonly Role[];
 
+/**
+ * Roles that may read issued report packs. Board members see packs written
+ * for the Board only.
+ */
+export const REPORT_READER_ROLES = [
+  'STRATEGY_OFFICE',
+  'SYSTEM_ADMIN',
+  'CEO',
+  'EXECUTIVE_SPONSOR',
+  'BOARD',
+  'INTERNAL_AUDIT',
+] as const satisfies readonly Role[];
+
 /** Roles that may propose new initiatives. */
 export const PROPOSER_ROLES = [
   'STRATEGY_OFFICE',

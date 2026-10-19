@@ -69,6 +69,13 @@ import {
 import { performanceQuerySchema, performanceSchema } from './performance.js';
 import { documentViewSchema } from './documents.js';
 import {
+  createPackSchema,
+  packContentSchema,
+  packDefinitionSchema,
+  reportPackSchema,
+  reportSnapshotSchema,
+} from './reports.js';
+import {
   dependencyQuerySchema,
   escalationCentreSchema,
   escalationDetailSchema,
@@ -98,6 +105,7 @@ import {
   INVITER_ROLES,
   PROPOSER_ROLES,
   STRATEGY_EDITOR_ROLES,
+  REPORT_READER_ROLES,
 } from './roles.js';
 import {
   createElementSchema,
@@ -159,6 +167,7 @@ const TAGS = {
   changes: 'Change requests',
   escalations: 'Escalations',
   documents: 'Documents and evidence',
+  reports: 'Reports and board packs',
   dashboard: 'Dashboard',
   performance: 'Performance and benefits',
 } as const;
@@ -915,6 +924,60 @@ export const API_ROUTES = {
     access: 'member',
     status: 204,
     response: null,
+  }),
+
+  // ----------------------------------------------------------- reports
+  listReportSnapshots: route({
+    method: 'get',
+    path: '/reports/snapshots',
+    tag: TAGS.reports,
+    summary: 'Locked cycle snapshots packs can be built from, newest first',
+    access: STRATEGY_EDITOR_ROLES,
+    status: 200,
+    response: z.array(reportSnapshotSchema),
+  }),
+  previewPack: route({
+    method: 'post',
+    path: '/reports/preview',
+    tag: TAGS.reports,
+    summary: 'Assemble a pack from a snapshot without saving it',
+    description:
+      'Returns exactly the content a generated pack will contain, with its page count, for the builder preview.',
+    access: STRATEGY_EDITOR_ROLES,
+    body: packDefinitionSchema,
+    status: 200,
+    response: packContentSchema,
+  }),
+  createPack: route({
+    method: 'post',
+    path: '/reports/packs',
+    tag: TAGS.reports,
+    summary: 'Request a pack',
+    description:
+      'Saves the pack definition and queues it for generation in the chosen formats. A pack for a cycle that already has one from the same template gets the next version.',
+    access: STRATEGY_EDITOR_ROLES,
+    body: createPackSchema,
+    status: 201,
+    response: reportPackSchema,
+  }),
+  listPacks: route({
+    method: 'get',
+    path: '/reports/packs',
+    tag: TAGS.reports,
+    summary: 'Issued and queued packs, newest first',
+    description: 'Board members see packs written for the Board only.',
+    access: REPORT_READER_ROLES,
+    status: 200,
+    response: z.array(reportPackSchema),
+  }),
+  getPack: route({
+    method: 'get',
+    path: '/reports/packs/{id}',
+    tag: TAGS.reports,
+    summary: 'One pack and its definition',
+    access: REPORT_READER_ROLES,
+    status: 200,
+    response: reportPackSchema,
   }),
 
   // ------------------------------------------------------- escalations

@@ -102,7 +102,8 @@ challenged or — unless `approveAwaitingSponsor: true` — awaiting the sponsor
 3. recalculates health — initiatives that owed an update and never reported become
    **Unknown**, unless a hard fact forces Red;
 4. writes a progress snapshot for every active initiative (the planned-vs-actual history);
-5. writes a `PERIOD_LOCK` report snapshot (portfolio totals and each initiative's figures) —
-   the frozen numbers Board packs are built from.
+5. writes a `PERIOD_LOCK` report snapshot: each initiative's figures, the strategy tree
+   with its scores, KPIs, open decisions and escalations, and the year's benefits. These are
+   the frozen numbers board packs are built from (chapter 22).
 
 After locking, nothing in the period can change (`PERIOD_LOCKED`).
