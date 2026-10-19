@@ -97,7 +97,34 @@ One call to `GET /dashboard` (chapter 16) feeds every panel:
 | Escalations | Highest-level first, with the organisation's own ladder names and counts per level | Escalation centre |
 | Milestones · next 14 days | Due date, initiative, critical, slip; overdue count | — |
 
+Below the watchlist a legend explains the bars (verified weighted completion; the tick is
+planned completion today). The sidebar shows the reporting cycle on every screen ("Day 6 of
+8 · Sponsor review", with a progress bar).
+
 **View** narrows everything to one pillar; it is kept in the URL (`/?elementId=…`), so a
 scoped dashboard can be bookmarked or shared. Loading shows a skeleton of the layout;
 failures explain themselves and offer **Try again** (server errors are retried twice
 automatically first); every panel has an empty state.
+
+### Strategy map (`/strategy`)
+
+"From strategy to execution", from `GET /plans/current/map` and `GET /elements/:id`:
+
+- **Header:** plan name, version and approval date; the chain of the organisation's own
+  framework levels ("Pillar → Objective → KPI → initiative" — whatever the levels are called).
+- **Aspiration banner:** the plan's aspiration (or vision) and totals for every level, KPIs
+  and active initiatives.
+- **Map:** one card per top-level element with its sponsor and execution bar, holding its
+  children (e.g. objectives) with code, headline KPI ("Non-interest income: 18% → 30%"),
+  initiative count and health in words (healthy · watch · off track · not yet measured).
+  Deeper levels are counted on the card and listed in the detail panel.
+- **Detail panel:** selecting an element opens it below — owner, KPI table (baseline, target
+  with its label, latest actual, progress to target), contributing initiatives (primary or
+  contributor, weight, health), restricted initiatives counted but not listed, and the
+  elements below it. The selection is in the URL (`/strategy?element=…`).
+- **Add** (Strategy Office and administrators): a dialog to add an element under any element
+  that has a level below it, or a new top-level one; the code is suggested by the server.
+
+KPI values are written with their units the way people say them (`lib/format.ts`):
+18 `%` → "18%", 72 `h` → "72h", 4.2 `NGN bn` → "₦4.2bn", 40 `clients` → "40 clients".
+

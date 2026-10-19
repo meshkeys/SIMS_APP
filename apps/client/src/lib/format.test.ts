@@ -4,6 +4,7 @@ import {
   formatDayMonth,
   formatDeadline,
   formatInstantDay,
+  formatKpiValue,
   formatPercent,
   plural,
 } from './format';
@@ -31,5 +32,18 @@ describe('format', () => {
     expect(formatPercent(null)).toBe('—');
     expect(plural(1, 'day')).toBe('1 day');
     expect(plural(3, 'initiative')).toBe('3 initiatives');
+  });
+
+  it('writes KPI values with their units naturally', () => {
+    expect(formatKpiValue(18, '%')).toBe('18%');
+    expect(formatKpiValue(72, 'h')).toBe('72h');
+    expect(formatKpiValue(4.2, 'NGN bn')).toBe('₦4.2bn');
+    expect(formatKpiValue(50, 'NGN m')).toBe('₦50m');
+    expect(formatKpiValue(40, 'clients')).toBe('40 clients');
+    expect(formatKpiValue(1, 'days')).toBe('1 day');
+    expect(formatKpiValue(5, 'days')).toBe('5 days');
+    expect(formatKpiValue(22, 'score')).toBe('22');
+    expect(formatKpiValue(1.5, 'm users')).toBe('1.5m users');
+    expect(formatKpiValue(null, '%')).toBe('—');
   });
 });

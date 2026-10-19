@@ -64,6 +64,11 @@ export function Watchlist({
             ))}
           </ul>
         )}
+        {items.length > 0 && (
+          <p className="mt-3 text-xs text-ink-muted">
+            Bar = verified weighted completion · tick = planned completion today
+          </p>
+        )}
       </CardBody>
     </Card>
   );

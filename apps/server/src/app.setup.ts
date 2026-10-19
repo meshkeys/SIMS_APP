@@ -1,6 +1,8 @@
 import { VersioningType } from '@nestjs/common';
+import { friendlyErrors } from '@sims/contracts';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { z } from 'zod';
 import helmet from 'helmet';
 import { ProblemDetailsFilter } from './common/http/problem-details.filter.js';
 import { REQUEST_ID_HEADER, requestId } from './common/http/request-id.js';
@@ -17,6 +19,8 @@ export function configureApp(
   app: NestExpressApplication,
 ): NestExpressApplication {
   const env = app.get<Env>(ENV);
+  // Field errors in plain English ("Required"), the same words the web app shows.
+  z.config({ customError: friendlyErrors });
 
   app.set('trust proxy', env.TRUST_PROXY);
   app.disable('x-powered-by');

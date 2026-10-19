@@ -75,6 +75,8 @@ export type FakeRoute = (
 export function fakeApi(
   options: {
     signedIn?: boolean;
+    /** The session the server hands out (defaults to a Strategy Office user). */
+    session?: SessionResponse;
     /** Extra endpoints, keyed "METHOD /api/v1/path". */
     routes?: Record<string, FakeRoute>;
   } = {},
@@ -91,7 +93,7 @@ export function fakeApi(
     switch (`${method} ${path}`) {
       case 'POST /api/v1/auth/refresh':
         return signedIn
-          ? json(200, SESSION)
+          ? json(200, options.session ?? SESSION)
           : problem(401, 'INVALID_REFRESH_TOKEN', 'Sign in again.');
       case 'POST /api/v1/auth/login': {
         const body = JSON.parse(String(init.body)) as { password: string };
@@ -103,7 +105,7 @@ export function fakeApi(
           );
         }
         signedIn = true;
-        return json(200, SESSION);
+        return json(200, options.session ?? SESSION);
       }
       case 'POST /api/v1/auth/logout':
         signedIn = false;

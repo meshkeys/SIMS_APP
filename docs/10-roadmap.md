@@ -32,7 +32,8 @@ with its tests and documentation.
 | 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |
 | 15 | Command Centre dashboard screen | Done |
-| 16 | Reporting cycle screen | Next |
+| 16 | Strategy map screen; dashboard sidebar cycle widget and legend | Done |
+| 17 | Initiative register screen | Next |
 | 15+ | Web app: each screen, with the backend pieces it needs (8b, 9, 11, 12, 13) | Planned |
 
 ## 10.3 Known follow-ups

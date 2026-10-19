@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Strategy map (slice 16)
+- Strategy map screen: plan header, aspiration banner with totals per level, pillar cards
+  with execution bars and objective cards (headline KPI, initiatives, health in words), and
+  a detail panel with KPIs (baseline, target, actual, progress) and contributing
+  initiatives. Uses each organisation's own level names; selection kept in the URL.
+- Add an objective (or any element) from the map, for the Strategy Office.
+- Dashboard: reporting-cycle widget in the sidebar and the progress-bar legend (the rest of
+  wireframe page 2).
+- Validation messages in plain English ("Required") on server and web app, from the
+  contract.
+- Fixed: optional fields left blank (e.g. an element's code) blocked the form.
+
 ## 2026-10-19 — Command Centre screen (slice 15)
 - The dashboard screen: cycle tracker, headline tiles, pillar performance (execution and
   impact), delivery-vs-value matrix, initiative monitoring, decisions, escalations and

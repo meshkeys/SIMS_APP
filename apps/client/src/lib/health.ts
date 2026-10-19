@@ -9,3 +9,11 @@ export const HEALTH_DISPLAY: Record<Health, { label: string; tone: Tone }> = {
   RED: { label: 'Delayed', tone: 'danger' },
   UNKNOWN: { label: 'Unknown', tone: 'neutral' },
 };
+
+/** How an objective's rolled-up health reads on the strategy map. */
+export const OBJECTIVE_HEALTH_WORDS: Record<Health, string> = {
+  GREEN: 'healthy',
+  AMBER: 'watch',
+  RED: 'off track',
+  UNKNOWN: 'not yet measured',
+};

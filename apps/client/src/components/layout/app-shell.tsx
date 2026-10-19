@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Brand } from '@/features/auth/login-page';
 import { useApiQuery } from '@/lib/api/query';
 import { cn } from '@/lib/cn';
+import { CycleWidget } from './cycle-widget';
 import { NAV } from './nav';
 
 /** Signed-in layout: sidebar on wide screens, a menu drawer on small ones. */
@@ -113,6 +114,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </nav>
+      <CycleWidget />
       <UserMenu />
     </>
   );

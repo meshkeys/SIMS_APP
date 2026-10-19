@@ -42,6 +42,14 @@ export function formatInstantDay(iso: string, timeZone: string): string {
   );
 }
 
+/** An instant as a full date in the organisation's zone: "12 Jan 2026". */
+export function formatInstantDate(iso: string, timeZone: string): string {
+  return dateFormat(
+    { day: 'numeric', month: 'short', year: 'numeric' },
+    timeZone,
+  ).format(new Date(iso));
+}
+
 /** "Fri 17 Oct, 5:00 pm" in the organisation's zone. */
 export function formatDeadline(iso: string, timeZone: string): string {
   return dateFormat(
@@ -66,4 +74,40 @@ export function formatPercent(value: number | null, digits = 0): string {
 /** 1 → "1 day", 3 → "3 days" */
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
+}
+
+const CURRENCY_SCALE = /^([A-Z]{3}) ?(k|m|bn)?$/;
+const ATTACHED_UNITS = new Set(['%', 'h', 'pp']);
+const BARE_UNITS = new Set(['score', 'index', 'ratio', '']);
+
+/** Trims trailing zeros: 4.20 → "4.2", 30 → "30". */
+const num = (value: number) =>
+  new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 2 }).format(value);
+
+/**
+ * A KPI value with its unit, written the way people say it:
+ * 18 "%" → "18%", 72 "h" → "72h", 4.2 "NGN bn" → "₦4.2bn",
+ * 1.5 "m users" → "1.5m users", 40 "clients" → "40 clients",
+ * 1 "days" → "1 day", 22 "score" → "22".
+ */
+export function formatKpiValue(value: number | null, unit: string): string {
+  if (value === null) return '—';
+  if (ATTACHED_UNITS.has(unit)) return `${num(value)}${unit}`;
+  if (BARE_UNITS.has(unit)) return num(value);
+  const currency = CURRENCY_SCALE.exec(unit);
+  if (currency) {
+    const symbol =
+      new Intl.NumberFormat(LOCALE, {
+        style: 'currency',
+        currency: currency[1],
+        currencyDisplay: 'narrowSymbol',
+      })
+        .formatToParts(0)
+        .find((part) => part.type === 'currency')?.value ?? `${currency[1]} `;
+    return `${symbol}${num(value)}${currency[2] ?? ''}`;
+  }
+  const scaled = /^(k|m|bn) (.+)$/.exec(unit);
+  if (scaled) return `${num(value)}${scaled[1]} ${scaled[2]}`;
+  const word = value === 1 && unit.endsWith('s') ? unit.slice(0, -1) : unit;
+  return `${num(value)} ${word}`;
 }

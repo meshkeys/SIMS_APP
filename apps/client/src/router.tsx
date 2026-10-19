@@ -79,6 +79,17 @@ const dashboardRoute = createRoute({
   ),
 });
 
+const strategyRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/strategy',
+  // The selected element is in the URL, so it can be shared.
+  validateSearch: z.object({ element: z.uuid().optional().catch(undefined) }),
+  component: lazyRouteComponent(
+    () => import('@/features/strategy/strategy-map-page'),
+    'StrategyMapPage',
+  ),
+});
+
 /** Register filters live in the URL (the register screen uses them next). */
 const initiativesRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -93,7 +104,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([
     dashboardRoute,
-    screen('/strategy', 'Strategy map'),
+    strategyRoute,
     initiativesRoute,
     screen('/performance', 'KPIs & benefits realisation', 'Performance'),
     screen('/risks', 'Risks & escalations'),

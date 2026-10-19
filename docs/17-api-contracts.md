@@ -37,6 +37,10 @@ Naming: `xxxSchema` is the zod schema; the type has the same name without `Schem
   enum — is a compile error, not a production bug.
 - **Domain stays independent.** `apps/server/src/domain` keeps its own types (e.g.
   `HealthReason`); where they reach the API, the compiler checks they fit the contract.
+- **Messages people can read.** `friendlyErrors` replaces zod's generic wording
+  ("Too small: expected string to have >=1 characters") with plain English ("Required",
+  "Use at most 200 characters"). Server and web app both install it, so a field error reads
+  the same whether the browser or the API caught it. Messages written on a schema win.
 - **Enums are generated.** `npm run db:generate` (and `npm install`) copies the Prisma enums
   into `enums.ts`; a unit test fails if the two ever differ.
 
