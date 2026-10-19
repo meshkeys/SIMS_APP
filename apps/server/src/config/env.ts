@@ -62,6 +62,25 @@ export const envSchema = z
 
     /** Serve /api/openapi.json and the /api/docs reference. Defaults to off in production. */
     API_DOCS: z.stringbool().optional(),
+
+    /**
+     * Where uploaded evidence and generated packs are kept: `local` (a folder,
+     * for development, tests and single-server installs) or `s3` (any
+     * S3-compatible service: AWS S3, Cloudflare R2, Backblaze B2, Spaces…).
+     */
+    STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+    /** Folder for the local driver, relative to the server's working directory. */
+    STORAGE_LOCAL_DIR: z.string().min(1).default('var/storage'),
+    S3_BUCKET: z.string().min(3).optional(),
+    S3_REGION: z.string().min(1).default('auto'),
+    /** For providers other than AWS, e.g. https://<account>.r2.cloudflarestorage.com */
+    S3_ENDPOINT: z.url().optional(),
+    /** Omit both to use the provider's default credential chain (e.g. an IAM role). */
+    S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+    S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    S3_FORCE_PATH_STYLE: z.stringbool().default(false),
+    /** Largest file accepted for upload, in megabytes. */
+    UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(200).default(20),
   })
   .transform((env) => ({
     ...env,
@@ -69,6 +88,21 @@ export const envSchema = z
     API_DOCS: env.API_DOCS ?? env.NODE_ENV !== 'production',
   }))
   .superRefine((env, ctx) => {
+    if (env.STORAGE_DRIVER === 's3' && !env.S3_BUCKET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['S3_BUCKET'],
+        message: 'is required when STORAGE_DRIVER is s3',
+      });
+    }
+    if (!env.S3_ACCESS_KEY_ID !== !env.S3_SECRET_ACCESS_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['S3_SECRET_ACCESS_KEY'],
+        message:
+          'set both S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY, or neither',
+      });
+    }
     if (env.NODE_ENV === 'production' && !env.COOKIE_SECURE) {
       ctx.addIssue({
         code: 'custom',

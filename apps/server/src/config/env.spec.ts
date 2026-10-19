@@ -28,7 +28,30 @@ describe('loadEnv', () => {
       RATE_LIMIT_PER_MINUTE: 300,
       RATE_LIMIT_AUTH_PER_MINUTE: 10,
       API_DOCS: true,
+      STORAGE_DRIVER: 'local',
+      STORAGE_LOCAL_DIR: 'var/storage',
+      S3_REGION: 'auto',
+      S3_FORCE_PATH_STYLE: false,
+      UPLOAD_MAX_MB: 20,
     });
+  });
+
+  it('requires a bucket for S3 storage, and both keys or neither', () => {
+    expect(() => loadEnv({ ...valid, STORAGE_DRIVER: 's3' })).toThrow(
+      /S3_BUCKET/,
+    );
+    expect(() =>
+      loadEnv({
+        ...valid,
+        STORAGE_DRIVER: 's3',
+        S3_BUCKET: 'sims-files',
+        S3_ACCESS_KEY_ID: 'key',
+      }),
+    ).toThrow(/S3_SECRET_ACCESS_KEY/);
+    expect(
+      loadEnv({ ...valid, STORAGE_DRIVER: 's3', S3_BUCKET: 'sims-files' })
+        .S3_BUCKET,
+    ).toBe('sims-files');
   });
 
   it('turns the API reference off in production unless asked for', () => {

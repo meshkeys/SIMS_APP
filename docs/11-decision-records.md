@@ -483,3 +483,23 @@ background infrastructure. Reads may write (idempotently). When scheduled jobs a
 same function runs on a timer and adds notifications; reads keep it as a safety net. Left
 alone, items move exactly as before (day 7, day 14); the new rule only differs after a
 manual move.
+
+## ADR-028 — Files behind a storage port; board packs printed by headless Chrome
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** Evidence uploads and generated board packs need durable file storage, and
+board packs need print-quality PDFs with the same charts as the web app. MinIO's Docker
+image is no longer published, organisations will deploy to different clouds, and
+development should not need another service.
+
+**Decision.** Files go through an `ObjectStorage` port with two adapters: a local folder
+(development, tests, single-server installs) and any S3-compatible service via the AWS SDK
+(AWS S3, Cloudflare R2, Backblaze B2, Spaces), chosen by `STORAGE_DRIVER`. Buckets stay
+private and every download goes through the API's permission checks. Board pack PDFs will be
+HTML pages printed by headless Chromium, as the documentation PDF already is. PowerPoint uses
+a JavaScript library and the Excel appendix uses exceljs.
+
+**Consequences.** No storage service to run locally; production picks a provider by
+configuration. Downloads use API bandwidth rather than pre-signed URLs; pre-signed links can
+be added for large packs later. The production image must include Chromium for PDF packs.

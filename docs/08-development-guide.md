@@ -61,6 +61,12 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `SMTP_SECURE` | false | `true` for implicit TLS (port 465); STARTTLS is used when offered |
 | `SMTP_USER` / `SMTP_PASSWORD` | — | SMTP credentials, if the provider needs them |
 | `MAIL_FROM` | SIMS <no-reply@sims.local> | Sender shown on emails |
+| `STORAGE_DRIVER` | local | `local` (a folder) or `s3` (any S3-compatible service), chapter 21.5 |
+| `STORAGE_LOCAL_DIR` | var/storage | Folder for the local driver (git-ignored) |
+| `S3_BUCKET` / `S3_REGION` / `S3_ENDPOINT` | — / auto / — | Bucket, region and (non-AWS) endpoint for the s3 driver |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | — | Both or neither (then the provider's default credentials) |
+| `S3_FORCE_PATH_STYLE` | false | Path-style URLs, for providers that need them |
+| `UPLOAD_MAX_MB` | 20 | Largest upload accepted |
 | `TEST_DATABASE_URL` / `TEST_DATABASE_ADMIN_URL` | — | e2e database (name must end in `_test`) |
 
 Configuration is validated at start-up; the server refuses to boot and lists every problem

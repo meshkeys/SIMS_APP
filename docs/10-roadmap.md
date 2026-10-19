@@ -29,7 +29,9 @@ with its tests and documentation.
 | 9b | Benefits management: benefits per initiative, expected profile and re-forecast, realised value and verification, benefits review requests | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
-| 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
+| 12a | Documents API: storage (local disk or any S3), evidence upload/download/remove with type and content checks, evidence per period, reviewed on verification | Done |
+| 12b | Report pack API: templates and sections, snapshots, audience rules, pack requests, issued packs, pack content for the preview | Planned |
+| 12c | Pack rendering as background jobs: PDF (headless Chrome), PowerPoint, Excel appendix; job queue | Planned |
 | 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
 | 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |
@@ -45,7 +47,8 @@ with its tests and documentation.
 | 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Done |
 | 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Done |
 | 22 | Escalation centre screen (wireframe page 7): ladder, risk heatmap, open escalations, blocked dependencies, decision log; raise, log risk, move and resolve | Done |
-| 12 + 23 | Documents and evidence (object storage), report pack generation, then the board pack builder screen | Next |
+| 20c | Evidence on the update form (upload, list, remove) and in the review panel (download); evidence becomes a blocking checklist item | Next |
+| 23 | Board pack builder screen (wireframe page 9), after 12b and 12c | Planned |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups
@@ -53,11 +56,12 @@ with its tests and documentation.
 - Rate-limit counters move to Redis (shared across instances) with the jobs module.
 - Email sending moves to a retrying background job (today: sent after commit; failures are reported and resendable).
 - Production email provider and sender domain (SPF, DKIM, DMARC).
-- Evidence becomes a blocking checklist item once uploads exist (documents slice).
+- Evidence becomes a blocking checklist item with the evidence screens (slice 20c).
+- A clean-up job purges the stored bytes of removed documents (slice 11).
 - Public holidays in the reporting calendar (today: Mon–Fri working days).
 - Per-account (not only per-IP) sign-in throttling.
 - Password reset, email verification, SSO (OIDC).
-- Object storage choice (S3-compatible; MinIO's Docker image is no longer published).
+- Production object storage provider and bucket (any S3-compatible service; chapter 21.5).
 - CI pipeline (lint, tests, build, docs) on every push.
 - Web app: the shared vendor bundle is 189 kB gzipped; screens already load on demand.
 - Web app: browser end-to-end tests (Playwright) once the first screens are in.

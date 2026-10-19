@@ -34,6 +34,7 @@ import type { AuthContext } from '../auth/index.js';
 import { HealthRecalculationService } from '../delivery/health-recalculation.service.js';
 import { DecisionsService } from '../governance/decisions.service.js';
 import { seesAllInitiatives } from '../delivery/visibility.js';
+import { documentSelect, toDocumentViews } from '../documents/document-view.js';
 import { personSelect, toPersonRef } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
 import { periodNotFound } from './periods.service.js';
@@ -165,7 +166,7 @@ export class UpdatesService {
   ): Promise<UpdateListItem[]> {
     const period = await this.db.client.reportingPeriod.findUnique({
       where: { id: periodId },
-      select: { id: true },
+      select: { id: true, startDate: true },
     });
     if (!period) throw periodNotFound();
     const scope = seesAllInitiatives(caller)
@@ -189,6 +190,7 @@ export class UpdatesService {
         },
         lines: {
           select: {
+            milestoneId: true,
             claimedCompletion: true,
             previousVerified: true,
             milestone: { select: { evidenceRequired: true } },
@@ -196,6 +198,23 @@ export class UpdatesService {
         },
       },
     });
+    // Milestones with evidence uploaded during the period.
+    const withEvidence = new Set(
+      (
+        await this.db.client.document.findMany({
+          where: {
+            deletedAt: null,
+            entityType: 'Milestone',
+            entityId: {
+              in: updates.flatMap((u) => u.lines.map((l) => l.milestoneId)),
+            },
+            createdAt: { gte: period.startDate },
+          },
+          select: { entityId: true },
+          distinct: ['entityId'],
+        })
+      ).map((d) => d.entityId),
+    );
     return updates.map((u) => ({
       updateId: u.id,
       initiativeId: u.initiative.id,
@@ -210,7 +229,8 @@ export class UpdatesService {
       evidenceFlags: u.lines.filter(
         (l) =>
           l.milestone.evidenceRequired &&
-          toNumber(l.claimedCompletion) > toNumber(l.previousVerified),
+          toNumber(l.claimedCompletion) > toNumber(l.previousVerified) &&
+          !withEvidence.has(l.milestoneId),
       ).length,
     }));
   }
@@ -424,6 +444,21 @@ export class UpdatesService {
       await tx.statusUpdate.update({
         where: { id: update.id },
         data: { status: 'REVIEWED', verifiedProgress, reviewedAt: now },
+      });
+      // The evidence behind the verified figures is now part of the record.
+      const period = await tx.reportingPeriod.findUniqueOrThrow({
+        where: { id: periodId },
+        select: { startDate: true },
+      });
+      await tx.document.updateMany({
+        where: {
+          entityType: 'Milestone',
+          entityId: { in: lines.map((l) => l.milestoneId) },
+          deletedAt: null,
+          reviewedAt: null,
+          createdAt: { gte: period.startDate },
+        },
+        data: { reviewedById: caller.membershipId, reviewedAt: now },
       });
       if (input.comment)
         await this.addComment(tx, caller, update.id, input.comment, 'COMMENT');
@@ -736,18 +771,20 @@ export class UpdatesService {
     });
     const rules = await this.recalculation.loadActiveRules(tx);
     const milestoneIds = details.milestones.map((m) => m.id);
-    const lineIds = update?.lines.map((l) => l.id) ?? [];
-    const evidence = await tx.document.groupBy({
-      by: ['entityId'],
+    // Evidence for this update: what was uploaded to each milestone during the period.
+    const evidenceRows = await tx.document.findMany({
       where: {
         deletedAt: null,
-        OR: [
-          { entityType: 'Milestone', entityId: { in: milestoneIds } },
-          { entityType: 'StatusUpdateLine', entityId: { in: lineIds } },
-        ],
+        entityType: 'Milestone',
+        entityId: { in: milestoneIds },
+        createdAt: { gte: period.startDate },
       },
-      _count: { _all: true },
+      orderBy: { createdAt: 'desc' },
+      select: documentSelect,
     });
+    const evidenceViews = await toDocumentViews(tx, evidenceRows, caller);
+    const evidenceOf = (milestoneId: string) =>
+      evidenceViews.filter((_, i) => evidenceRows[i]!.entityId === milestoneId);
     const comments = update
       ? await tx.comment.findMany({
           where: { entityType: 'StatusUpdate', entityId: update.id },
@@ -755,9 +792,6 @@ export class UpdatesService {
           include: { author: personSelect },
         })
       : [];
-    const evidenceCount = new Map(
-      evidence.map((e) => [e.entityId, e._count._all]),
-    );
     const lineByMilestone = new Map(
       update?.lines.map((l) => [l.milestoneId, l]),
     );
@@ -779,9 +813,7 @@ export class UpdatesService {
         lastVerified,
         claimed: line ? toNumber(line.claimedCompletion) : locked ? 100 : null,
         evidenceRequired: m.evidenceRequired,
-        evidenceCount:
-          (evidenceCount.get(m.id) ?? 0) +
-          (line ? (evidenceCount.get(line.id) ?? 0) : 0),
+        evidenceCount: evidenceOf(m.id).length,
       };
     });
     const planned = plannedCompletion(
@@ -862,6 +894,7 @@ export class UpdatesService {
           evidenceRequired: f.evidenceRequired,
           evidenceCount: f.evidenceCount,
           needsEvidence: evaluation.needsEvidence.includes(f.milestoneId),
+          evidence: evidenceOf(f.milestoneId),
           note: line?.note ?? null,
         };
       }),

@@ -9,6 +9,7 @@ import { ApiDocsModule } from './api-docs/api-docs.module.js';
 import { HealthModule } from './health/health.module.js';
 import { DatabaseModule } from './infrastructure/database/index.js';
 import { MailModule } from './infrastructure/mail/index.js';
+import { StorageModule } from './infrastructure/storage/index.js';
 import {
   AccessTokenGuard,
   AuthModule,
@@ -18,6 +19,7 @@ import {
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
 import { DeliveryModule } from './modules/delivery/delivery.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
+import { DocumentsModule } from './modules/documents/documents.module.js';
 import { PeopleModule } from './modules/people/people.module.js';
 import { GovernanceModule } from './modules/governance/governance.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
@@ -31,6 +33,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     ClockModule,
     DatabaseModule,
     MailModule,
+    StorageModule,
     ThrottlerModule.forRootAsync({
       inject: [ENV],
       useFactory: (env: Env) => rateLimitOptions(env),
@@ -46,6 +49,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     GovernanceModule,
     DashboardModule,
     PerformanceModule,
+    DocumentsModule,
     PeopleModule,
   ],
   providers: [

@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Documents and evidence API (slice 12a)
+- **File storage** on local disk (development, tests) or any S3-compatible service
+  (production), chosen by settings.
+- **Evidence on milestones:** upload (type checked against the file's content, size limit
+  enforced while streaming, cleaned names, checksum), list, download as an attachment, and
+  remove until reviewed.
+- **Evidence per period:** the update form lists and counts each milestone's evidence
+  uploaded this period; the review queue no longer flags claims whose evidence is attached.
+- **Verifying an update marks its evidence as reviewed**, after which it stays on record.
+
 ## 2026-10-19 — Escalation centre screen (slice 22)
 - **Escalation centre** page: the organisation's ladder with counts (filters the list),
   the portfolio risk heatmap (select a cell to see and escalate its risks), open

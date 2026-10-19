@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { documentViewSchema } from './documents.js';
 import {
   clearableText,
   isoDate,
@@ -226,8 +227,10 @@ export const updateFormSchema = z.object({
       /** Completed milestones are locked at 100%. */
       locked: z.boolean(),
       evidenceRequired: z.boolean(),
+      /** Evidence uploaded for this milestone during this period. */
       evidenceCount: count,
       needsEvidence: z.boolean(),
+      evidence: z.array(documentViewSchema),
       note: z.string().nullable(),
     }),
   ),

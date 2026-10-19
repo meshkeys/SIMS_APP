@@ -32,3 +32,6 @@ Thumbs.db
 
 # Built documentation (regenerate with npm run docs:build)
 docs/dist/
+
+# Local file storage (uploaded evidence, generated packs)
+apps/server/var/

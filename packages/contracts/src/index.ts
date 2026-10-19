@@ -17,6 +17,7 @@ export * from './delivery.js';
 export * from './reporting.js';
 export * from './governance.js';
 export * from './escalations.js';
+export * from './documents.js';
 export * from './dashboard.js';
 export * from './performance.js';
 export * from './update-checklist.js';

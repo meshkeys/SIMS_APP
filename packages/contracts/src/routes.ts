@@ -67,6 +67,7 @@ import {
   verifyKpiActualsSchema,
 } from './kpis.js';
 import { performanceQuerySchema, performanceSchema } from './performance.js';
+import { documentViewSchema } from './documents.js';
 import {
   dependencyQuerySchema,
   escalationCentreSchema,
@@ -138,6 +139,8 @@ export interface ApiRoute {
   response: z.ZodType | null;
   /** A file download instead of JSON, e.g. an Excel export. */
   produces?: string;
+  /** A file upload (multipart/form-data) in this form field instead of a JSON body. */
+  uploadField?: string;
 }
 
 const route = <const R extends ApiRoute>(definition: R) => definition;
@@ -155,6 +158,7 @@ const TAGS = {
   decisions: 'Decisions',
   changes: 'Change requests',
   escalations: 'Escalations',
+  documents: 'Documents and evidence',
   dashboard: 'Dashboard',
   performance: 'Performance and benefits',
 } as const;
@@ -865,6 +869,52 @@ export const API_ROUTES = {
     body: commentSchema,
     status: 201,
     response: updateFormSchema,
+  }),
+
+  // --------------------------------------------------------- documents
+  listMilestoneDocuments: route({
+    method: 'get',
+    path: '/milestones/{id}/documents',
+    tag: TAGS.documents,
+    summary: 'Evidence attached to a milestone, newest first',
+    access: 'member',
+    status: 200,
+    response: z.array(documentViewSchema),
+  }),
+  uploadMilestoneDocument: route({
+    method: 'post',
+    path: '/milestones/{id}/documents',
+    tag: TAGS.documents,
+    summary: 'Attach evidence to a milestone',
+    description:
+      'Multipart upload in the field `file`. PDF, PNG, JPEG, Word, Excel, PowerPoint, CSV or text, up to the configured size (20 MB by default); the content must match the extension. The initiative owner, sponsor or the Strategy Office.',
+    access: 'member',
+    uploadField: 'file',
+    status: 201,
+    response: documentViewSchema,
+  }),
+  downloadDocument: route({
+    method: 'get',
+    path: '/documents/{id}/download',
+    tag: TAGS.documents,
+    summary: 'Download a document',
+    description:
+      'Always served as an attachment, for anyone who may see the initiative.',
+    access: 'member',
+    status: 200,
+    response: null,
+    produces: 'application/octet-stream',
+  }),
+  deleteDocument: route({
+    method: 'delete',
+    path: '/documents/{id}',
+    tag: TAGS.documents,
+    summary: 'Remove a document',
+    description:
+      'The uploader or the Strategy Office, until the Strategy Office has reviewed it. Kept for the audit trail; no longer listed or counted.',
+    access: 'member',
+    status: 204,
+    response: null,
   }),
 
   // ------------------------------------------------------- escalations

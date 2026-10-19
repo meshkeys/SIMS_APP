@@ -312,6 +312,11 @@ describe('Reporting cycle (e2e)', () => {
         status: 'REVIEWED',
         verifiedProgress: 65,
       });
+      // The evidence uploaded this period is now part of the verified record.
+      const evidence = await admin.query(
+        `SELECT "reviewedAt" FROM "Document" WHERE "fileName" = 'Sprint 14 report.pdf'`,
+      );
+      expect(evidence.rows[0].reviewedAt).not.toBeNull();
     });
 
     it('the sponsor confirms (the owner cannot)', async () => {

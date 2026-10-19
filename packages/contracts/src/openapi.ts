@@ -45,6 +45,7 @@ import {
   kpiSummarySchema,
   kpiTargetViewSchema,
 } from './kpis.js';
+import { documentViewSchema } from './documents.js';
 import {
   escalationCentreSchema,
   escalationDetailSchema,
@@ -139,6 +140,7 @@ const named: [string, z.ZodType][] = [
   ['LowValueItem', lowValueItemSchema],
   ['ScorecardRow', scorecardRowSchema],
   ['Performance', performanceSchema],
+  ['Document', documentViewSchema],
   ['EscalationItem', escalationItemSchema],
   ['LadderLevel', ladderLevelSchema],
   ['EscalationCentre', escalationCentreSchema],
@@ -270,7 +272,24 @@ function operation(operationId: string, route: ApiRoute) {
             },
           },
         }
-      : {}),
+      : route.uploadField
+        ? {
+            requestBody: {
+              required: true,
+              content: {
+                'multipart/form-data': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      [route.uploadField]: { type: 'string', format: 'binary' },
+                    },
+                    required: [route.uploadField],
+                  },
+                },
+              },
+            },
+          }
+        : {}),
     responses: {
       [route.status]: success,
       ...(route.strictRateLimit

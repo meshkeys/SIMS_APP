@@ -61,6 +61,7 @@ const line = (
   evidenceRequired: true,
   evidenceCount: 0,
   needsEvidence: false,
+  evidence: [],
   note: null,
   ...over,
 });
