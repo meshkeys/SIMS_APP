@@ -1,9 +1,9 @@
 # 15. Governance API
 
-Risks and issues, decisions, and maker-checker change requests. Powers the **Escalation
-centre** (heatmap, register), the dashboard's **Decisions required** panel and the
-**decision log**. (The automatic escalation ladder and rules administration follow in the
-next slice.)
+Risks and issues, escalations, decisions, and maker-checker change requests. Powers the
+**Escalation centre** (ladder, heatmap, open escalations, blocked dependencies, decision log)
+and the dashboard's **Decisions required** and escalation panels. (Rules administration
+follows in slice 8c.)
 
 ## 15.1 Endpoints
 
@@ -21,6 +21,15 @@ next slice.)
 | `GET /api/v1/change-requests` | any member | `?status=`, `?initiativeId=` |
 | `GET /api/v1/change-requests/:id` | any member who may see it | One request with before/after |
 | `POST /api/v1/change-requests/:id/withdraw` | requester, Office | Withdraw a pending request |
+
+| `GET /api/v1/escalations` | any member | Ladder with open counts, items oldest first (`?status=`, `?level=`, `?initiativeId=`) |
+| `GET /api/v1/escalations/:id` | any member who may see it | One escalation with its level history |
+| `POST /api/v1/escalations` | initiative's owner/sponsor, Office; portfolio-level: Office | Raise an escalation |
+| `POST /api/v1/escalations/:id/escalate` and `/de-escalate` | the decider at its level, Office | Move up or down one level (reason required) |
+| `POST /api/v1/escalations/:id/resolve` | the decider at its level, Office | Resolve (resolution required) |
+| `POST /api/v1/escalations/:id/withdraw` | whoever raised it, Office | Withdraw one raised by mistake |
+| `POST /api/v1/escalations/sweep` | Strategy Office, Admin | Apply due automatic moves now |
+| `GET /api/v1/dependencies` | any member | Blocked and at-risk dependencies across the portfolio |
 
 Items on sensitive initiatives are hidden from people who may not see them (chapter 12.3).
 
@@ -83,3 +92,47 @@ through an approved change request.
 - The requester (or the Strategy Office) may withdraw a pending request.
 - Pipeline initiatives (not yet active) are edited directly; a change request there answers
   `409 CHANGE_REQUEST_NOT_NEEDED`.
+
+## 15.5 Escalations
+
+The organisation's ladder (chapter 7.2) decides where items start, who decides at each level
+and when unresolved items move up.
+
+- **The centre** returns the ladder (each level's name, description, who decides, its
+  timing and how many open items sit there) and the items, **oldest first**. Each item
+  carries its level and level name, age and days at the level, the initiative, the linked
+  risk, issue or dependency, who must decide (a named person and/or a role), **days until
+  it moves up on its own** (null at a level reached only by decision) and `can` for the caller.
+- **Raising.** Owners, sponsors and the Strategy Office raise for an initiative; portfolio
+  items (no initiative) are for the Strategy Office. A risk or issue can be escalated by id:
+  its initiative is used, it must be open, and only once at a time (`409 ALREADY_ESCALATED`).
+  Items start at level 1, or at `criticalStartsAtLevel` when critical. References continue
+  the `ESC-…` series.
+- **Who decides.** Owner and sponsor levels name the initiative's owner or sponsor; a role
+  level names the role (and the person, when exactly one member holds it), and anyone holding
+  the role may act. Portfolio items at owner or sponsor levels go to the Strategy Office.
+- **Moving.** The decider at the current level, or the Strategy Office, moves an item up or
+  down one level with a reason of at least 10 characters. The ends of the ladder answer
+  `409 TOP_OF_LADDER` / `409 BOTTOM_OF_LADDER`; anyone else gets `403 NOT_DECIDER`. Moving
+  up past a manual-only level (e.g. EXCO referring to the Board) is done this way.
+- **Closing.** The decider or the Strategy Office resolves with a resolution; whoever raised
+  it, or the Strategy Office, withdraws it. Closed items answer `409 ESCALATION_CLOSED`.
+- **Automatic moves** are applied before the escalation centre, an escalation or the
+  dashboard is read, and on `POST /escalations/sweep`. Each step is recorded on the day it
+  fell due, with no actor, reason `AUTO_TIMEOUT`, and the ruleset version. It is safe to run
+  repeatedly or concurrently. (Scheduled runs and notifications come with slice 11.)
+- Audit events: `ESCALATION_RAISED`, `ESCALATED`, `DE_ESCALATED`, `ESCALATION_RESOLVED`,
+  `ESCALATION_WITHDRAWN`.
+
+## 15.6 Portfolio dependencies
+
+`GET /dependencies` lists dependencies between initiatives the caller can see (blocked and
+at risk by default, `?status=` for others): blocked first, critical path first, then the
+longest blocked. Each has the waiting initiative (`from`), the one it waits on (`to`), the
+description, `blockedSince` and `neededBy`.
+
+## 15.7 Not yet
+
+- Escalations are raised by people. Raising them automatically for missed updates, missing
+  KPI actuals and long-blocked dependencies comes with scheduled jobs (slice 11), as do
+  reminders and notifications to the person who must decide.

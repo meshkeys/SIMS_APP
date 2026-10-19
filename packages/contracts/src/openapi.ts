@@ -46,6 +46,14 @@ import {
   kpiTargetViewSchema,
 } from './kpis.js';
 import {
+  escalationCentreSchema,
+  escalationDetailSchema,
+  escalationItemSchema,
+  ladderLevelSchema,
+  portfolioDependencySchema,
+  sweepResultSchema,
+} from './escalations.js';
+import {
   benefitQuarterSchema,
   lowValueItemSchema,
   performanceSchema,
@@ -131,6 +139,12 @@ const named: [string, z.ZodType][] = [
   ['LowValueItem', lowValueItemSchema],
   ['ScorecardRow', scorecardRowSchema],
   ['Performance', performanceSchema],
+  ['EscalationItem', escalationItemSchema],
+  ['LadderLevel', ladderLevelSchema],
+  ['EscalationCentre', escalationCentreSchema],
+  ['EscalationDetail', escalationDetailSchema],
+  ['SweepResult', sweepResultSchema],
+  ['PortfolioDependency', portfolioDependencySchema],
 ];
 for (const [id, schema] of named) apiComponents.add(schema, { id });
 

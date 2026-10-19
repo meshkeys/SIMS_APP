@@ -23,7 +23,8 @@ with its tests and documentation.
 | 6c | Delivery API (write): propose/edit initiatives, lifecycle, milestones, tasks, dependencies, objective links | Done |
 | 7 | Reporting cycle: periods and deadlines, My updates, verification and challenge, sponsor confirmation, lock and snapshots | Done |
 | 8a | Governance: risks and issues, decisions, change requests (maker-checker) | Done |
-| 8b | Governance: automatic escalation ladder, rulesets admin with impact preview | Planned |
+| 8b | Governance: escalations API (ladder with counts, raise, move up/down, resolve, withdraw, automatic moves with history); portfolio dependencies | Done |
+| 8c | Rulesets admin: draft, impact preview, maker-checker approval (with the Administration screen) | Planned |
 | 9a | KPI actuals (record, verify), trajectory from the rules, performance overview (benefits by quarter, scorecard, delivered-but-low-value) | Done |
 | 9b | Benefits management: benefits per initiative, expected profile and re-forecast, realised value and verification, benefits review requests | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
@@ -43,7 +44,7 @@ with its tests and documentation.
 | 20a | Monthly progress update (owner): My updates, milestone claims, commentary, risks, live checklist, save and submit | Done |
 | 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Done |
 | 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Done |
-| 8b + 22 | Escalation ladder automation and rulesets admin (API), then the Risks & escalations screen | Next |
+| 22 | Escalation centre screen (wireframe page 7): ladder, risk heatmap, open escalations, blocked dependencies, decision log; raise, log risk, move and resolve | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

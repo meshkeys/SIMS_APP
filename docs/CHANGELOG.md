@@ -2,6 +2,17 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Escalations API (slice 8b)
+- **Escalation centre API:** the organisation's ladder with open counts per level and items
+  oldest first, each with who must decide and when it moves up on its own.
+- **Raise** (for an initiative, a logged risk or issue, or the portfolio), **escalate**,
+  **de-escalate**, **resolve** and **withdraw**, with permissions for the decider at each
+  level, and full level history.
+- **Automatic ladder moves** are applied when escalations or the dashboard are read (and on
+  demand), each recorded on the day it fell due. Each level gets its own window, so an item
+  moved down is not pushed straight back up.
+- **Portfolio dependencies** list: blocked and at risk, longest blocked first.
+
 ## 2026-10-19 — KPIs & benefits screen (slice 21)
 - **KPIs & benefits realisation** page: headline figures, expected vs realised benefits by
   quarter with the forecast and a plain-language reading of the trend, delivered work that

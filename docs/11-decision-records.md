@@ -461,3 +461,25 @@ the demo seed.
 strictness (through the bands), and the label is always explainable from the figures on
 screen. Unverified readings never move a KPI. A finer, time-weighted expectation within a
 year would need monthly or quarterly targets, which the model already supports.
+
+## ADR-027 — Escalations climb on per-level windows, applied on read until jobs exist
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** Unresolved escalations must move up the organisation's ladder on its timings.
+There is no job scheduler yet (slice 11), and people can also move items up or down by
+decision. Counting every timing from the day an item was raised would push an item that was
+deliberately moved down straight back up.
+
+**Decision.** Each level gets a window (the gap between its `autoEscalateAfterDays` and the
+next level's) counted from when the item reached its level. The moves owed are calculated
+by a pure function and applied before the escalation centre, an escalation or the dashboard
+is read, and on `POST /escalations/sweep`. Each step is written as history on the day it fell
+due. The update is conditional on the level that was read, so concurrent runs cannot apply a
+step twice.
+
+**Consequences.** Screens never show an item at a level it should have left, without any
+background infrastructure. Reads may write (idempotently). When scheduled jobs arrive, the
+same function runs on a timer and adds notifications; reads keep it as a safety net. Left
+alone, items move exactly as before (day 7, day 14); the new rule only differs after a
+manual move.

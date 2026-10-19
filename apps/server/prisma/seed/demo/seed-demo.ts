@@ -8,6 +8,10 @@ import {
   parseRulesetConfig,
   type RulesetConfig,
 } from '../../../src/domain/rulesets/ruleset-config.js';
+import {
+  autoSteps,
+  startLevel,
+} from '../../../src/domain/governance/escalation-ladder.js';
 import { recalculateElementRollups } from '../../../src/modules/delivery/element-rollups.js';
 import { recalculateKpiPositions } from '../../../src/modules/kpis/kpi-positions.js';
 import {
@@ -161,37 +165,24 @@ function validateSpecs(ruleset: RulesetConfig, computed: Computed): void {
     );
 }
 
-/** Replays the ruleset's ladder timings to produce an escalation's level history. */
+/** Replays the ruleset's ladder timings (the API's own rules) to produce an escalation's level history. */
 function escalationHistory(spec: EscalationSpec, ruleset: RulesetConfig) {
-  const { levels, criticalStartsAtLevel } = ruleset.escalation;
-  const startLevel =
-    spec.severity === 'CRITICAL' && criticalStartsAtLevel
-      ? criticalStartsAtLevel
-      : 1;
+  const DAY_MS = 86_400_000;
+  const origin = new Date(0);
+  const start = startLevel(spec.severity, ruleset.escalation);
   const age = spec.resolved ? spec.resolved.afterDays : spec.ageDays;
-  const history: {
-    level: number;
-    afterDays: number;
-    reason: 'RAISED' | 'CRITICAL_SEVERITY' | 'AUTO_TIMEOUT';
-  }[] = [
-    {
-      level: startLevel,
-      afterDays: 0,
-      reason: startLevel > 1 ? 'CRITICAL_SEVERITY' : 'RAISED',
-    },
+  return [
+    { level: start.level, afterDays: 0, reason: start.reason },
+    ...autoSteps(
+      { level: start.level, levelChangedAt: origin },
+      ruleset.escalation,
+      new Date(age * DAY_MS),
+    ).map((step) => ({
+      level: step.level,
+      afterDays: Math.round(step.dueAt.getTime() / DAY_MS),
+      reason: 'AUTO_TIMEOUT' as const,
+    })),
   ];
-  for (const level of levels) {
-    if (level.level <= startLevel || level.autoEscalateAfterDays === null)
-      continue;
-    if (level.autoEscalateAfterDays <= age) {
-      history.push({
-        level: level.level,
-        afterDays: level.autoEscalateAfterDays,
-        reason: 'AUTO_TIMEOUT' as const,
-      });
-    }
-  }
-  return history;
 }
 
 /**

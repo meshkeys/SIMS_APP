@@ -35,7 +35,7 @@ decides, and when unresolved items arrive automatically.
 | `level` | Position, numbered 1, 2, 3… without gaps |
 | `name` | Shown on the ladder, e.g. "Executive sponsor" |
 | `decidedBy` | `INITIATIVE_OWNER`, `INITIATIVE_SPONSOR`, or `ROLE` (e.g. CEO, BOARD) |
-| `autoEscalateAfterDays` | Age (days since raised) at which an item moves here; level 1 = 0; `null` = only by explicit decision |
+| `autoEscalateAfterDays` | Day on the ladder at which an item moves here; level 1 = 0; `null` = only by explicit decision |
 
 Validation rules: levels contiguous from 1; timings strictly increase; once a level is
 manual-only, every level above it is too; `criticalStartsAtLevel` must exist on the ladder.
@@ -48,6 +48,12 @@ Default ladder:
 | L2 | Executive sponsor | Initiative sponsor | after 7 days |
 | L3 | MD/CEO · EXCO | CEO | after 14 days, or immediately if critical |
 | L4 | Board | Board | by EXCO decision only |
+
+**Timing.** Each level gets its own window (the gap between its `autoEscalateAfterDays`
+and the next level's), counted from when the item reached it. Left alone, an item raised at
+L1 moves to L2 on day 7 and to L3 on day 14. An item moved up early by decision gets the
+next level's full window from then; one moved back down gets a fresh window, so it does not
+bounce straight back up.
 
 Every level change is recorded with the level's **name at that moment** and the ruleset
 version, so history stays accurate after the ladder is renamed or resized.

@@ -15,6 +15,7 @@ import { loadActiveRules } from '../delivery/element-rollups.js';
 import { InitiativeRegisterService } from '../delivery/initiative-register.service.js';
 import { seesAllInitiatives } from '../delivery/visibility.js';
 import { DecisionsService } from '../governance/decisions.service.js';
+import { EscalationsService } from '../governance/escalations.service.js';
 import { personSelect, toPersonRef } from '../people/person.js';
 import { PeriodsService } from '../reporting/periods.service.js';
 import { PlansService } from '../strategy/plans.service.js';
@@ -76,6 +77,7 @@ export class DashboardService {
     private readonly register: InitiativeRegisterService,
     private readonly periods: PeriodsService,
     private readonly decisions: DecisionsService,
+    private readonly escalationLadder: EscalationsService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -88,7 +90,12 @@ export class DashboardService {
         select: { id: true, name: true, startDate: true, endDate: true },
       }),
       query.elementId ? this.findScope(planId, query.elementId) : null,
-      this.db.transaction((tx) => loadActiveRules(tx)),
+      this.db.transaction(async (tx) => {
+        const rules = await loadActiveRules(tx);
+        // Escalations owed an automatic move are moved before they are shown.
+        await this.escalationLadder.catchUpIn(tx, rules, now);
+        return rules;
+      }),
     ]);
 
     const initiatives = await this.initiativesInScope(viewer, planId, scope);
