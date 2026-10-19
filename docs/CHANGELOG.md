@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Administration API: people, departments, organisation, audit (slice 25a)
+- **Members:** list with roles, status and responsibilities; change roles, job title,
+  department and manager; deactivate and reactivate access. Only administrators manage the
+  administrator role, and the last administrator is always kept.
+- **Departments:** add, rename, recode, nest and delete empty ones.
+- **Organisation settings:** read by everyone, changed by a system administrator (name,
+  country, currency, time zone, financial year, terminology), with checks.
+- **Audit log:** every change, newest first, filterable, for administrators, the Strategy
+  Office and internal audit.
+
 ## 2026-10-19 — Administration: rules (slice 24)
 - **Administration** screen for the Strategy Office, administrators and the MD/CEO:
   RAG thresholds with sliders, health modifiers, override policy, impact and KPI

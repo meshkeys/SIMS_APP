@@ -47,6 +47,13 @@ import {
 } from './kpis.js';
 import { documentViewSchema } from './documents.js';
 import {
+  auditEventSchema,
+  auditPageSchema,
+  memberAdminPageSchema,
+  memberAdminSchema,
+  organisationSettingsSchema,
+} from './admin.js';
+import {
   rulesetImpactSchema,
   rulesetsOverviewSchema,
   rulesetViewSchema,
@@ -152,6 +159,11 @@ const named: [string, z.ZodType][] = [
   ['ScorecardRow', scorecardRowSchema],
   ['Performance', performanceSchema],
   ['Document', documentViewSchema],
+  ['MemberAdmin', memberAdminSchema],
+  ['MemberAdminPage', memberAdminPageSchema],
+  ['OrganisationSettings', organisationSettingsSchema],
+  ['AuditEvent', auditEventSchema],
+  ['AuditPage', auditPageSchema],
   ['RulesetView', rulesetViewSchema],
   ['RulesetsOverview', rulesetsOverviewSchema],
   ['RulesetImpact', rulesetImpactSchema],
