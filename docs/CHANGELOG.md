@@ -2,6 +2,14 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Update reviews (slice 20b)
+- **Reviews** screen for the Strategy Office and sponsors: stage tabs with counts, a queue,
+  and a review panel with claims beside verified figures, commentary and risks.
+- **Verify** with per-milestone verified figures (live verified completion), **Challenge**
+  with a required comment, **Confirm and approve** for sponsors, and optional notes.
+- A shared **Conversation** panel on every update — owners can now reply to challenges.
+- Reviews appears in the menu only for people who review.
+
 ## 2026-10-19 — Monthly progress update (slice 20a)
 - **My updates** screen: cards for each update owed this cycle; milestone claims with live
   completion, variance and evidence status; commentary; risks with **Add risk or issue**;

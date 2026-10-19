@@ -40,7 +40,8 @@ with its tests and documentation.
 | 19b | Initiative detail: editing — details, objectives, milestones, tasks (with field-level permissions in `can`) | Done |
 | 19c | Initiative detail: dependencies (with an initiative picker), **Request change** for active baselines, withdraw a pending request | Done |
 | 20a | Monthly progress update (owner): My updates, milestone claims, commentary, risks, live checklist, save and submit | Done |
-| 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Next |
+| 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Done |
+| 9 + 21 | KPI actuals and benefits realisation (API), then the KPIs & benefits screen (wireframe page 6) | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

@@ -268,5 +268,25 @@ From `GET /my-updates` and `GET`/`PUT /periods/:periodId/updates/:initiativeId`
 - **States:** submitted (read-only, waiting for verification), challenged (the challenge
   shown, editable again), verified (waiting for the sponsor), approved, period locked.
 
-Reviewing — verify, challenge, approve and comment — is slice 20b.
+The **Conversation** panel (shared with the review screen) shows the challenges and comments
+on the update, and lets the owner reply.
+
+### Update reviews (`/reviews`)
+
+In the sidebar under My work, for the Strategy Office, administrators, executive sponsors and
+the MD/CEO. The stage and the open update are in the URL (`?stage=…&initiative=…`).
+
+- **Stages:** To verify · Waiting for sponsor (shown to sponsors as "Waiting for you") ·
+  Challenged · Approved · All, each with its count. The Strategy Office lands on To verify,
+  sponsors on what waits for them. Sponsors see only initiatives they sponsor (or own).
+- **Queue:** initiative, owner, status, claimed (red when below plan), planned, verified,
+  missing evidence and when it was submitted, oldest first; **Review** opens it below.
+- **Review panel:** the owner's claims beside the last verified figures and evidence;
+  the owner's commentary, management-decision flag and open risks; the conversation.
+  - **Strategy Office:** enters verified completion per milestone (starts at the claim;
+    the verified completion recalculates live) and **Verifies**, or **Challenges** with a
+    comment (10+ characters) that sends it back to the owner.
+  - **Sponsor:** **Confirm and approve** a verified update, or challenge it.
+  - An optional note is recorded with verify and approve. Every button follows the
+    server's `can` for this person and this update.
 

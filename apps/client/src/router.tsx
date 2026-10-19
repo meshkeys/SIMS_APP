@@ -92,6 +92,22 @@ const myUpdatesRoute = createRoute({
   ),
 });
 
+const reviewsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/reviews',
+  validateSearch: z.object({
+    stage: z
+      .enum(['to-verify', 'with-sponsor', 'challenged', 'approved', 'all'])
+      .optional()
+      .catch(undefined),
+    initiative: z.uuid().optional().catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/updates/reviews-page'),
+    'ReviewsPage',
+  ),
+});
+
 const strategyRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/strategy',
@@ -151,6 +167,7 @@ const routeTree = rootRoute.addChildren([
     screen('/risks', 'Risks & escalations'),
     screen('/reports', 'Reports'),
     myUpdatesRoute,
+    reviewsRoute,
     screen('/admin', 'Administration', 'Settings'),
   ]),
 ]);

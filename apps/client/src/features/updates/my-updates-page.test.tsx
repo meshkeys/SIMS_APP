@@ -128,7 +128,11 @@ describe('Monthly progress update', () => {
     // 44% is above last month's 30% with no file yet.
     expect(screen.getByText('Upload required')).toBeVisible();
     // More than 5 pp behind: explanation and recovery become required.
-    expect(screen.getByText(/so a variance explanation and recovery action are required/)).toBeVisible();
+    expect(
+      screen.getByText(
+        /so a variance explanation and recovery action are required/,
+      ),
+    ).toBeVisible();
     expect(within(checklist).getByText(/explain why/)).toBeVisible();
     expect(
       screen.getByRole('button', { name: 'Submit for review' }),

@@ -3,7 +3,6 @@ import {
   type UpdateDraftInput,
   type UpdateForm as Form,
 } from '@sims/contracts';
-import { useQueryClient } from '@tanstack/react-query';
 import { Check, CircleAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '@/auth/use-auth';
@@ -13,11 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Field, Input, Textarea } from '@/components/ui/form';
 import { errorMessage } from '@/lib/api/errors';
-import { apiKey, useApiMutation } from '@/lib/api/query';
+import { useApiMutation } from '@/lib/api/query';
 import { cn } from '@/lib/cn';
 import { formatInstantDate, formatPercent } from '@/lib/format';
 import { HEALTH_DISPLAY } from '@/lib/health';
 import { AddRiskDialog } from './add-risk-dialog';
+import { Conversation } from './conversation';
+import { useApplyForm } from './use-apply-form';
 
 interface Draft {
   /** Claimed % per milestone, as typed ("" = not filled in). */
@@ -57,7 +58,6 @@ const claimOf = (text: string | undefined): number | null => {
 export function UpdateForm({ form }: { form: Form }) {
   const { organisation } = useSession();
   const timeZone = organisation.timezone;
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft>(() => fromForm(form));
   const [dirty, setDirty] = useState(false);
   const [addingRisk, setAddingRisk] = useState(false);
@@ -127,12 +127,7 @@ export function UpdateForm({ form }: { form: Form }) {
   });
 
   const params = { periodId: form.period.id, initiativeId: form.initiative.id };
-  const onSaved = async (next: Form) => {
-    queryClient.setQueryData(apiKey('getUpdate', { params }), next);
-    await queryClient.invalidateQueries({
-      predicate: (q) => q.queryKey[0] !== 'getUpdate',
-    });
-  };
+  const onSaved = useApplyForm(form);
   const save = useApiMutation('saveUpdateDraft', { onSuccess: onSaved });
   const submit = useApiMutation('submitUpdate', { onSuccess: onSaved });
   const busy = save.isPending || submit.isPending;
@@ -536,34 +531,7 @@ export function UpdateForm({ form }: { form: Form }) {
             )}
           </CardBody>
         </Card>
-        {form.comments.length > 0 && (
-          <Card aria-labelledby="comments-title">
-            <CardBody>
-              <h2 id="comments-title" className="font-semibold text-ink">
-                Conversation
-              </h2>
-              <ol className="mt-3 flex flex-col gap-3 text-sm">
-                {form.comments.map((c) => (
-                  <li
-                    key={c.id}
-                    className={
-                      c.kind === 'CHALLENGE'
-                        ? 'rounded-md bg-warning-soft p-2'
-                        : undefined
-                    }
-                  >
-                    <p className="text-ink">{c.body}</p>
-                    <p className="mt-0.5 text-xs text-ink-muted">
-                      {c.kind === 'CHALLENGE' ? 'Challenge · ' : ''}
-                      {c.author?.name ?? 'Someone'} ·{' '}
-                      {formatInstantDate(c.at, timeZone)}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </CardBody>
-          </Card>
-        )}
+        <Conversation form={form} />
       </aside>
 
       {addingRisk && (

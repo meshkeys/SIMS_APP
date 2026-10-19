@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useAuth, useSession } from '@/auth/use-auth';
 import { Button } from '@/components/ui/button';
 import { Brand } from '@/features/auth/login-page';
+import { hasAnyRole } from '@/lib/access';
 import { useApiQuery } from '@/lib/api/query';
 import { cn } from '@/lib/cn';
 import { CycleWidget } from './cycle-widget';
@@ -78,6 +79,7 @@ export function AppShell() {
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const session = useSession();
   const myUpdates = useApiQuery('getMyUpdates', {});
   const due = myUpdates.data?.items.filter((i) => i.actionNeeded).length ?? 0;
 
@@ -93,23 +95,27 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               {group.heading}
             </h2>
             <ul className="flex flex-col gap-0.5">
-              {group.items.map((item) => (
-                <li key={item.to}>
-                  <Link
-                    to={item.to}
-                    activeOptions={{ exact: item.to === '/' }}
-                    onClick={onNavigate}
-                    className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover focus-visible:outline-sidebar-text aria-[current=page]:bg-sidebar-active aria-[current=page]:font-medium aria-[current=page]:text-white"
-                  >
-                    {item.label}
-                    {item.to === '/my-updates' && due > 0 && (
-                      <span className="rounded-full bg-canvas px-2 py-0.5 text-[0.6875rem] font-semibold text-sidebar">
-                        {due} due
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              ))}
+              {group.items
+                .filter(
+                  (item) => !item.roles || hasAnyRole(session, item.roles),
+                )
+                .map((item) => (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      activeOptions={{ exact: item.to === '/' }}
+                      onClick={onNavigate}
+                      className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover focus-visible:outline-sidebar-text aria-[current=page]:bg-sidebar-active aria-[current=page]:font-medium aria-[current=page]:text-white"
+                    >
+                      {item.label}
+                      {item.to === '/my-updates' && due > 0 && (
+                        <span className="rounded-full bg-canvas px-2 py-0.5 text-[0.6875rem] font-semibold text-sidebar">
+                          {due} due
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
             </ul>
           </div>
         ))}
