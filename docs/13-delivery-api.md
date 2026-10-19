@@ -90,7 +90,7 @@ restricted initiatives the caller may not see are never in the file.
 | Impact | score, summary, trajectory |
 | Milestones | weight, critical, status, planned window, forecast/actual, claimed and verified completion, **contribution** (pp it adds to completion), **overdue days**, evidence count |
 | Risks & issues | open items, most severe first, with owner, due date and current escalation level |
-| Dependencies | `blockedBy` (what it waits on) and `enables` (what waits on it), with status and blocked-since |
+| Dependencies | `blockedBy` (what it waits on) and `enables` (what waits on it): the dependency's own `id` (for `PATCH`/`DELETE /dependencies/:id`), the other initiative, status, blocked-since, critical path, description and need-by date |
 | KPIs | the KPIs it is expected to move |
 | History | planned vs verified over time (the chart) |
 | Activity | the 10 latest audit events for the initiative and its milestones, as sentences ("Status overridden Red → Amber with reason", "Forecast for Vendor contract signed moved 7 Oct → 22 Oct") with who did them |

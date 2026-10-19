@@ -178,12 +178,19 @@ export const milestoneViewSchema = z.object({
 export type MilestoneView = z.infer<typeof milestoneViewSchema>;
 
 export const dependencyViewSchema = z.object({
+  /** The dependency itself (for PATCH/DELETE /dependencies/:id). */
+  id: z.uuid(),
+  /** The other initiative. */
   initiativeId: z.uuid(),
   code: z.string(),
   title: z.string(),
   status: z.enum(DependencyStatus),
   blockedSince: isoDate.nullable(),
   isCriticalPath: z.boolean(),
+  /** What exactly is needed. */
+  description: z.string().nullable(),
+  /** When it is needed by. */
+  neededBy: isoDate.nullable(),
 });
 export type DependencyView = z.infer<typeof dependencyViewSchema>;
 

@@ -181,17 +181,23 @@ export class InitiativesService {
     const dependency = (
       other: { id: string; code: string; title: string },
       d: {
+        id: string;
         status: DependencyStatus;
         blockedSince: Date | null;
         isCriticalPath: boolean;
+        description: string | null;
+        neededBy: Date | null;
       },
     ): DependencyView => ({
+      id: d.id,
       initiativeId: other.id,
       code: other.code,
       title: other.title,
       status: d.status,
       blockedSince: toIsoDate(d.blockedSince),
       isCriticalPath: d.isCriticalPath,
+      description: d.description,
+      neededBy: toIsoDate(d.neededBy),
     });
 
     // What the caller may do, from the same rules that enforce each action.

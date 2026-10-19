@@ -284,7 +284,7 @@ describe('Initiative detail', () => {
       screen.getByRole('tab', { name: 'Change requests' }),
     ).toHaveAttribute('aria-selected', 'true');
     expect(
-      screen.getByText('Release contingency for the vendor.'),
+      screen.getByText(/Release contingency for the vendor\./),
     ).toBeVisible();
   });
 

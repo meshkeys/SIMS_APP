@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Dependencies and change requests (slice 19c)
+- **Dependencies:** add (initiative picker), change status, remove.
+- **Request change** for active baselines — dates and milestones, budget or scope — sending
+  only what changes, routed to the right approver; confirmation on the Change requests tab.
+- **Change requests** shown in plain words (before → after), with **Withdraw** for pending
+  requests.
+- One accessible `SearchPicker`, used by the people and initiative pickers.
+- API: dependency entries include their id, description and need-by date.
+
 ## 2026-10-19 — Editing initiatives (slice 19b)
 - **Edit details**, showing only the fields the person may change now and sending only what
   changed; people pickers show the current assignee.

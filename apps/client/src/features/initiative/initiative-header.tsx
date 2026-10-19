@@ -20,11 +20,13 @@ export function InitiativeHeader({
   onMove,
   onEdit,
   onEditObjectives,
+  onRequestChange,
 }: {
   initiative: InitiativeDetail;
   onMove: (to: InitiativeStatus) => void;
   onEdit: () => void;
   onEditObjectives: () => void;
+  onRequestChange: () => void;
 }) {
   const health = initiative.health;
   const shown = HEALTH_DISPLAY[health.effective];
@@ -107,6 +109,11 @@ export function InitiativeHeader({
           {initiative.can.editFields.length > 0 && (
             <Button variant="secondary" onClick={onEdit}>
               Edit details
+            </Button>
+          )}
+          {initiative.can.requestChange && (
+            <Button variant="secondary" onClick={onRequestChange}>
+              Request change
             </Button>
           )}
           {initiative.can.changeStatus.length > 0 && (

@@ -1,5 +1,4 @@
 import type { InitiativeDetail } from '@sims/contracts';
-import { Link } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -461,86 +460,6 @@ export function RisksCard({ initiative }: { initiative: InitiativeDetail }) {
       />
       <CardBody className="pt-3">
         <RiskList risks={initiative.risks} limit={3} />
-      </CardBody>
-    </Card>
-  );
-}
-
-export function DependencyList({
-  initiative,
-}: {
-  initiative: InitiativeDetail;
-}) {
-  const { blockedBy, enables } = initiative.dependencies;
-  if (blockedBy.length + enables.length === 0) {
-    return <EmptyState className="py-6" title="No dependencies" />;
-  }
-  return (
-    <ul className="flex flex-col gap-2 text-sm">
-      {blockedBy.map((d) => (
-        <li
-          key={`b-${d.initiativeId}`}
-          className={cn(
-            'rounded-md px-3 py-2',
-            d.status === 'BLOCKED' ? 'bg-danger-soft' : 'bg-surface-muted',
-          )}
-        >
-          <span
-            className={cn(
-              'mr-2 text-xs font-medium',
-              d.status === 'BLOCKED' ? 'text-danger' : 'text-ink-muted',
-            )}
-          >
-            {d.status === 'BLOCKED' ? 'Blocked by' : 'Depends on'}
-          </span>
-          <Link
-            to="/initiatives/$id"
-            params={{ id: d.initiativeId }}
-            className="text-ink hover:underline"
-          >
-            <span className="font-mono text-xs">{d.code}</span> {d.title}
-          </Link>
-          {d.isCriticalPath && (
-            <span className="ml-2 text-xs text-ink-muted">critical path</span>
-          )}
-          {d.blockedSince && (
-            <span className="block text-xs text-danger">
-              Blocked since {formatDate(d.blockedSince)}
-            </span>
-          )}
-        </li>
-      ))}
-      {enables.map((d) => (
-        <li
-          key={`e-${d.initiativeId}`}
-          className="rounded-md bg-surface-muted px-3 py-2"
-        >
-          <span className="mr-2 text-xs font-medium text-ink-muted">
-            Enables
-          </span>
-          <Link
-            to="/initiatives/$id"
-            params={{ id: d.initiativeId }}
-            className="text-ink hover:underline"
-          >
-            <span className="font-mono text-xs">{d.code}</span> {d.title}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function DependenciesCard({
-  initiative,
-}: {
-  initiative: InitiativeDetail;
-}) {
-  return (
-    <Card aria-labelledby="dependencies-title">
-      <CardHeader titleId="dependencies-title" title="Dependencies" />
-      <CardBody className="pt-3">
-        <DependencyList initiative={initiative} />
       </CardBody>
     </Card>
   );

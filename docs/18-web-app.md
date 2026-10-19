@@ -222,6 +222,22 @@ exist.
 - **Tasks** (Milestones & tasks tab): add with assignee and due date, change status in
   place (To do · In progress · Done · Blocked), remove.
 
-Dependencies, **Request change** and withdrawing a request follow in slice 19c;
+- **Dependencies:** **Add dependency** (the initiative it waits on — chosen with the
+  initiative picker, which never offers the initiative itself or one already linked — what
+  is needed, need-by date, status, critical path); on each "waits on" row, change status
+  (On track · At risk · Blocked · Resolved) or remove it.
+- **Request change** (active initiatives, for its owner, sponsor and the Strategy Office):
+  choose dates and milestones, budget or scope; values start as today's baseline and only
+  what changes is sent, with a justification (20+ characters) and an optional decision
+  date. The dialog names the approver (MD/CEO for dates and milestones, the sponsor for
+  budget and scope). Afterwards the Change requests tab opens with a confirmation.
+- **Change requests** tab: each request in plain words ("Budget: ₦500m → ₦550m",
+  "Commercial launch due: 31 Jan 2027"), its justification, who is deciding or decided,
+  and **Withdraw** for a pending request (its requester or the Strategy Office).
+
+**Pickers.** `SearchPicker` (`components/ui/search-picker.tsx`) is the one accessible
+search-and-choose control (Downshift combobox); `PeoplePicker` and `InitiativePicker` are
+thin wrappers that run the search.
+
 **Documents**, **Updates** and **Escalate** arrive with their backend slices.
 

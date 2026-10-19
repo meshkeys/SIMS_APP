@@ -1,19 +1,13 @@
-import {
-  type ChangeRequestView,
-  type InitiativeDetail,
-  type InitiativeStatus,
-} from '@sims/contracts';
+import type { InitiativeDetail, InitiativeStatus } from '@sims/contracts';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { Tabs } from 'radix-ui';
 import { useEffect, useState } from 'react';
 import { useSession } from '@/auth/use-auth';
 import { Alert } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/states';
 import { useApiQuery } from '@/lib/api/query';
-import { formatInstantDate } from '@/lib/format';
 import { ClearOverrideDialog, OverrideDialog, StatusDialog } from './dialogs';
 import {
   DeleteMilestoneDialog,
@@ -21,13 +15,14 @@ import {
   EditObjectivesDialog,
   MilestoneDialog,
 } from './edit-dialogs';
+import { ChangeRequestDialog } from './change-request-dialog';
+import { ChangeRequests } from './change-requests';
+import { AddDependencyDialog, DependenciesCard } from './dependencies';
 import { TaskBoard } from './task-board';
 import { FactsStrip, InitiativeHeader } from './initiative-header';
 import { INITIATIVE_TABS, type InitiativeTab, STATUS_LABELS } from './labels';
 import {
   ActivityCard,
-  DependenciesCard,
-  DependencyList,
   ExecutionCard,
   ImpactCard,
   MilestonesCard,
@@ -49,6 +44,8 @@ type Dialog =
   | { kind: 'edit-objectives' }
   | { kind: 'milestone'; milestone?: Milestone }
   | { kind: 'remove-milestone'; milestone: Milestone }
+  | { kind: 'add-dependency' }
+  | { kind: 'change-request' }
   | null;
 
 /** One initiative in full: status and why, delivery, risks, dependencies, history. */
@@ -112,6 +109,7 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
         onMove={(to) => setDialog({ kind: 'status', to })}
         onEdit={() => setDialog({ kind: 'edit-details' })}
         onEditObjectives={() => setDialog({ kind: 'edit-objectives' })}
+        onRequestChange={() => setDialog({ kind: 'change-request' })}
       />
       <FactsStrip
         initiative={initiative}
@@ -174,7 +172,10 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
             </div>
             <div className="flex min-w-0 flex-col gap-5">
               <RisksCard initiative={initiative} />
-              <DependenciesCard initiative={initiative} />
+              <DependenciesCard
+                initiative={initiative}
+                onAdd={() => setDialog({ kind: 'add-dependency' })}
+              />
               <ActivityCard initiative={initiative} timeZone={timeZone} />
             </div>
           </div>
@@ -209,15 +210,14 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
         </Tabs.Content>
 
         <Tabs.Content value="dependencies" className="mt-5 outline-none">
-          <Card>
-            <CardBody>
-              <DependencyList initiative={initiative} />
-            </CardBody>
-          </Card>
+          <DependenciesCard
+            initiative={initiative}
+            onAdd={() => setDialog({ kind: 'add-dependency' })}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="changes" className="mt-5 outline-none">
-          <ChangeRequests initiativeId={initiative.id} timeZone={timeZone} />
+          <ChangeRequests initiative={initiative} />
         </Tabs.Content>
       </Tabs.Root>
 
@@ -252,6 +252,12 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
           milestone={dialog.milestone}
           onClose={close}
         />
+      )}
+      {dialog?.kind === 'add-dependency' && (
+        <AddDependencyDialog initiative={initiative} onClose={close} />
+      )}
+      {dialog?.kind === 'change-request' && (
+        <ChangeRequestDialog initiative={initiative} onClose={close} />
       )}
       {dialog?.kind === 'remove-milestone' && (
         <DeleteMilestoneDialog
@@ -318,85 +324,6 @@ function Notices({ initiative }: { initiative: InitiativeDetail }) {
         </Alert>
       ))}
     </div>
-  );
-}
-
-const CR_TONE: Record<
-  ChangeRequestView['status'],
-  'info' | 'success' | 'danger' | 'neutral'
-> = {
-  PENDING: 'info',
-  APPROVED: 'success',
-  REJECTED: 'danger',
-  WITHDRAWN: 'neutral',
-};
-
-function ChangeRequests({
-  initiativeId,
-  timeZone,
-}: {
-  initiativeId: string;
-  timeZone: string;
-}) {
-  const requests = useApiQuery('listChangeRequests', {
-    query: { initiativeId },
-  });
-  return (
-    <Card>
-      <CardBody>
-        {requests.isPending ? (
-          <Skeleton className="h-24" />
-        ) : requests.isError ? (
-          <ErrorState
-            error={requests.error}
-            onRetry={() => void requests.refetch()}
-          />
-        ) : requests.data.length === 0 ? (
-          <EmptyState
-            title="No change requests"
-            description="Once active, changes to the baseline dates, budget or scope go through an approved change request."
-          />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {requests.data.map((cr) => (
-              <li key={cr.id} className="rounded-md border border-border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-ink-muted">
-                    {cr.reference}
-                  </span>
-                  <Badge tone={CR_TONE[cr.status]}>
-                    {cr.status.charAt(0) + cr.status.slice(1).toLowerCase()}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm font-medium text-ink">
-                  {cr.type
-                    .replace('_CHANGE', '')
-                    .replace('_', ' ')
-                    .toLowerCase()
-                    .replace(/^./, (c) => c.toUpperCase())}{' '}
-                  change
-                </p>
-                {cr.justification && (
-                  <p className="mt-1 text-sm text-ink">{cr.justification}</p>
-                )}
-                <p className="mt-2 text-xs text-ink-muted">
-                  Requested by {cr.requestedBy?.name ?? 'unknown'} on{' '}
-                  {formatInstantDate(cr.createdAt, timeZone)}
-                  {cr.approver && ` · decided by ${cr.approver.name}`}
-                  {cr.decidedAt &&
-                    ` on ${formatInstantDate(cr.decidedAt, timeZone)}`}
-                </p>
-                {cr.decisionReason && (
-                  <p className="mt-1 text-xs text-ink-muted">
-                    “{cr.decisionReason}”
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardBody>
-    </Card>
   );
 }
 

@@ -174,22 +174,28 @@ export const DIG_004: InitiativeDetail = {
   dependencies: {
     blockedBy: [
       {
+        id: id(801),
         initiativeId: id(11),
         code: 'DIG-011',
         title: 'Core Banking API Layer',
         status: 'BLOCKED',
         blockedSince: '2026-09-25',
         isCriticalPath: true,
+        description: 'Account API needed for onboarding',
+        neededBy: '2026-10-20',
       },
     ],
     enables: [
       {
+        id: id(802),
         initiativeId: id(5),
         code: 'REV-005',
         title: 'Bancassurance Product Bundle',
         status: 'ON_TRACK',
         blockedSince: null,
         isCriticalPath: false,
+        description: null,
+        neededBy: null,
       },
     ],
   },
