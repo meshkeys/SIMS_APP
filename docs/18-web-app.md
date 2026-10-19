@@ -128,3 +128,28 @@ automatically first); every panel has an empty state.
 KPI values are written with their units the way people say them (`lib/format.ts`):
 18 `%` → "18%", 72 `h` → "72h", 4.2 `NGN bn` → "₦4.2bn", 40 `clients` → "40 clients".
 
+### Initiative register (`/initiatives`)
+
+From `GET /initiatives` (chapter 13). Every filter is in the URL, so a view can be
+bookmarked or shared, and the dashboard's tiles open it pre-filtered
+(`/initiatives?health=RED`). Broken values in an edited link fall back to defaults.
+
+| Control | URL | Notes |
+|---|---|---|
+| Tabs: Active · Pipeline (awaiting approval) · Closed (benefits tracking) · Cancelled | `tab` | With counts; switching tab clears the health filter |
+| Search by name, ID or owner | `q` | Applied after a 300 ms pause; replaces the history entry instead of adding one per keystroke |
+| Pillar (the plan's own top-level label) | `elementId` | Includes everything under the pillar |
+| Health chips: All · Delayed · At risk · On track (· Unknown when any) | `health` | Counts within the current tab; press again to clear |
+| Sort: health then due date · due date · latest due · furthest behind · ID | `sort` | |
+| Previous / Next, "Page 1 of 4" | `page` | Any other change returns to page 1 |
+
+Each row: ID, initiative (links to its page) with pillar and a "Restricted" mark for
+sensitive ones, owner and sponsor, due date (and a later forecast in red), execution bar
+with the planned tick and "−9 pp vs plan", health (and "Overridden"), impact summary or
+"% of target" or "Not yet measurable", and last update ("overdue" in red). The table scrolls
+sideways on narrow screens. Loading shows skeleton rows; no matches offers **Clear filters**.
+
+Not yet on the register (they need endpoints from later slices): the **department** filter
+(needs a departments list), **Propose initiative** (needs a people picker for owner and
+sponsor) and **Export to Excel** (reports slice).
+

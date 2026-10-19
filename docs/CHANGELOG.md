@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Initiative register (slice 17)
+- Register screen: tabs with counts, search, pillar filter, health chips, sorting and
+  paging — all kept in the URL, so views can be shared and dashboard tiles open it
+  pre-filtered; broken filter values fall back to defaults.
+- Rows show execution against plan (bar, planned tick, pp variance), health, impact and last
+  update with overdue flags; sensitive initiatives are marked "Restricted".
+- Fixed before release: pausing after a space in the search box dropped the space.
+- Tests: screen-level waits raised to 5 s, as screens load on demand and a full parallel
+  run can take over a second to show one.
+
 ## 2026-10-19 — Strategy map (slice 16)
 - Strategy map screen: plan header, aspiration banner with totals per level, pillar cards
   with execution bars and objective cards (headline KPI, initiatives, health in words), and

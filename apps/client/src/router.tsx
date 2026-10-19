@@ -6,12 +6,12 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { Health } from '@sims/contracts';
 import { z } from 'zod';
 import { type Auth, safeRedirect } from '@/auth/use-auth';
 import { AppShell } from '@/components/layout/app-shell';
 import { ErrorState } from '@/components/ui/states';
 import { LoginPage } from '@/features/auth/login-page';
+import { registerSearchSchema } from '@/features/initiatives/register-search';
 import { ComingSoon, NotFound } from '@/features/placeholder/coming-soon';
 
 export interface RouterContext {
@@ -90,14 +90,21 @@ const strategyRoute = createRoute({
   ),
 });
 
-/** Register filters live in the URL (the register screen uses them next). */
+/** Register filters live in the URL, so any view can be shared. */
 const initiativesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/initiatives',
-  validateSearch: z.object({
-    health: z.enum(Health).optional().catch(undefined),
-  }),
-  component: () => <ComingSoon title="Initiatives" />,
+  validateSearch: registerSearchSchema,
+  component: lazyRouteComponent(
+    () => import('@/features/initiatives/register-page'),
+    'RegisterPage',
+  ),
+});
+
+const initiativeRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/initiatives/$id',
+  component: () => <ComingSoon title="Initiative" eyebrow="Initiatives" />,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -106,6 +113,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute,
     strategyRoute,
     initiativesRoute,
+    initiativeRoute,
     screen('/performance', 'KPIs & benefits realisation', 'Performance'),
     screen('/risks', 'Risks & escalations'),
     screen('/reports', 'Reports'),

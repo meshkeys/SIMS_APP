@@ -33,7 +33,8 @@ with its tests and documentation.
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |
 | 15 | Command Centre dashboard screen | Done |
 | 16 | Strategy map screen; dashboard sidebar cycle widget and legend | Done |
-| 17 | Initiative register screen | Next |
+| 17 | Initiative register screen | Done |
+| 18 | Initiative detail screen | Next |
 | 15+ | Web app: each screen, with the backend pieces it needs (8b, 9, 11, 12, 13) | Planned |
 
 ## 10.3 Known follow-ups
@@ -47,6 +48,8 @@ with its tests and documentation.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).
 - CI pipeline (lint, tests, build, docs) on every push.
+- API for the web app: people directory (owner/sponsor pickers) and departments list —
+  needed for "Propose initiative" and the register's department filter.
 - Web app: the shared vendor bundle is 189 kB gzipped; screens already load on demand.
 - Web app: browser end-to-end tests (Playwright) once the first screens are in.
 - Prisma's query engine runs some relation loads concurrently inside its own per-query
