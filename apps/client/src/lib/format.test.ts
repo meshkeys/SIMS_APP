@@ -5,6 +5,7 @@ import {
   formatDeadline,
   formatInstantDay,
   formatKpiValue,
+  formatMoney,
   formatPercent,
   plural,
 } from './format';
@@ -45,5 +46,11 @@ describe('format', () => {
     expect(formatKpiValue(22, 'score')).toBe('22');
     expect(formatKpiValue(1.5, 'm users')).toBe('1.5m users');
     expect(formatKpiValue(null, '%')).toBe('—');
+  });
+
+  it('writes money compactly in the organisation currency', () => {
+    expect(formatMoney(50_000_000, 'NGN')).toBe('₦50m');
+    expect(formatMoney(1_250_000_000, 'NGN')).toBe('₦1.3bn');
+    expect(formatMoney(null, 'NGN')).toBe('—');
   });
 });

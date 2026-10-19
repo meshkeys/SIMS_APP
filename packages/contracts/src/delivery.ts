@@ -274,6 +274,20 @@ export const initiativeDetailSchema = z.object({
       actor: personRefSchema.nullable(),
     }),
   ),
+  /**
+   * What the caller may do now, decided by the server with the same rules
+   * that enforce each action — so the screen shows the right buttons.
+   */
+  can: z.object({
+    /** Lifecycle moves the caller may make (Strategy Office only). */
+    changeStatus: z.array(z.enum(InitiativeStatus)),
+    /** Set or clear a manual health override (the organisation's rule). */
+    override: z.boolean(),
+    /** Edit fields they are responsible for (owner, sponsor, Office). */
+    edit: z.boolean(),
+    /** Ask for a change to the locked baseline (active initiatives). */
+    requestChange: z.boolean(),
+  }),
 });
 export type InitiativeDetail = z.infer<typeof initiativeDetailSchema>;
 
@@ -381,6 +395,13 @@ export type UpdateInitiativeInput = z.output<typeof updateInitiativeSchema>;
 
 export const objectivesSchema = z.object({ objectives: objectiveLinks });
 export type ObjectivesInput = z.output<typeof objectivesSchema>;
+
+/** Moves that stop or pause delivery, and so must say why. */
+export const STATUS_CHANGES_NEEDING_REASON = [
+  'ON_HOLD',
+  'CANCELLED',
+  'CLOSED',
+] as const satisfies readonly InitiativeStatus[];
 
 export const statusChangeSchema = z.object({
   status: z.enum(InitiativeStatus),

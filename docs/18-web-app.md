@@ -179,3 +179,35 @@ taken appears under Code).
 Esc); shows job title and department; can be limited to a role; clearable. Built on
 Downshift's accessible combobox, and reused wherever someone is assigned.
 
+### Initiative detail (`/initiatives/:id`)
+
+From `GET /initiatives/:id` (chapter 13.3). The open tab is in the URL (`?tab=risks`).
+
+- **Header:** breadcrumb, title, chips (health — "· overridden" when an override applies;
+  status instead of health before activation; priority; pillar; "Contributes to O2.1 ·
+  O1.1"; Restricted), and **Change status** with the moves the server allows the caller.
+- **Facts:** owner, sponsor, benefits owner (job titles; names on hover), baseline dates,
+  budget ("₦500m · 58% spent"), last verified update; a later forecast end is flagged.
+- **Notices:** update overdue, awaiting approval, approved and ready to plan, on hold,
+  closed or cancelled.
+- **Overview:** execution (verified vs planned with the tick, pp behind) and strategic impact
+  cards; **Why this status?** — each rule's result, the calculated result and the
+  management override (who, when, expiry), with **Override** / **Remove override** for
+  those allowed; the milestones table (weight, baseline, forecast/actual, verified,
+  contribution, evidence; total row); the **planned vs actual** chart; risks and issues;
+  dependencies (blocked by / enables, linked); activity and audit trail.
+- **Tabs:** Milestones & tasks · Risks & issues · Dependencies · Change requests.
+- **Actions:** lifecycle moves in a confirmation dialog that says what will happen;
+  stopping or pausing delivery needs a reason; refusals (e.g. not ready to activate) are
+  explained in the dialog. Health override with reason and optional expiry (default: the
+  longest the organisation allows). Results update the page at once and refresh lists.
+
+The chart is drawn as SVG with a written summary ("verified progress was 60% against 66%
+planned") and the figures as a table for screen readers. A restricted initiative the
+person may not see shows "This initiative cannot be shown" — the same as one that does not
+exist.
+
+Editing (milestones, tasks, dependencies, objectives, details) and **Request change**
+follow in slice 19b; **Documents**, **Updates** and **Escalate** arrive with their backend
+slices.
+

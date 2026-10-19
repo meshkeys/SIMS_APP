@@ -2,6 +2,17 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Initiative detail (slice 19a)
+- Initiative page: header chips and facts, notices, execution and impact, **Why this
+  status?** with the override, milestones with contribution, planned-vs-actual chart, risks,
+  dependencies, activity; tabs for milestones and tasks, risks, dependencies and change
+  requests (tab in the URL).
+- Lifecycle moves (approve, activate, hold, resume, close, cancel, return for rework) with
+  reasons where required and the server's explanation when refused.
+- Health override and its removal, with reason and expiry.
+- API: the initiative detail now says what the caller may do (`can`), computed with the
+  same rules that enforce each action.
+
 ## 2026-10-19 — Propose initiative, department filter, export (slice 18b)
 - **Propose initiative** page: details, strategic fit (objectives with weights and a
   primary), people, baseline and budget; save as draft or submit; server errors shown on

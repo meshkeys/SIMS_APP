@@ -113,7 +113,17 @@ const proposeRoute = createRoute({
 const initiativeRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/initiatives/$id',
-  component: () => <ComingSoon title="Initiative" eyebrow="Initiatives" />,
+  // The open tab is in the URL (e.g. ?tab=risks), so it can be linked to.
+  validateSearch: z.object({
+    tab: z
+      .enum(['overview', 'milestones', 'risks', 'dependencies', 'changes'])
+      .optional()
+      .catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/initiative/initiative-page'),
+    'InitiativePage',
+  ),
 });
 
 const routeTree = rootRoute.addChildren([

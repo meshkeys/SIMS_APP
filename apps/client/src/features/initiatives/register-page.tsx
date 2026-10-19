@@ -60,6 +60,7 @@ export function RegisterPage() {
   const notice = useRouterState({ select: (s) => s.location.state.notice });
   const dismissNotice = () =>
     void navigate({
+      from: '/initiatives',
       to: '/initiatives',
       search: (previous) => previous,
       state: {},
@@ -71,6 +72,7 @@ export function RegisterPage() {
   const update = useCallback(
     (changes: Partial<RegisterSearch>, replace = false) =>
       void navigate({
+        from: '/initiatives',
         to: '/initiatives',
         search: (previous) => ({ ...previous, page: undefined, ...changes }),
         replace,

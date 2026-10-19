@@ -11,6 +11,11 @@ import { toIsoDate, toNumber } from '../../common/data/numbers.js';
 import { canSeeInitiative } from '../../domain/access/initiative-visibility.js';
 import { canOverrideHealth } from '../../domain/access/override-permission.js';
 import type { HealthReason } from '../../domain/delivery/health.js';
+import {
+  allowedTransitions,
+  isBaselineLocked,
+} from '../../domain/delivery/lifecycle.js';
+import { relationTo } from '../../domain/delivery/permissions.js';
 import { daysBetween } from '../../domain/delivery/progress.js';
 import type {
   DependencyStatus,
@@ -115,7 +120,7 @@ export class InitiativesService {
 
     const now = this.clock.now();
     const milestoneIds = initiative.milestones.map((m) => m.id);
-    const [evidence, events, pillar] = await Promise.all([
+    const [evidence, events, pillar, rules] = await Promise.all([
       db.document.groupBy({
         by: ['entityId'],
         where: {
@@ -133,6 +138,7 @@ export class InitiativesService {
       this.topLevelOf(
         initiative.objectiveLinks.find((l) => l.isPrimary)?.element ?? null,
       ),
+      this.db.transaction((tx) => this.recalculation.loadActiveRules(tx)),
     ]);
     const actors = await db.membership.findMany({
       where: {
@@ -182,7 +188,29 @@ export class InitiativesService {
       isCriticalPath: d.isCriticalPath,
     });
 
+    // What the caller may do, from the same rules that enforce each action.
+    const relation = relationTo(viewer, initiative);
+    const baselineLocked = isBaselineLocked(initiative.status);
+    const can = {
+      changeStatus:
+        relation === 'OFFICE' ? [...allowedTransitions(initiative.status)] : [],
+      override:
+        initiative.status === 'ACTIVE' &&
+        canOverrideHealth(
+          viewer,
+          initiative,
+          rules.config.overrides.minimumRole,
+        ),
+      edit: relation !== 'NONE',
+      requestChange:
+        baselineLocked &&
+        relation !== 'NONE' &&
+        initiative.status !== 'CLOSED' &&
+        initiative.status !== 'CANCELLED',
+    };
+
     return {
+      can,
       id: initiative.id,
       code: initiative.code,
       title: initiative.title,

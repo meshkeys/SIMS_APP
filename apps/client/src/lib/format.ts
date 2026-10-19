@@ -111,3 +111,15 @@ export function formatKpiValue(value: number | null, unit: string): string {
   const word = value === 1 && unit.endsWith('s') ? unit.slice(0, -1) : unit;
   return `${num(value)} ${word}`;
 }
+
+/** 50000000 "NGN" → "₦50m", 1.25e9 → "₦1.3bn"; compact, in the organisation's currency. */
+export function formatMoney(value: number | null, currency: string): string {
+  if (value === null) return '—';
+  return new Intl.NumberFormat(LOCALE, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+}

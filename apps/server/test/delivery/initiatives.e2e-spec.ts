@@ -325,6 +325,47 @@ describe('Initiatives (e2e)', () => {
     });
   });
 
+  describe('what the caller may do', () => {
+    const can = async (as: string, code: string) =>
+      (await call(as, 'get', `/initiatives/${ids[code]}`)).body.can;
+
+    it('lets the Strategy Office move the lifecycle and override', async () => {
+      expect(await can(AMARA, 'DIG-004')).toEqual({
+        changeStatus: ['ON_HOLD', 'CLOSED', 'CANCELLED'],
+        override: true,
+        edit: true,
+        requestChange: true,
+      });
+    });
+
+    it('lets the sponsor override, but not move the lifecycle', async () => {
+      expect(await can(ED_BUSINESS, 'DIG-004')).toEqual({
+        changeStatus: [],
+        override: true,
+        edit: true,
+        requestChange: true,
+      });
+    });
+
+    it('lets the owner edit and request changes, not override', async () => {
+      expect(await can(HASSAN, 'DIG-004')).toEqual({
+        changeStatus: [],
+        override: false,
+        edit: true,
+        requestChange: true,
+      });
+    });
+
+    it('gives someone unrelated read-only access', async () => {
+      expect(await can(COO, 'DIG-004')).toEqual({
+        changeStatus: [],
+        override: false,
+        edit: false,
+        requestChange: false,
+      });
+    });
+  });
+
   describe('overrides', () => {
     const body = {
       health: 'GREEN',
