@@ -865,7 +865,11 @@ export class UpdatesService {
           note: line?.note ?? null,
         };
       }),
-      evaluation: { ...evaluation, healthPreview: preview?.health ?? null },
+      evaluation: {
+        ...evaluation,
+        healthPreview: preview?.health ?? null,
+        varianceThresholdPp: rules.config.rag.greenMaxPpBehind,
+      },
       risks: details.risks,
       comments: comments.map((c) => ({
         id: c.id,

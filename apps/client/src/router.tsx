@@ -79,6 +79,19 @@ const dashboardRoute = createRoute({
   ),
 });
 
+const myUpdatesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/my-updates',
+  // Which of the caller's updates is open, so it can be linked to.
+  validateSearch: z.object({
+    initiative: z.uuid().optional().catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/updates/my-updates-page'),
+    'MyUpdatesPage',
+  ),
+});
+
 const strategyRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/strategy',
@@ -137,7 +150,7 @@ const routeTree = rootRoute.addChildren([
     screen('/performance', 'KPIs & benefits realisation', 'Performance'),
     screen('/risks', 'Risks & escalations'),
     screen('/reports', 'Reports'),
-    screen('/my-updates', 'My updates', 'My work'),
+    myUpdatesRoute,
     screen('/admin', 'Administration', 'Settings'),
   ]),
 ]);

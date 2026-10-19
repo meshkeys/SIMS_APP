@@ -241,3 +241,32 @@ thin wrappers that run the search.
 
 **Documents**, **Updates** and **Escalate** arrive with their backend slices.
 
+### Monthly progress update (`/my-updates`)
+
+From `GET /my-updates` and `GET`/`PUT /periods/:periodId/updates/:initiativeId`
+(chapter 14). The open update is in the URL (`?initiative=…`).
+
+- **Header:** the cycle and its deadline in the organisation's time zone ("October 2026
+  cycle · due Sat 17 Oct, 5:00 pm").
+- **Cards:** one per initiative the person owes an update for (code, status — e.g.
+  "Draft 16 Oct" — and due date, overdue or "Needs your changes"), plus **Submitted this
+  cycle**. The first update needing action opens by default.
+- **1 · Milestone progress:** weight, last verified and this month's claim per milestone
+  (completed milestones locked at 100%), evidence ("1 file uploaded", "Upload required",
+  "Not required"); calculated completion, planned today, variance and the calculated
+  health from the last save.
+- **2 · Commentary:** progress this period, variance explanation, recovery action (required
+  when more than the organisation's Green threshold behind — a warning says so), planned
+  for next period.
+- **3 · Risks, issues & support needed:** open items, **Add risk or issue**, and "I need a
+  management decision to proceed" (adds it to Decisions required).
+- **Before you submit:** the checklist, live as the owner types. It runs the **same code the
+  server runs** (`evaluateUpdate` in `@sims/contracts`), with the organisation's threshold
+  returned in the form, so the screen and the server can never disagree.
+- **Save draft** at any time; **Submit for review** once the checklist is complete. A
+  warning appears before leaving the page with unsaved changes.
+- **States:** submitted (read-only, waiting for verification), challenged (the challenge
+  shown, editable again), verified (waiting for the sponsor), approved, period locked.
+
+Reviewing — verify, challenge, approve and comment — is slice 20b.
+

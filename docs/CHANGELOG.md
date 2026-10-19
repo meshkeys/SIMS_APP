@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Monthly progress update (slice 20a)
+- **My updates** screen: cards for each update owed this cycle; milestone claims with live
+  completion, variance and evidence status; commentary; risks with **Add risk or issue**;
+  "I need a management decision"; **Save draft** and **Submit for review**; clear states
+  for submitted, challenged, verified, approved and locked.
+- The "Before you submit" checklist moved into `@sims/contracts`: the web app runs it live
+  and the server runs the same code, with the organisation's threshold now included in the
+  update form.
+
 ## 2026-10-19 — Dependencies and change requests (slice 19c)
 - **Dependencies:** add (initiative picker), change status, remove.
 - **Request change** for active baselines — dates and milestones, budget or scope — sending

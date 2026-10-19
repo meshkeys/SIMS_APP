@@ -39,7 +39,8 @@ with its tests and documentation.
 | 19a | Initiative detail: full read view (overview, why this status, milestones, chart, risks, dependencies, activity, change requests), lifecycle moves and health override; `can` in the API | Done |
 | 19b | Initiative detail: editing — details, objectives, milestones, tasks (with field-level permissions in `can`) | Done |
 | 19c | Initiative detail: dependencies (with an initiative picker), **Request change** for active baselines, withdraw a pending request | Done |
-| 20 | Monthly progress update screen (My updates; submit, verify, challenge, approve) — its API is complete | Next |
+| 20a | Monthly progress update (owner): My updates, milestone claims, commentary, risks, live checklist, save and submit | Done |
+| 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

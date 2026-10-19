@@ -237,6 +237,8 @@ export const updateFormSchema = z.object({
     variancePp: z.number(),
     /** The status the claimed figures would give, from the rules engine. */
     healthPreview: z.enum(Health).nullable(),
+    /** Behind plan by more than this (pp) needs a variance explanation and recovery action. */
+    varianceThresholdPp: z.number(),
     checklist: z.array(checklistItemSchema),
     canSubmit: z.boolean(),
   }),

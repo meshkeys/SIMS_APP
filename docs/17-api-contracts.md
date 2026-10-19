@@ -18,6 +18,7 @@ change to this package, and the compiler shows every place on both sides that mu
 | `reporting.ts` | Periods, updates (form, queue, my updates) |
 | `governance.ts` | Risks and issues, decisions, change requests |
 | `dashboard.ts` | The Command Centre |
+| `update-checklist.ts` | **Shared rule:** the monthly update's "Before you submit" checklist, run live by the web app and on save/submit by the server |
 | `roles.ts` | Role labels and role lists (who may invite, edit strategy, propose initiatives) |
 | `routes.ts` | Every endpoint (`API_ROUTES`) |
 | `openapi.ts` | The OpenAPI 3.1 generator |
