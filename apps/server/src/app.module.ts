@@ -9,6 +9,7 @@ import { ApiDocsModule } from './api-docs/api-docs.module.js';
 import { HealthModule } from './health/health.module.js';
 import { DatabaseModule } from './infrastructure/database/index.js';
 import { MailModule } from './infrastructure/mail/index.js';
+import { JobsModule } from './infrastructure/jobs/index.js';
 import { StorageModule } from './infrastructure/storage/index.js';
 import {
   AccessTokenGuard,
@@ -35,6 +36,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     DatabaseModule,
     MailModule,
     StorageModule,
+    JobsModule,
     ThrottlerModule.forRootAsync({
       inject: [ENV],
       useFactory: (env: Env) => rateLimitOptions(env),

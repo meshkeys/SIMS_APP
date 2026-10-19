@@ -67,6 +67,10 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | — | Both or neither (then the provider's default credentials) |
 | `S3_FORCE_PATH_STYLE` | false | Path-style URLs, for providers that need them |
 | `UPLOAD_MAX_MB` | 20 | Largest upload accepted |
+| `REDIS_URL` | redis://localhost:6379 | Redis for the background job queue |
+| `JOBS_DRIVER` | bullmq | `bullmq` (through Redis, survives restarts) or `inline` (runs at once; tests) |
+| `JOBS_WORKER` | true | Process jobs in this server; turn off on API-only instances |
+| `CHROME_PATH` | found automatically | Chrome, Chromium or Edge used to print PDF packs |
 | `TEST_DATABASE_URL` / `TEST_DATABASE_ADMIN_URL` | — | e2e database (name must end in `_test`) |
 
 Configuration is validated at start-up; the server refuses to boot and lists every problem

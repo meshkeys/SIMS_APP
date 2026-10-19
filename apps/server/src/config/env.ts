@@ -81,6 +81,18 @@ export const envSchema = z
     S3_FORCE_PATH_STYLE: z.stringbool().default(false),
     /** Largest file accepted for upload, in megabytes. */
     UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(200).default(20),
+
+    /** Redis, for the background job queue. */
+    REDIS_URL: z.url({ protocol: /^rediss?$/ }).default('redis://localhost:6379'),
+    /**
+     * `bullmq`: jobs go through Redis and survive restarts (default).
+     * `inline`: jobs run at once in the request (tests, quick local runs).
+     */
+    JOBS_DRIVER: z.enum(['bullmq', 'inline']).default('bullmq'),
+    /** Process jobs in this server. Turn off on API-only instances when a separate worker runs. */
+    JOBS_WORKER: z.stringbool().default(true),
+    /** Chrome or Chromium for PDF packs; found automatically in the usual places when unset. */
+    CHROME_PATH: z.string().min(1).optional(),
   })
   .transform((env) => ({
     ...env,

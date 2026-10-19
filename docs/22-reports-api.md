@@ -2,8 +2,8 @@
 
 Board packs and management reports, built **only from a locked cycle's snapshot**, so the
 numbers in a pack always match what management approved, however the live data has moved
-since. This chapter covers defining, previewing and requesting packs; producing the files
-(PDF, PowerPoint, Excel) follows in slice 12c.
+since. A requested pack is generated as a background job in PDF, PowerPoint and/or Excel,
+stored, and downloaded from the issued packs list.
 
 ## 22.1 Endpoints
 
@@ -14,6 +14,8 @@ since. This chapter covers defining, previewing and requesting packs; producing 
 | `POST /api/v1/reports/packs` | Strategy Office, Admin | Request a pack (queued for generation) |
 | `GET /api/v1/reports/packs` | Office, Admin, MD/CEO, sponsors, Board, Internal audit | Issued and queued packs, newest first |
 | `GET /api/v1/reports/packs/:id` | the same | One pack and its definition |
+| `GET /api/v1/reports/packs/:id/download?format=PDF` | the same | Download one generated file |
+| `POST /api/v1/reports/packs/:id/regenerate` | Strategy Office, Admin | Generate a failed pack again, or re-render a ready one |
 
 Board members see packs written **for the Board** only; anything else answers `404`.
 
@@ -73,5 +75,37 @@ one) and an optional title. The pack is saved **queued** with its snapshot, sect
 audience and narrative. A repeat of the same cycle and template gets the next version
 (1.0, 1.1…). Audit event: `REPORT_PACK_REQUESTED`.
 
-Each pack lists `available` formats: those with a stored file once the pack is ready. Until
-slice 12c produces files, requested packs stay queued.
+Each pack lists `available` formats: those with a stored file once the pack is ready.
+
+## 22.6 Generation
+
+Requesting a pack queues the job `report-pack.generate` once the pack is saved. The job:
+
+1. marks the pack **generating**;
+2. assembles the content from the pack's snapshot with `assemblePack`, the same function
+   the preview uses, so a file never differs from its preview;
+3. renders each requested format and stores it (chapter 21.5) under
+   `<organisationId>/ReportPack/<packId>/v<version>.<pdf|pptx|xlsx>`;
+4. marks the pack **ready** and issued (`REPORT_PACK_ISSUED`). Any error marks it
+   **failed** with the message (`REPORT_PACK_FAILED`), and the queue retries it up to three
+   times with back-off.
+
+| Format | How it is made |
+|---|---|
+| PDF | A self-contained HTML document (A4 landscape, inline styles and SVG charts, no scripts) printed by headless Chrome or Chromium. JavaScript is off and every network request is blocked while printing. Page count and numbering match the estimate. |
+| PowerPoint | A 16:9 deck (pptxgenjs): cover slide, then one slide per page, with tables, the delivery-vs-value quadrants and a native benefits chart. |
+| Excel | A data appendix (exceljs): an About sheet, then one sheet per section with typed cells (numbers, dates, colour-coded health), filters on initiative lists. |
+
+All three apply the same audience rule: a Board pack never names a sensitive initiative.
+
+**Downloads** are attachments named after the pack, e.g. "Q3 2026 Board pack v1.0.pdf". A
+format that was not requested, or a pack that is not ready, is `409 PACK_NOT_READY`; a file
+missing from storage is `404 PACK_FILE_MISSING` (the demo's issued packs list files without
+storing them; regenerate them to produce real files).
+
+**Regenerate** re-queues a failed or ready pack (not one already queued or generating:
+`409 PACK_IN_PROGRESS`). The version stays the same: the figures come from the same
+snapshot, so they cannot change.
+
+PDF needs Chrome, Chromium or Edge on the server. It is found in the usual places or set
+with `CHROME_PATH`; production images must include it (for example `chromium` on Debian).

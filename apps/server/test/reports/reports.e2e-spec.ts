@@ -27,6 +27,19 @@ describe('Report packs (e2e)', () => {
   let admin: pg.Pool;
   let token: ReturnType<typeof signInAs>;
   let september: Snapshot;
+  let boardPackId: string;
+  const fetchFile = async (as: string, packId: string, format: string) => {
+    const bearer = await token(as);
+    return request(app.getHttpServer())
+      .get(`/api/v1/reports/packs/${packId}/download?format=${format}`)
+      .auth(bearer, { type: 'bearer' })
+      .buffer(true)
+      .parse((res, done) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (c: Buffer) => chunks.push(c));
+        res.on('end', () => done(null, Buffer.concat(chunks)));
+      });
+  };
 
   const call = async (
     as: string,
@@ -241,7 +254,7 @@ describe('Report packs (e2e)', () => {
   });
 
   describe('requesting packs', () => {
-    it('queues a pack with its definition', async () => {
+    it('generates the requested files and issues the pack', async () => {
       const response = await call(AMARA, 'post', '/reports/packs', {
         ...board(),
         formats: ['PDF', 'PPTX'],
@@ -255,20 +268,24 @@ describe('Report packs (e2e)', () => {
         period: 'September 2026',
         snapshotId: september.id,
         formats: ['PDF', 'PPTX'],
-        status: 'QUEUED',
+        // Jobs run inline in tests: the pack is ready by the time the request returns.
+        status: 'READY',
         version: '1.0',
-        available: [],
-        issuedAt: null,
+        available: ['PDF', 'PPTX'],
+        issuedAt: DEMO_NOW.toISOString(),
+        error: null,
         requestedBy: { name: expect.any(String) },
       });
+      boardPackId = response.body.id;
       const audit = await admin.query(
-        `SELECT action FROM "AuditEvent" WHERE "entityId" = $1`,
+        `SELECT action FROM "AuditEvent" WHERE "entityId" = $1 ORDER BY "createdAt"`,
         [response.body.id],
       );
       expect(audit.rows.map((r) => r.action)).toEqual([
         'REPORT_PACK_REQUESTED',
+        'REPORT_PACK_ISSUED',
       ]);
-    });
+    }, 60_000);
 
     it('gives a repeat of a cycle and template the next version', async () => {
       const response = await call(AMARA, 'post', '/reports/packs', {
@@ -295,17 +312,107 @@ describe('Report packs (e2e)', () => {
     });
   });
 
+  describe('files', () => {
+    it('downloads each format with the pack’s title and version', async () => {
+      const pdf = await fetchFile(CHAIR, boardPackId, 'PDF');
+      expect(pdf.status).toBe(200);
+      expect((pdf.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+      expect(pdf.headers['content-type']).toBe('application/pdf');
+      expect(pdf.headers['content-disposition']).toContain(
+        'filename="Q3 2026 Board pack v1.0.pdf"',
+      );
+
+      const deck = await fetchFile(CHAIR, boardPackId, 'PPTX');
+      expect(deck.status).toBe(200);
+      expect((deck.body as Buffer).subarray(0, 2).toString()).toBe('PK');
+
+      const missing = await fetchFile(CHAIR, boardPackId, 'XLSX');
+      expect(missing.status).toBe(409);
+      expect(missing.body.code ?? JSON.parse(String(missing.body)).code).toBe(
+        'PACK_NOT_READY',
+      );
+    });
+
+    it('never names sensitive initiatives in the Board’s Excel appendix', async () => {
+      const created = await call(AMARA, 'post', '/reports/packs', {
+        ...board({ sections: ['exceptions'] }),
+        title: 'Board exceptions extract',
+        formats: ['XLSX'],
+      });
+      expect(created.body.status).toBe('READY');
+      const workbook = await fetchFile(AMARA, created.body.id, 'XLSX');
+      expect((workbook.body as Buffer).subarray(0, 2).toString()).toBe('PK');
+      const ExcelJS = (await import('exceljs')).default;
+      const book = new ExcelJS.Workbook();
+      await book.xlsx.load(workbook.body as never);
+      const codes = book
+        .getWorksheet('At risk & delayed')!
+        .getColumn(1)
+        .values.slice(2)
+        .map(String);
+      expect(codes.length).toBeGreaterThan(0);
+      expect(codes.filter((c) => SENSITIVE.includes(c))).toEqual([]);
+    }, 60_000);
+
+    it('says so when a listed file is no longer stored', async () => {
+      const seeded = (await call(AMARA, 'get', '/reports/packs')).body.find(
+        (p: { title: string }) => p.title === 'August management report',
+      );
+      const response = await fetchFile(AMARA, seeded.id, 'PDF');
+      expect(response.status).toBe(404);
+      expect(JSON.parse(String(response.body)).code).toBe('PACK_FILE_MISSING');
+    });
+
+    it('records a failure, and generates the pack again on request', async () => {
+      const seeded = (await call(AMARA, 'get', '/reports/packs')).body.find(
+        (p: { title: string }) => p.title === 'August management report',
+      );
+      // Break the pack's snapshot to force a failure.
+      await admin.query(
+        `UPDATE "ReportSnapshot" SET data = '{"version":1}' WHERE id = (SELECT "snapshotId" FROM "ReportPack" WHERE id = $1)`,
+        [seeded.id],
+      );
+      const failed = await call(
+        AMARA,
+        'post',
+        `/reports/packs/${seeded.id}/regenerate`,
+      );
+      expect(failed.status).toBe(200);
+      expect(failed.body).toMatchObject({
+        status: 'FAILED',
+        error: 'The pack’s snapshot cannot build packs.',
+        available: [],
+      });
+
+      const ready = await call(
+        AMARA,
+        'post',
+        `/reports/packs/${boardPackId}/regenerate`,
+      );
+      expect(ready.body).toMatchObject({ status: 'READY', version: '1.0' });
+      expect(
+        (await call(CHAIR, 'post', `/reports/packs/${boardPackId}/regenerate`))
+          .status,
+      ).toBe(403);
+    }, 60_000);
+  });
+
   describe('reading packs', () => {
     it('lists every pack, newest first, for the Strategy Office', async () => {
       const { body } = await call(AMARA, 'get', '/reports/packs');
       expect(body.map((p: { title: string }) => p.title)).toEqual([
+        'Board exceptions extract',
         'September management report (corrected)',
         'Q3 2026 Board pack',
         'September management report',
         'August management report',
         'Q2 2026 Board pack',
       ]);
-      expect(body[2]).toMatchObject({
+      expect(
+        body.find(
+          (p: { title: string }) => p.title === 'September management report',
+        ),
+      ).toMatchObject({
         status: 'READY',
         available: ['PDF'],
         issuedAt: expect.stringMatching(/^2026-10-08/),
@@ -315,10 +422,11 @@ describe('Report packs (e2e)', () => {
     it('shows Board members the Board’s packs only', async () => {
       const { body } = await call(CHAIR, 'get', '/reports/packs');
       expect(body.map((p: { title: string }) => p.title)).toEqual([
+        'Board exceptions extract',
         'Q3 2026 Board pack',
         'Q2 2026 Board pack',
       ]);
-      const excoPack = (await call(AMARA, 'get', '/reports/packs')).body[0];
+      const excoPack = (await call(AMARA, 'get', '/reports/packs')).body[1];
       expect(
         (await call(CHAIR, 'get', `/reports/packs/${excoPack.id}`)).status,
       ).toBe(404);

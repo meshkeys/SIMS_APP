@@ -6,10 +6,15 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
+import { attachment } from '../documents/documents.controller.js';
 import { ReportsService } from './reports.service.js';
 import {
   type CreatePackInput,
@@ -18,6 +23,8 @@ import {
   type PackContent,
   type PackDefinition,
   packDefinitionSchema,
+  type PackDownloadQuery,
+  packDownloadQuerySchema,
   REPORT_READER_ROLES,
   type ReportPack,
   type ReportSnapshot,
@@ -70,5 +77,36 @@ export class ReportsController {
     @Param('id', id) packId: string,
   ): Promise<ReportPack> {
     return this.reports.get(caller, packId);
+  }
+
+  /** Always an attachment; the file name carries the title and version. */
+  @Roles(...REPORT_READER_ROLES)
+  @Get('packs/:id/download')
+  async download(
+    @CurrentAuth() caller: AuthContext,
+    @Param('id', id) packId: string,
+    @Query(new ZodValidationPipe(packDownloadQuerySchema))
+    query: PackDownloadQuery,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const file = await this.reports.download(caller, packId, query.format);
+    response.set({
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return new StreamableFile(file.stream, {
+      type: file.mimeType,
+      disposition: attachment(file.fileName),
+    });
+  }
+
+  @Roles(...STRATEGY_EDITOR_ROLES)
+  @Post('packs/:id/regenerate')
+  @HttpCode(HttpStatus.OK)
+  regenerate(
+    @CurrentAuth() caller: AuthContext,
+    @Param('id', id) packId: string,
+  ): Promise<ReportPack> {
+    return this.reports.regenerate(caller, packId);
   }
 }

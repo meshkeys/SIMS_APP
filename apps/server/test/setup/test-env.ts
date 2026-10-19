@@ -12,3 +12,5 @@ process.env.RATE_LIMIT_AUTH_PER_MINUTE = '100000';
 process.env.STORAGE_DRIVER = 'local';
 process.env.STORAGE_LOCAL_DIR = join(tmpdir(), 'sims-e2e-storage');
 process.env.UPLOAD_MAX_MB = '1';
+// Background jobs run inline, so tests see their results at once.
+process.env.JOBS_DRIVER = 'inline';

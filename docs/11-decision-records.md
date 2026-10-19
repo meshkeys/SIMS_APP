@@ -523,3 +523,24 @@ renderers in slice 12c will print the same content.
 same numbers. Snapshots are larger (a few hundred kilobytes for a large portfolio). Cycles
 locked before version 2 cannot produce packs. Demo snapshots are captured at seed time, so
 every demo month holds the same figures.
+
+## ADR-030 — Background jobs behind a queue port: BullMQ in production, inline in tests
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** Generating a board pack takes seconds (Chrome start-up, rendering three
+formats) and must not hold a request open or be lost on a restart. More background work is
+coming: reminders, the escalation sweep on a timer, and purging removed files. Tests need
+deterministic results without polling.
+
+**Decision.** Jobs go through a `JobQueue` port. The BullMQ driver (Redis, already part of
+the stack) persists jobs, retries three times with exponential back-off and runs a worker in
+the API process unless `JOBS_WORKER=false`. The inline driver runs each job at once and is
+used by the tests. Every job carries its organisation and runs inside the tenant context, so
+row-level security applies exactly as in a request. Work is queued only after the
+transaction that created it commits.
+
+**Consequences.** Packs are generated reliably and survive restarts. Tests exercise the real
+renderers (including Chrome) without timing races. The BullMQ path itself is covered by a
+smoke test against Redis rather than the automated suite. A separate worker process can be
+added later by starting the same app with `JOBS_WORKER=true` and no HTTP traffic.

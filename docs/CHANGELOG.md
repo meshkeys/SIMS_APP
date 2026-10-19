@@ -2,6 +2,14 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Board pack generation (slice 12c)
+- **Background jobs** on Redis (BullMQ) with retries; an inline mode for tests.
+- Requested packs are **generated**: PDF printed by headless Chrome from a self-contained
+  HTML layout, a PowerPoint deck, and an Excel data appendix, all from the same content as
+  the preview and with the same Board audience rule.
+- **Download** issued packs by format, and **regenerate** failed or ready packs.
+- Demo data: pillar scores are calculated before the demo snapshots are taken.
+
 ## 2026-10-19 — Report packs API (slice 12b)
 - **Locking a cycle now freezes everything packs need**: initiatives, the strategy tree
   with its scores, KPIs, open decisions, escalations and the year's benefits.

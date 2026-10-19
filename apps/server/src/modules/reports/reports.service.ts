@@ -1,6 +1,8 @@
+import type { Readable } from 'node:stream';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,7 +25,14 @@ import {
   TenantPrismaService,
   type TenantTransactionClient,
 } from '../../infrastructure/database/index.js';
+import { JOB_QUEUE, type JobQueue } from '../../infrastructure/jobs/index.js';
+import {
+  OBJECT_STORAGE,
+  ObjectNotFoundError,
+  type ObjectStorage,
+} from '../../infrastructure/storage/index.js';
 import type { AuthContext } from '../auth/index.js';
+import { PACK_FILES } from './pack-generator.service.js';
 import { personSelect, toPersonRef } from '../people/person.js';
 import type {
   CreatePackInput,
@@ -72,7 +81,11 @@ const boardOnly = (viewer: AuthContext) =>
  */
 @Injectable()
 export class ReportsService {
-  constructor(private readonly db: TenantPrismaService) {}
+  constructor(
+    private readonly db: TenantPrismaService,
+    @Inject(JOB_QUEUE) private readonly jobs: JobQueue,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+  ) {}
 
   async snapshots(): Promise<ReportSnapshot[]> {
     const rows = await this.db.client.reportSnapshot.findMany({
@@ -157,7 +170,72 @@ export class ReportsService {
         },
       });
     });
+    // Queued only once the pack is committed, so the job can read it.
+    await this.jobs.enqueue('report-pack.generate', { packId: id });
     return this.get(caller, id);
+  }
+
+  /** Queues a failed pack again, or re-renders a ready one from the same snapshot. */
+  async regenerate(caller: AuthContext, packId: string): Promise<ReportPack> {
+    const pack = await this.get(caller, packId);
+    if (pack.status === 'QUEUED' || pack.status === 'GENERATING') {
+      throw new ConflictException({
+        code: 'PACK_IN_PROGRESS',
+        message: `${pack.title} is already being generated.`,
+      });
+    }
+    await this.db.transaction(async (tx) => {
+      await tx.reportPack.update({
+        where: { id: packId },
+        data: { status: 'QUEUED', error: null },
+      });
+      await recordAudit(tx, {
+        action: 'REPORT_PACK_REGENERATED',
+        entityType: 'ReportPack',
+        entityId: packId,
+        before: { status: pack.status },
+      });
+    });
+    await this.jobs.enqueue('report-pack.generate', { packId });
+    return this.get(caller, packId);
+  }
+
+  /** A generated file, for anyone who may read the pack. */
+  async download(
+    viewer: AuthContext,
+    packId: string,
+    format: ReportFormatKey,
+  ): Promise<{ fileName: string; mimeType: string; stream: Readable }> {
+    const row = await this.db.client.reportPack.findUnique({
+      where: { id: packId },
+    });
+    if (!row || (boardOnly(viewer) && row.audience !== 'BOARD'))
+      throw packNotFound();
+    const key = (
+      row.fileKeys as Partial<Record<ReportFormatKey, string>> | null
+    )?.[format];
+    if (row.status !== 'READY' || !key) {
+      throw new ConflictException({
+        code: 'PACK_NOT_READY',
+        message: `${row.title} has no ${format} file yet.`,
+      });
+    }
+    const file = PACK_FILES[format];
+    try {
+      return {
+        fileName: `${row.title} v${row.version}.${file.extension}`,
+        mimeType: file.mimeType,
+        stream: await this.storage.get(key),
+      };
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        throw new NotFoundException({
+          code: 'PACK_FILE_MISSING',
+          message: `The ${format} file of ${row.title} is no longer stored. Generate the pack again.`,
+        });
+      }
+      throw error;
+    }
   }
 
   async list(viewer: AuthContext): Promise<ReportPack[]> {

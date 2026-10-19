@@ -28,10 +28,10 @@ with its tests and documentation.
 | 9a | KPI actuals (record, verify), trajectory from the rules, performance overview (benefits by quarter, scorecard, delivered-but-low-value) | Done |
 | 9b | Benefits management: benefits per initiative, expected profile and re-forecast, realised value and verification, benefits review requests | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
-| 11 | Background jobs (BullMQ), notifications, email | Planned |
+| 11 | Scheduled jobs on the queue (escalation sweep, reminders, removed-file clean-up), notifications, email as jobs | Planned |
 | 12a | Documents API: storage (local disk or any S3), evidence upload/download/remove with type and content checks, evidence per period, reviewed on verification | Done |
 | 12b | Report pack API: templates and sections, snapshots (frozen at lock), audience rules, preview content, pack requests and versions, issued packs | Done |
-| 12c | Pack rendering as background jobs: PDF (headless Chrome), PowerPoint, Excel appendix; job queue | Next |
+| 12c | Pack rendering as background jobs: PDF (headless Chrome), PowerPoint, Excel appendix; job queue (BullMQ on Redis); downloads and regeneration | Done |
 | 13a | Shared API contracts package (`@sims/contracts`): every request and response as zod schemas and types | Done |
 | 13b | OpenAPI reference generated from the contracts; route and response drift tests | Done |
 | 14 | Web app foundation: design system, app shell, sign-in, typed API client | Done |
@@ -48,7 +48,7 @@ with its tests and documentation.
 | 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Done |
 | 22 | Escalation centre screen (wireframe page 7): ladder, risk heatmap, open escalations, blocked dependencies, decision log; raise, log risk, move and resolve | Done |
 | 20c | Evidence on the update form (upload, list, remove) and in the review panel (download); evidence becomes a blocking checklist item | Done |
-| 23 | Board pack builder screen (wireframe page 9), after 12b and 12c | Planned |
+| 23 | Board pack builder screen (wireframe page 9): templates, snapshot and audience, sections, live preview, narrative, formats, issued packs with downloads | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

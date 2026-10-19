@@ -154,6 +154,11 @@ export const createPackSchema = z.intersection(
 );
 export type CreatePackInput = z.output<typeof createPackSchema>;
 
+export const packDownloadQuerySchema = z.object({
+  format: z.enum(REPORT_FORMATS),
+});
+export type PackDownloadQuery = z.output<typeof packDownloadQuerySchema>;
+
 // ---------------------------------------------------------------------------
 // Responses
 // ---------------------------------------------------------------------------

@@ -1199,6 +1199,11 @@ async function writeDemo(
     });
   }
 
+  // ----------------------------------------------------------- rollups
+  // Pillar and objective scores come from the same code the API runs,
+  // before reporting snapshots freeze them.
+  await recalculateElementRollups(tx, planId, ruleset, AS_OF);
+
   // ----------------------------------------------------------- reports
   // Every locked month has its reporting snapshot, as locking produces one.
   // (Demo snapshots all hold today's figures; real ones freeze each month.)
@@ -1420,10 +1425,6 @@ async function writeDemo(
       },
     ].map((n) => ({ id: uuidv7(), ...org, ...n })),
   });
-
-  // ----------------------------------------------------------- rollups
-  // Pillar and objective scores come from the same code the API runs.
-  await recalculateElementRollups(tx, planId, ruleset, AS_OF);
 
   return {
     organisationId,

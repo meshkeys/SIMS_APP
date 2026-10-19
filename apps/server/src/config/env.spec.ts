@@ -33,6 +33,9 @@ describe('loadEnv', () => {
       S3_REGION: 'auto',
       S3_FORCE_PATH_STYLE: false,
       UPLOAD_MAX_MB: 20,
+      REDIS_URL: 'redis://localhost:6379',
+      JOBS_DRIVER: 'bullmq',
+      JOBS_WORKER: true,
     });
   });
 

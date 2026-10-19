@@ -70,6 +70,7 @@ import { performanceQuerySchema, performanceSchema } from './performance.js';
 import { documentViewSchema } from './documents.js';
 import {
   createPackSchema,
+  packDownloadQuerySchema,
   packContentSchema,
   packDefinitionSchema,
   reportPackSchema,
@@ -976,6 +977,28 @@ export const API_ROUTES = {
     tag: TAGS.reports,
     summary: 'One pack and its definition',
     access: REPORT_READER_ROLES,
+    status: 200,
+    response: reportPackSchema,
+  }),
+  downloadPack: route({
+    method: 'get',
+    path: '/reports/packs/{id}/download',
+    tag: TAGS.reports,
+    summary: 'Download a generated pack in one format',
+    access: REPORT_READER_ROLES,
+    query: packDownloadQuerySchema,
+    status: 200,
+    response: null,
+    produces: 'application/octet-stream',
+  }),
+  regeneratePack: route({
+    method: 'post',
+    path: '/reports/packs/{id}/regenerate',
+    tag: TAGS.reports,
+    summary: 'Generate a pack again',
+    description:
+      'Queues a failed pack again, or re-renders a ready one. The figures come from the same snapshot, so they do not change.',
+    access: STRATEGY_EDITOR_ROLES,
     status: 200,
     response: reportPackSchema,
   }),
