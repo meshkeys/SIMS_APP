@@ -43,6 +43,7 @@ export class ContractCheckInterceptor implements NestInterceptor {
           return;
         }
         const [operationId, route] = match;
+        if (route.produces) return; // a file download, checked by its own tests
         if (route.response === null) {
           if (body !== undefined)
             contractViolations.push(`${operationId}: expected no body`);

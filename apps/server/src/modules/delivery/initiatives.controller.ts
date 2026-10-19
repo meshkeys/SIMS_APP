@@ -10,7 +10,10 @@ import {
   Post,
   Put,
   Query,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { PROPOSER_ROLES } from '../../domain/delivery/permissions.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
@@ -19,6 +22,7 @@ import { HealthRecalculationService } from './health-recalculation.service.js';
 import { InitiativeRegisterService } from './initiative-register.service.js';
 import { InitiativeWritesService } from './initiative-writes.service.js';
 import { InitiativesService } from './initiatives.service.js';
+import { RegisterExportService } from './register-export.service.js';
 import { WorkItemsService } from './work-items.service.js';
 import {
   type CreateDependencyInput,
@@ -35,7 +39,10 @@ import {
   overrideSchema,
   type RecalculationSummary,
   type RegisterPage,
+  type RegisterExportQuery,
+  registerExportQuerySchema,
   type RegisterQuery,
+  XLSX_MEDIA_TYPE,
   registerQuerySchema,
   type StatusChangeInput,
   statusChangeSchema,
@@ -53,6 +60,7 @@ export class InitiativesController {
     private readonly recalculation: HealthRecalculationService,
     private readonly writes: InitiativeWritesService,
     private readonly work: WorkItemsService,
+    private readonly exporter: RegisterExportService,
   ) {}
 
   /** Propose an initiative (or, for the Strategy Office, save a draft). */
@@ -85,6 +93,29 @@ export class InitiativesController {
   @HttpCode(HttpStatus.OK)
   recalculate(): Promise<RecalculationSummary> {
     return this.recalculation.recalculateAll();
+  }
+
+  /**
+   * The register as an Excel workbook, with the screen's filters. Declared
+   * before ':id' so "export" is never read as an initiative id.
+   */
+  @Get('export')
+  async export(
+    @CurrentAuth() viewer: AuthContext,
+    @Query(new ZodValidationPipe(registerExportQuerySchema))
+    query: RegisterExportQuery,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const file = await this.exporter.export(viewer, query);
+    response.set({
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return new StreamableFile(file.content, {
+      type: XLSX_MEDIA_TYPE,
+      disposition: `attachment; filename="${file.fileName}"`,
+      length: file.content.length,
+    });
   }
 
   /** Everything the Initiative detail screen shows. */

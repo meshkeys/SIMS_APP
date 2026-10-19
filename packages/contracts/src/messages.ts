@@ -28,7 +28,8 @@ export const friendlyErrors: z.core.$ZodErrorMap = (issue) => {
       }
       return undefined;
     case 'too_big':
-      if (issue.origin === 'string') return `Use at most ${issue.maximum} characters`;
+      if (issue.origin === 'string')
+        return `Use at most ${issue.maximum} characters`;
       if (issue.origin === 'array') return `Choose at most ${issue.maximum}`;
       if (issue.origin === 'number') {
         return `Must be ${issue.inclusive ? 'at most' : 'less than'} ${issue.maximum}`;

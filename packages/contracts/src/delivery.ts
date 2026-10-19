@@ -55,6 +55,16 @@ export const registerQuerySchema = z.object({
 });
 export type RegisterQuery = z.output<typeof registerQuerySchema>;
 
+/** The register's filters and order, without paging: the export takes everything. */
+export const registerExportQuerySchema = registerQuerySchema.omit({
+  page: true,
+  pageSize: true,
+});
+export type RegisterExportQuery = z.output<typeof registerExportQuerySchema>;
+
+export const XLSX_MEDIA_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
 export const registerItemSchema = z.object({
   id: z.uuid(),
   code: z.string(),

@@ -37,6 +37,7 @@ const CHAPTERS = [
   '16-dashboard-api.md',
   '17-api-contracts.md',
   '18-web-app.md',
+  '19-people-api.md',
   'CHANGELOG.md',
 ];
 

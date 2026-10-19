@@ -18,6 +18,7 @@ import {
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
 import { DeliveryModule } from './modules/delivery/delivery.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
+import { PeopleModule } from './modules/people/people.module.js';
 import { GovernanceModule } from './modules/governance/governance.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
 import { ReportingModule } from './modules/reporting/reporting.module.js';
@@ -43,6 +44,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     ReportingModule,
     GovernanceModule,
     DashboardModule,
+    PeopleModule,
   ],
   providers: [
     // Global guards run in this order: rate limit → authentication → roles.

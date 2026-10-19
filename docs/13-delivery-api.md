@@ -8,6 +8,7 @@ detail**, proposing and changing initiatives, health recalculation and status ov
 | Method & path | Who | Purpose |
 |---|---|---|
 | `GET /api/v1/initiatives` | any member | The register: tabs, health chips, filters, sorting, pages |
+| `GET /api/v1/initiatives/export` | any member | The register as an Excel workbook (13.2.1) |
 | `GET /api/v1/initiatives/:id` | any member who may see it | Everything on the detail screen |
 | `PUT /api/v1/initiatives/:id/override` | see 13.5 | Override the calculated status |
 | `DELETE /api/v1/initiatives/:id/override` | see 13.5 | Remove an override |
@@ -59,6 +60,23 @@ see them (chapter 12.3), so totals never reveal their existence.
 **Pagination** is page-numbered (offset) on purpose: a tenant has hundreds to low
 thousands of initiatives, the screen shows "Page 1 of 4" with jumps, and the query is one
 indexed statement. Lists that grow without bound (activity, audit) will use cursors.
+
+### 13.2.1 Export to Excel
+
+`GET /initiatives/export` takes the register's parameters except `page` and `pageSize` and
+returns `initiative-register-<date>.xlsx` (the organisation's date). It runs the register's
+own query page by page, so filters, order and **visibility are exactly the screen's** —
+restricted initiatives the caller may not see are never in the file.
+
+- **Register** sheet: one row per initiative — ID, title, pillar, status, owner and role,
+  sponsor, department, due, forecast end, verified %, planned %, variance (pp), health
+  (colour-coded), overridden, impact, impact score, last update, update overdue,
+  restricted. Dates are real dates and percentages real numbers, so the sheet sorts,
+  filters and charts; the header row is frozen and has filters.
+- **About** sheet: organisation, when and by whom it was exported, the filters in words
+  ("Active · Delayed · sorted by code"), the row count, and what the figures mean.
+- Up to 10,000 rows (the About sheet says when the limit was reached). Sent with
+  `Cache-Control: no-store`.
 
 ## 13.3 Detail
 

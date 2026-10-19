@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — People, departments and register export (slice 18a)
+- `GET /members`: people directory for pickers — active members by name, searchable by
+  name, email or job title, filterable by role and department, paged.
+- `GET /departments`: departments by name with member counts.
+- `GET /initiatives/export`: the register as an Excel workbook with the screen's filters,
+  order and visibility (restricted initiatives never included); typed cells, frozen header
+  and filters, and an About sheet describing the export.
+- `API_ROUTES` can describe file downloads (`produces`); the OpenAPI document shows them as
+  binary responses.
+- Dependencies: `exceljs` added; its outdated `uuid` replaced through an npm override, so
+  `npm audit` reports no vulnerabilities.
+
 ## 2026-10-19 — Initiative register (slice 17)
 - Register screen: tabs with counts, search, pillar filter, health chips, sorting and
   paging — all kept in the URL, so views can be shared and dashboard tiles open it

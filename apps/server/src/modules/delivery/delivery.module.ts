@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { StrategyModule } from '../strategy/strategy.module.js';
 import { HealthRecalculationService } from './health-recalculation.service.js';
 import { InitiativeRegisterService } from './initiative-register.service.js';
+import { RegisterExportService } from './register-export.service.js';
 import { InitiativesController } from './initiatives.controller.js';
 import { InitiativeWritesService } from './initiative-writes.service.js';
 import { InitiativesService } from './initiatives.service.js';
@@ -18,6 +19,7 @@ import { WorkItemsService } from './work-items.service.js';
     HealthRecalculationService,
     InitiativeWritesService,
     WorkItemsService,
+    RegisterExportService,
   ],
   exports: [HealthRecalculationService, InitiativeRegisterService],
 })

@@ -108,6 +108,12 @@ no drift with `prisma migrate diff`.
 - Comments explain *why*, not *what*.
 - Prettier formatting; oxlint for linting.
 
+**Dependency overrides.** The root `package.json` has an `overrides` entry giving `exceljs`
+a patched `uuid` (exceljs 4.4 pins an old version with a security advisory; the
+"`npm audit fix --force`" suggestion would *downgrade* exceljs to 2019). Remove the override
+once exceljs ships a release with a current `uuid`. `npm audit` should report 0
+vulnerabilities.
+
 ## 8.9 Git workflow
 
 Small, reviewable slices. Each slice: code + tests + docs updated, all checks green, then

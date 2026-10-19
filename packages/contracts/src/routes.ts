@@ -8,6 +8,7 @@ import {
 } from './auth.js';
 import { dashboardQuerySchema, dashboardSchema } from './dashboard.js';
 import {
+  XLSX_MEDIA_TYPE,
   createDependencySchema,
   createInitiativeSchema,
   createMilestoneSchema,
@@ -17,6 +18,7 @@ import {
   overrideSchema,
   recalculationSummarySchema,
   registerPageSchema,
+  registerExportQuerySchema,
   registerQuerySchema,
   statusChangeSchema,
   updateDependencySchema,
@@ -48,6 +50,11 @@ import {
   invitationViewSchema,
   sentInvitationSchema,
 } from './invitations.js';
+import {
+  departmentSchema,
+  memberPageSchema,
+  memberQuerySchema,
+} from './people.js';
 import {
   createKpiSchema,
   kpiDetailSchema,
@@ -111,8 +118,10 @@ export interface ApiRoute {
   query?: z.ZodObject;
   body?: z.ZodType;
   status: 200 | 201 | 204;
-  /** null: no body (204). */
+  /** null: no JSON body (204, or a file — see `produces`). */
   response: z.ZodType | null;
+  /** A file download instead of JSON, e.g. an Excel export. */
+  produces?: string;
 }
 
 const route = <const R extends ApiRoute>(definition: R) => definition;
@@ -120,6 +129,7 @@ const route = <const R extends ApiRoute>(definition: R) => definition;
 const TAGS = {
   auth: 'Authentication',
   invitations: 'Invitations',
+  people: 'People and departments',
   strategy: 'Strategy',
   kpis: 'KPIs',
   initiatives: 'Initiatives',
@@ -266,6 +276,29 @@ export const API_ROUTES = {
     body: acceptInvitationSchema,
     status: 200,
     response: sessionResponseSchema,
+  }),
+
+  // ------------------------------------------------------------ people
+  listMembers: route({
+    method: 'get',
+    path: '/members',
+    tag: TAGS.people,
+    summary: 'People directory: active members, by name',
+    description:
+      'For owner, sponsor and assignee pickers. Search by name, email or job title; narrow by role or department.',
+    access: 'member',
+    query: memberQuerySchema,
+    status: 200,
+    response: memberPageSchema,
+  }),
+  listDepartments: route({
+    method: 'get',
+    path: '/departments',
+    tag: TAGS.people,
+    summary: 'Departments, by name',
+    access: 'member',
+    status: 200,
+    response: z.array(departmentSchema),
   }),
 
   // ---------------------------------------------------------- strategy
@@ -465,6 +498,19 @@ export const API_ROUTES = {
     query: registerQuerySchema,
     status: 200,
     response: registerPageSchema,
+  }),
+  exportInitiatives: route({
+    method: 'get',
+    path: '/initiatives/export',
+    tag: TAGS.initiatives,
+    summary: 'The register as an Excel workbook',
+    description:
+      'Same filters, order and visibility as the register, every page (up to 10,000 rows). Restricted initiatives the caller may not see are never included.',
+    access: 'member',
+    query: registerExportQuerySchema,
+    status: 200,
+    response: null,
+    produces: XLSX_MEDIA_TYPE,
   }),
   recalculateHealth: route({
     method: 'post',

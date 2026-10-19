@@ -37,6 +37,11 @@ import {
   sentInvitationSchema,
 } from './invitations.js';
 import {
+  departmentSchema,
+  memberPageSchema,
+  memberSchema,
+} from './people.js';
+import {
   kpiDetailSchema,
   kpiListItemSchema,
   kpiSummarySchema,
@@ -76,6 +81,9 @@ const named: [string, z.ZodType][] = [
   ['SessionResponse', sessionResponseSchema],
   ['InvitationView', invitationViewSchema],
   ['SentInvitation', sentInvitationSchema],
+  ['Member', memberSchema],
+  ['MemberPage', memberPageSchema],
+  ['Department', departmentSchema],
   ['InvitationPreview', invitationPreviewSchema],
   ['FrameworkTemplateView', frameworkTemplateViewSchema],
   ['PlanSummary', planSummarySchema],
@@ -202,16 +210,23 @@ function operation(operationId: string, route: ApiRoute) {
       });
     }
   }
-  const success = route.response
+  const success = route.produces
     ? {
-        description: 'Success',
+        description: 'A file download',
         content: {
-          'application/json': {
-            schema: responseSchema(route.response, operationId),
-          },
+          [route.produces]: { schema: { type: 'string', format: 'binary' } },
         },
       }
-    : { description: 'Success (no content)' };
+    : route.response
+      ? {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: responseSchema(route.response, operationId),
+            },
+          },
+        }
+      : { description: 'Success (no content)' };
 
   return {
     operationId,

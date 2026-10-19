@@ -34,8 +34,10 @@ with its tests and documentation.
 | 15 | Command Centre dashboard screen | Done |
 | 16 | Strategy map screen; dashboard sidebar cycle widget and legend | Done |
 | 17 | Initiative register screen | Done |
-| 18 | Initiative detail screen | Next |
-| 15+ | Web app: each screen, with the backend pieces it needs (8b, 9, 11, 12, 13) | Planned |
+| 18a | API: people directory (search members by name, role, department), departments list, register export to Excel (same filters and visibility as the register) | Done |
+| 18b | Web app: department filter, **Propose initiative** (guided form: details → objectives and weights → people → baseline and budget, with a reusable people picker), **Export to Excel** | Next |
+| 19 | Initiative detail screen | Planned |
+| 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups
 
@@ -48,8 +50,6 @@ with its tests and documentation.
 - Password reset, email verification, SSO (OIDC).
 - Object storage choice (S3-compatible; MinIO's Docker image is no longer published).
 - CI pipeline (lint, tests, build, docs) on every push.
-- API for the web app: people directory (owner/sponsor pickers) and departments list —
-  needed for "Propose initiative" and the register's department filter.
 - Web app: the shared vendor bundle is 189 kB gzipped; screens already load on demand.
 - Web app: browser end-to-end tests (Playwright) once the first screens are in.
 - Prisma's query engine runs some relation loads concurrently inside its own per-query

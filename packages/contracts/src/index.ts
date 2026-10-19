@@ -10,6 +10,7 @@ export * from './roles.js';
 export * from './messages.js';
 export * from './auth.js';
 export * from './invitations.js';
+export * from './people.js';
 export * from './strategy.js';
 export * from './kpis.js';
 export * from './delivery.js';
