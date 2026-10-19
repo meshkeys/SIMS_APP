@@ -31,6 +31,7 @@ import {
   toPersonRef,
 } from '../people/person.js';
 import { ChangeRequestsService } from './change-requests.service.js';
+import { RulesetsService } from './rulesets.service.js';
 import type {
   CreateDecisionInput,
   DecideInput,
@@ -53,7 +54,9 @@ const decisionInclude = {
   },
   requiredFromMember: personSelect,
   decidedBy: personSelect,
-  approval: { select: { id: true, requestedById: true, status: true } },
+  approval: {
+    select: { id: true, requestedById: true, status: true, type: true },
+  },
 };
 type DecisionRow = Prisma.DecisionGetPayload<{
   include: typeof decisionInclude;
@@ -71,6 +74,7 @@ export class DecisionsService {
   constructor(
     private readonly db: TenantPrismaService,
     private readonly changeRequests: ChangeRequestsService,
+    private readonly rulesets: RulesetsService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -262,7 +266,22 @@ export class DecisionsService {
         });
       }
 
-      if (row.approval) {
+      if (row.approval?.type === 'RULESET_CHANGE') {
+        if (input.outcome === 'APPROVED')
+          await this.rulesets.apply(
+            tx,
+            row.approval.id,
+            caller.membershipId,
+            input.notes,
+          );
+        if (input.outcome === 'REJECTED')
+          await this.rulesets.reject(
+            tx,
+            row.approval.id,
+            caller.membershipId,
+            input.notes,
+          );
+      } else if (row.approval) {
         if (input.outcome === 'APPROVED')
           await this.changeRequests.apply(
             tx,
@@ -361,7 +380,11 @@ export class DecisionsService {
       reference: row.reference,
       title: row.title,
       context: row.context,
-      kind: row.approval ? 'CHANGE_REQUEST' : 'DECISION',
+      kind: !row.approval
+        ? 'DECISION'
+        : row.approval.type === 'RULESET_CHANGE'
+          ? 'RULE_CHANGE'
+          : 'CHANGE_REQUEST',
       initiative: row.initiative
         ? {
             id: row.initiative.id,
@@ -379,7 +402,10 @@ export class DecisionsService {
       deferredUntil: toIsoDate(row.deferredUntil),
       decidedBy: toPersonRef(row.decidedBy),
       decidedAt: row.decidedAt?.toISOString() ?? null,
-      changeRequestId: row.approval?.id ?? null,
+      changeRequestId:
+        row.approval && row.approval.type !== 'RULESET_CHANGE'
+          ? row.approval.id
+          : null,
       canDecide:
         open &&
         decideRight(viewer, {

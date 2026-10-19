@@ -24,7 +24,7 @@ with its tests and documentation.
 | 7 | Reporting cycle: periods and deadlines, My updates, verification and challenge, sponsor confirmation, lock and snapshots | Done |
 | 8a | Governance: risks and issues, decisions, change requests (maker-checker) | Done |
 | 8b | Governance: escalations API (ladder with counts, raise, move up/down, resolve, withdraw, automatic moves with history); portfolio dependencies | Done |
-| 8c | Rulesets admin: draft, impact preview, maker-checker approval (with the Administration screen) | Planned (with 24) |
+| 8c | Rulesets API: impact preview on today's portfolio, proposals with MD/CEO approval through Decisions required, versions, recalculation on approval | Done |
 | 9a | KPI actuals (record, verify), trajectory from the rules, performance overview (benefits by quarter, scorecard, delivered-but-low-value) | Done |
 | 9b | Benefits management: benefits per initiative, expected profile and re-forecast, realised value and verification, benefits review requests | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
@@ -49,7 +49,7 @@ with its tests and documentation.
 | 22 | Escalation centre screen (wireframe page 7): ladder, risk heatmap, open escalations, blocked dependencies, decision log; raise, log risk, move and resolve | Done |
 | 20c | Evidence on the update form (upload, list, remove) and in the review panel (download); evidence becomes a blocking checklist item | Done |
 | 23 | Board pack builder screen (wireframe page 9): templates, snapshot and audience, sections, live preview, narrative, formats, issued packs with downloads | Done |
-| 8c + 24 | Rulesets API (draft, impact preview on the live portfolio, MD/CEO approval, versions), then the Administration screen (wireframe page 10): RAG & health rules, escalation rules, reporting cycles, users and roles, departments, audit log | Next |
+| 24 | Administration screen (wireframe page 10): RAG & health rules with impact preview, escalation rules, reporting cycles, rule versions; then users and roles, departments, audit log | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

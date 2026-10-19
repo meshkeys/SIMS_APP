@@ -544,3 +544,25 @@ transaction that created it commits.
 renderers (including Chrome) without timing races. The BullMQ path itself is covered by a
 smoke test against Redis rather than the automated suite. A separate worker process can be
 added later by starting the same app with `JOBS_WORKER=true` and no HTTP traffic.
+
+## ADR-031 — Rule changes are decisions, previewed on the live portfolio
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** Rules drive every status, escalation and KPI label, so a careless change could
+silently turn the portfolio Red. Governance asks for rule changes to be proposed by the
+Strategy Office and approved by the MD/CEO. The system already has a maker-checker path for
+baseline change requests, shown in the MD/CEO's Decisions required.
+
+**Decision.** A proposed ruleset becomes a pending version, a `RULESET_CHANGE` approval and a
+decision for the MD/CEO, decided through the same endpoint as every other decision (the
+proposer can never decide it). Before proposing, the Strategy Office previews the impact: the
+same rules engine runs with the live and the proposed rules over the same facts, without
+saving anything. Approval activates the version and recalculates health and KPI trajectories
+in the same transaction. The ruleset schema moved into `@sims/contracts`, so the screen
+validates exactly as the server does.
+
+**Consequences.** One place for the MD/CEO to decide, one audit trail, and no surprise status
+changes. Approval of a large portfolio's rules does its recalculation inside the decision's
+transaction; if that becomes slow it can move to a background job behind a "recalculating"
+state.

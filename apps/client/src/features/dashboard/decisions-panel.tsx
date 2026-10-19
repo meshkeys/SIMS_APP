@@ -146,9 +146,11 @@ function DecideDialog({
       description={
         decision.kind === 'CHANGE_REQUEST'
           ? 'Approving applies the change to the baseline.'
-          : decision.initiative
-            ? `${decision.initiative.code} · ${decision.initiative.title}`
-            : undefined
+          : decision.kind === 'RULE_CHANGE'
+            ? 'Approving puts these rules in force at once and recalculates every status and KPI trajectory.'
+            : decision.initiative
+              ? `${decision.initiative.code} · ${decision.initiative.title}`
+              : undefined
       }
       footer={
         <>

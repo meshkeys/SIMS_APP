@@ -21,6 +21,7 @@ import {
   SUBMITTED_STATUSES,
 } from '../../domain/reporting/obligations.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import type { Health } from '../../generated/prisma/enums.js';
 import {
   TenantPrismaService,
   type TenantTransactionClient,
@@ -86,6 +87,44 @@ export class HealthRecalculationService {
     );
   }
 
+  /**
+   * Every active initiative's status under the live rules and under proposed
+   * ones, from the same facts at the same moment, without saving anything.
+   * A valid manual override still wins under both.
+   */
+  async compareRules(
+    tx: TenantTransactionClient,
+    proposed: RulesetConfig,
+  ): Promise<
+    {
+      id: string;
+      code: string;
+      title: string;
+      live: Health;
+      proposed: Health;
+    }[]
+  > {
+    const now = this.clock.now();
+    const { rules, items } = await this.gather(tx, { status: 'ACTIVE' });
+    return items.map(({ initiative, facts }) => {
+      const overridden =
+        initiative.healthOverride !== null &&
+        initiative.overrideExpiresAt !== null &&
+        initiative.overrideExpiresAt > now;
+      const status = (config: RulesetConfig) =>
+        overridden
+          ? initiative.healthOverride!
+          : calculateHealth(facts, config).health;
+      return {
+        id: initiative.id,
+        code: initiative.code,
+        title: initiative.title,
+        live: status(rules.config),
+        proposed: status(proposed),
+      };
+    });
+  }
+
   /** Everything the rules engine needs, for each matching initiative. */
   private async gather(
     tx: TenantTransactionClient,
@@ -99,7 +138,10 @@ export class HealthRecalculationService {
       select: {
         id: true,
         code: true,
+        title: true,
         planId: true,
+        healthOverride: true,
+        overrideExpiresAt: true,
         baselineStart: true,
         activatedAt: true,
         calculatedHealth: true,

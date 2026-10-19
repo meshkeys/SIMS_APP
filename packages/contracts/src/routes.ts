@@ -69,6 +69,13 @@ import {
 import { performanceQuerySchema, performanceSchema } from './performance.js';
 import { documentViewSchema } from './documents.js';
 import {
+  proposeRulesetSchema,
+  rulesetImpactSchema,
+  rulesetPreviewSchema,
+  rulesetsOverviewSchema,
+  rulesetViewSchema,
+} from './rulesets-api.js';
+import {
   createPackSchema,
   packDownloadQuerySchema,
   packContentSchema,
@@ -169,6 +176,7 @@ const TAGS = {
   escalations: 'Escalations',
   documents: 'Documents and evidence',
   reports: 'Reports and board packs',
+  rulesets: 'Rules (rulesets)',
   dashboard: 'Dashboard',
   performance: 'Performance and benefits',
 } as const;
@@ -925,6 +933,50 @@ export const API_ROUTES = {
     access: 'member',
     status: 204,
     response: null,
+  }),
+
+  // ---------------------------------------------------------- rulesets
+  getRulesets: route({
+    method: 'get',
+    path: '/rulesets',
+    tag: TAGS.rulesets,
+    summary: 'The active rules, any pending proposal and every version',
+    access: ['STRATEGY_OFFICE', 'SYSTEM_ADMIN', 'CEO'],
+    status: 200,
+    response: rulesetsOverviewSchema,
+  }),
+  previewRuleset: route({
+    method: 'post',
+    path: '/rulesets/preview',
+    tag: TAGS.rulesets,
+    summary: 'What proposed rules would change on today’s portfolio',
+    description:
+      'Runs the rules engine with the proposed rules over current facts, without saving anything: initiative health, KPI trajectories and delivered-but-low-value work.',
+    access: STRATEGY_EDITOR_ROLES,
+    body: rulesetPreviewSchema,
+    status: 200,
+    response: rulesetImpactSchema,
+  }),
+  proposeRuleset: route({
+    method: 'post',
+    path: '/rulesets',
+    tag: TAGS.rulesets,
+    summary: 'Propose new rules for MD/CEO approval',
+    description:
+      'Saves the next version as pending and adds a decision for the MD/CEO. Approving it (POST /decisions/{id}/decide) makes it active and recalculates health and KPI trajectories; nobody approves their own proposal.',
+    access: STRATEGY_EDITOR_ROLES,
+    body: proposeRulesetSchema,
+    status: 201,
+    response: rulesetViewSchema,
+  }),
+  withdrawRuleset: route({
+    method: 'post',
+    path: '/rulesets/{id}/withdraw',
+    tag: TAGS.rulesets,
+    summary: 'Withdraw a pending proposal',
+    access: STRATEGY_EDITOR_ROLES,
+    status: 200,
+    response: rulesetViewSchema,
   }),
 
   // ----------------------------------------------------------- reports

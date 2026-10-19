@@ -1,7 +1,8 @@
 # 7. Governance rules (rulesets)
 
 Each organisation runs on a **ruleset**: versioned JSON validated by
-`apps/server/src/domain/rulesets/ruleset-config.ts`. Changes follow maker-checker (proposed,
+`rulesetConfigSchema` in `@sims/contracts` (shared, so the Administration screen and the
+server validate rules identically). Changes follow maker-checker (proposed,
 approved by the MD/CEO, logged). Only one ruleset is `ACTIVE` per organisation at a time —
 enforced by the database.
 
@@ -121,3 +122,22 @@ remain visible alongside it.
 
 `schemaVersion` identifies the shape of the JSON. When the shape changes, a new version is
 added with a migration function; stored rulesets are never reinterpreted.
+
+## 7.6 Changing the rules
+
+1. **Preview.** The Strategy Office edits a copy of the live rules and sees what it would
+   change on today's portfolio (chapter 15.7): initiatives whose status would move (a valid
+   manual override still wins), KPIs whose trajectory would move, and the change in
+   delivered-but-low-value work. Nothing is saved.
+2. **Propose.** Saving with a reason creates the next version as *pending approval* and a
+   decision for the MD/CEO ("Approve rule change v5: …") listing every change in plain words.
+   Only one proposal can wait at a time.
+3. **Decide.** The MD/CEO approves or rejects it in Decisions required. Nobody approves their
+   own proposal, and the Strategy Office cannot approve on the MD/CEO's behalf.
+4. **Apply.** An approved version becomes active immediately, and the previous one is kept
+   as superseded. Every active initiative's health (and the pillar rollups) and every KPI's
+   trajectory are recalculated under it, in the same transaction. A rejected or withdrawn
+   proposal changes nothing.
+
+Escalation ladder and reporting-cycle changes apply to what happens next: escalations move on
+the new timings from their current level, and a period already open keeps its deadlines.

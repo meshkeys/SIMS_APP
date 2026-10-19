@@ -30,6 +30,10 @@ follows in slice 8c.)
 | `POST /api/v1/escalations/:id/withdraw` | whoever raised it, Office | Withdraw one raised by mistake |
 | `POST /api/v1/escalations/sweep` | Strategy Office, Admin | Apply due automatic moves now |
 | `GET /api/v1/dependencies` | any member | Blocked and at-risk dependencies across the portfolio |
+| `GET /api/v1/rulesets` | Strategy Office, Admin, MD/CEO | Active rules, any pending proposal, every version |
+| `POST /api/v1/rulesets/preview` | Strategy Office, Admin | What proposed rules would change today (saves nothing) |
+| `POST /api/v1/rulesets` | Strategy Office, Admin | Propose new rules for MD/CEO approval |
+| `POST /api/v1/rulesets/:id/withdraw` | Strategy Office, Admin | Withdraw a pending proposal |
 
 Items on sensitive initiatives are hidden from people who may not see them (chapter 12.3).
 
@@ -131,7 +135,31 @@ at risk by default, `?status=` for others): blocked first, critical path first, 
 longest blocked. Each has the waiting initiative (`from`), the one it waits on (`to`), the
 description, `blockedSince` and `neededBy`.
 
-## 15.7 Not yet
+## 15.7 Rules (rulesets)
+
+The process is described in chapter 7.6.
+
+- **Overview** returns the active version (its rules, what it changed against the version
+  before, who proposed and approved it, since when), any pending proposal (with its decision
+  id) and every version, newest first. An organisation that never saved rules gets the
+  built-in defaults.
+- **Preview** takes a full ruleset and returns: the changes in plain words; health counts
+  under the live and proposed rules (Green, Amber, Red, Unknown) with each initiative that
+  would change; KPI trajectory counts with each KPI that would change; and the
+  delivered-but-low-value count under each. Both sides use the same facts at the same moment.
+- **Propose** validates the rules (`400` with paths like `config.rag.amberMaxPpBehind`),
+  refuses a copy of the live rules (`400 NO_CHANGES`) or a second pending proposal
+  (`409 RULESET_PENDING`), and creates the next version, a `RULESET_CHANGE` approval and a
+  `RUL-…` decision for the MD/CEO, due in 7 days. The decision's context lists the changes.
+- **Deciding** uses `POST /decisions/:id/decide`. Decisions of this kind are
+  `RULE_CHANGE`. Approval activates the version and recalculates (chapter 7.6); rejection
+  marks it rejected. Deferring leaves it pending.
+- **Withdraw** closes a pending proposal and its decision (`409 RULESET_NOT_PENDING`
+  otherwise).
+- Audit events: `RULESET_PROPOSED`, `RULESET_APPROVED`, `RULESET_REJECTED`,
+  `RULESET_WITHDRAWN`.
+
+## 15.8 Not yet
 
 - Escalations are raised by people. Raising them automatically for missed updates, missing
   KPI actuals and long-blocked dependencies comes with scheduled jobs (slice 11), as do

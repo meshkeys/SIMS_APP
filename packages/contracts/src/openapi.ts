@@ -47,6 +47,11 @@ import {
 } from './kpis.js';
 import { documentViewSchema } from './documents.js';
 import {
+  rulesetImpactSchema,
+  rulesetsOverviewSchema,
+  rulesetViewSchema,
+} from './rulesets-api.js';
+import {
   packContentSchema,
   packSectionSchema,
   reportPackSchema,
@@ -147,6 +152,9 @@ const named: [string, z.ZodType][] = [
   ['ScorecardRow', scorecardRowSchema],
   ['Performance', performanceSchema],
   ['Document', documentViewSchema],
+  ['RulesetView', rulesetViewSchema],
+  ['RulesetsOverview', rulesetsOverviewSchema],
+  ['RulesetImpact', rulesetImpactSchema],
   ['ReportSnapshot', reportSnapshotSchema],
   ['PackSection', packSectionSchema],
   ['PackContent', packContentSchema],

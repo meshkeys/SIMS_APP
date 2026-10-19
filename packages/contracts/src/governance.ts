@@ -188,7 +188,8 @@ export const decisionViewSchema = z.object({
   reference: z.string(),
   title: z.string(),
   context: z.string().nullable(),
-  kind: z.enum(['CHANGE_REQUEST', 'DECISION']),
+  /** A change request, a proposed rule change (both maker-checker), or a decision. */
+  kind: z.enum(['CHANGE_REQUEST', 'RULE_CHANGE', 'DECISION']),
   initiative: initiativeRefSchema.nullable(),
   /** Role that must decide, and the named person when there is one. */
   requiredFrom: z.enum(Role),

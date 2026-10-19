@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Rules API with impact preview and MD/CEO approval (slice 8c)
+- **Rules overview:** the active ruleset, any pending proposal and every version, each with
+  what it changed in plain words.
+- **Impact preview:** what proposed rules would change on today's portfolio (initiative
+  status, KPI trajectories, delivered-but-low-value work) before anything is saved.
+- **Maker-checker:** proposals go to the MD/CEO in Decisions required; approving makes them
+  active at once and recalculates health and KPI trajectories; proposals can be withdrawn.
+- The ruleset schema now lives in the shared contract, so screen and server validate rules
+  the same way.
+
 ## 2026-10-19 — Board pack builder screen (slice 23)
 - **Board pack builder:** choose a template, a locked cycle, the audience (and pillar for a
   deep dive), tick sections with their page counts, write the executive narrative and pick
