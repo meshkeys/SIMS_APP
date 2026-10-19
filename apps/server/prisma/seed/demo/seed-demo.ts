@@ -9,6 +9,7 @@ import {
   type RulesetConfig,
 } from '../../../src/domain/rulesets/ruleset-config.js';
 import { recalculateElementRollups } from '../../../src/modules/delivery/element-rollups.js';
+import { recalculateKpiPositions } from '../../../src/modules/kpis/kpi-positions.js';
 import {
   DIG_004_BENEFIT,
   MILLION,
@@ -469,9 +470,7 @@ async function writeDemo(
       baselineDate: date('2024-01-01'),
       target: k.target,
       ownerId: member[objectiveOwner[k.objective] as PersonKey],
-      latestValue: k.latest,
-      latestAt: date('2026-09-30'),
-      trajectory: k.trajectory,
+      // Latest value and trajectory are calculated from the verified actuals below.
     })),
   });
   await tx.kpiTarget.createMany({
@@ -523,6 +522,20 @@ async function writeDemo(
       });
     }),
   });
+
+  await recalculateKpiPositions(tx, Object.values(kpiIds), ruleset);
+  const positions = await tx.kpi.findMany({
+    where: { id: { in: Object.values(kpiIds) } },
+    select: { code: true, trajectory: true },
+  });
+  const drift = positions.filter(
+    (p) => KPIS.find((k) => k.code === p.code)!.trajectory !== p.trajectory,
+  );
+  if (drift.length) {
+    throw new Error(
+      `Demo KPI trajectories no longer match the wireframe: ${drift.map((p) => `${p.code} is ${p.trajectory}`).join(', ')}`,
+    );
+  }
 
   // ----------------------------------------------------------- initiatives
   const initiativeIds: Record<string, string> = {};

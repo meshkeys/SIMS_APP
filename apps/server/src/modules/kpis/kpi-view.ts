@@ -5,7 +5,7 @@ import type {
   KpiDirection,
   Trajectory,
 } from '../../generated/prisma/enums.js';
-import type { KpiSummary } from '@sims/contracts';
+import type { ElementRef, KpiSummary } from '@sims/contracts';
 
 type DecimalLike = { toNumber(): number };
 
@@ -81,5 +81,26 @@ export function toKpiSummary(kpi: KpiRow, today = new Date()): KpiSummary {
       rangeLow,
       rangeHigh,
     }),
+  };
+}
+
+/**
+ * Finds the top-level element (e.g. the pillar) each element rolls up to,
+ * given every element of the plan.
+ */
+export function topLevelResolver(
+  elements: readonly {
+    id: string;
+    code: string;
+    title: string;
+    parentId: string | null;
+  }[],
+): (elementId: string) => ElementRef {
+  const byId = new Map(elements.map((element) => [element.id, element]));
+  return (elementId) => {
+    let node = byId.get(elementId)!;
+    while (node.parentId && byId.has(node.parentId))
+      node = byId.get(node.parentId)!;
+    return { id: node.id, code: node.code, title: node.title };
   };
 }

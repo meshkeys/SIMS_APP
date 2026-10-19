@@ -439,3 +439,25 @@ storage. Browsers without Web Locks (very old ones) fall back to per-tab refresh
 own components on Radix costs more up front than a ready-made kit but matches the wireframes
 exactly and keeps accessibility under our control.
 
+
+## ADR-026 — KPI trajectory is progress to the target due, banded by the rules
+
+**Status:** Accepted · 2026-10-19
+
+**Context.** The scorecard labels every KPI On trajectory, Slightly behind or Off trajectory.
+A straight time-line from baseline to the end-of-plan target judges KPIs harshly near the end
+of a plan and ignores how the organisation phased its targets; hand-set labels drift from
+the data.
+
+**Decision.** Trajectory is calculated from the latest **verified** reading: its progress
+from baseline to the **target due next after the reading's date** (interim targets such as
+FY2025 and FY2026 phase the expectation; the end-of-plan target is the fallback), banded with
+two ruleset values, `impact.onTrajectoryMinPct` (default 50) and
+`impact.slightlyBehindMinPct` (default 40). They were added to ruleset schema version 1 with
+defaults, so stored rulesets keep parsing unchanged. The same function serves the API and
+the demo seed.
+
+**Consequences.** Organisations control both the phasing (through interim targets) and the
+strictness (through the bands), and the label is always explainable from the figures on
+screen. Unverified readings never move a KPI. A finer, time-weighted expectation within a
+year would need monthly or quarterly targets, which the model already supports.

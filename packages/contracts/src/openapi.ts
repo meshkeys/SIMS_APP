@@ -36,17 +36,21 @@ import {
   invitationViewSchema,
   sentInvitationSchema,
 } from './invitations.js';
+import { departmentSchema, memberPageSchema, memberSchema } from './people.js';
 import {
-  departmentSchema,
-  memberPageSchema,
-  memberSchema,
-} from './people.js';
-import {
+  kpiActualRowSchema,
+  kpiActualsSheetSchema,
   kpiDetailSchema,
   kpiListItemSchema,
   kpiSummarySchema,
   kpiTargetViewSchema,
 } from './kpis.js';
+import {
+  benefitQuarterSchema,
+  lowValueItemSchema,
+  performanceSchema,
+  scorecardRowSchema,
+} from './performance.js';
 import {
   checklistItemSchema,
   myUpdatesSchema,
@@ -97,6 +101,8 @@ const named: [string, z.ZodType][] = [
   ['KpiSummary', kpiSummarySchema],
   ['KpiListItem', kpiListItemSchema],
   ['KpiDetail', kpiDetailSchema],
+  ['KpiActualRow', kpiActualRowSchema],
+  ['KpiActualsSheet', kpiActualsSheetSchema],
   ['RegisterItem', registerItemSchema],
   ['RegisterPage', registerPageSchema],
   ['HealthReason', healthReasonSchema],
@@ -121,6 +127,10 @@ const named: [string, z.ZodType][] = [
   ['EscalationSummary', escalationSummarySchema],
   ['MilestoneDue', milestoneDueSchema],
   ['Dashboard', dashboardSchema],
+  ['BenefitQuarter', benefitQuarterSchema],
+  ['LowValueItem', lowValueItemSchema],
+  ['ScorecardRow', scorecardRowSchema],
+  ['Performance', performanceSchema],
 ];
 for (const [id, schema] of named) apiComponents.add(schema, { id });
 

@@ -134,14 +134,14 @@ Limits: 1–10 levels.
 
 **Reading position against target.** Every KPI response carries `currentTarget` (the next
 target due, else the last one), `latestValue`, `trajectory` and `progressToTarget`.
-`trajectory` starts as `NOT_MEASURABLE` and is recalculated when actuals are recorded
-(performance slice).
+`trajectory` starts as `NOT_MEASURABLE` and is recalculated whenever a reading is verified
+(chapter 20).
 
 Audit events: `KPI_CREATED`, `KPI_UPDATED`, `KPI_TARGETS_CHANGED`, `KPI_DELETED`.
 
 ## 12.8 Not yet
 
-Recording KPI actuals and trajectory calculation come with the performance slice. Plan
+Recording KPI actuals and trajectory are in chapter 20. Plan
 approval (maker-checker, versioning approved plans) arrives with the governance slice;
 until then changes to an approved plan are allowed for the Strategy Office and fully
 audited.

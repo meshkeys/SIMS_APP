@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — KPI actuals and performance API (slice 9a)
+- **KPI actuals** per reporting period: owners record their own KPIs, the Strategy Office
+  records any KPI and verifies; locked periods are frozen.
+- **Trajectory** is now calculated: the latest verified reading against the target due
+  next, banded by two new, configurable rules (`onTrajectoryMinPct`, `slightlyBehindMinPct`).
+  Verifying a reading also refreshes pillar and objective impact scores.
+- **Performance overview** (`GET /performance`): expected vs realised benefits by quarter,
+  KPI trajectory counts, the strategic KPI scorecard with six-month trends, and delivered
+  work that is not creating value.
+- Demo KPI trajectories are calculated by the engine (two demo readings adjusted so the
+  wireframe's 9 / 5 / 4 split still holds).
+
 ## 2026-10-19 — Update reviews (slice 20b)
 - **Reviews** screen for the Strategy Office and sponsors: stage tabs with counts, a queue,
   and a review panel with claims beside verified figures, commentary and risks.

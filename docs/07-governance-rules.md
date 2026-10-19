@@ -23,6 +23,7 @@ enforced by the database.
 | | Stage windows (working days): owner submission / Strategy Office review / sponsor review / report issue | 1–3 / 4–5 / 6–7 / 8 |
 | | `reminderDaysBeforeDue` | 2 and 0 |
 | `impact` | `lowValueThresholdPct` — below this % of expected impact, delivered work is "not creating value" | 50 |
+| | `onTrajectoryMinPct` / `slightlyBehindMinPct` — KPI trajectory bands, in % of the way from baseline to the target due (chapter 20.3) | 50 / 40 |
 
 ## 7.2 Escalation ladder
 

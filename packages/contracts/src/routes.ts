@@ -60,9 +60,13 @@ import {
   kpiDetailSchema,
   kpiListItemSchema,
   kpiListQuerySchema,
+  kpiActualsSheetSchema,
   kpiTargetsSchema,
+  recordKpiActualsSchema,
   updateKpiSchema,
+  verifyKpiActualsSchema,
 } from './kpis.js';
+import { performanceQuerySchema, performanceSchema } from './performance.js';
 import {
   approveSchema,
   challengeSchema,
@@ -139,6 +143,7 @@ const TAGS = {
   decisions: 'Decisions',
   changes: 'Change requests',
   dashboard: 'Dashboard',
+  performance: 'Performance and benefits',
 } as const;
 
 /**
@@ -474,6 +479,40 @@ export const API_ROUTES = {
     access: STRATEGY_EDITOR_ROLES,
     status: 204,
     response: null,
+  }),
+
+  getKpiActuals: route({
+    method: 'get',
+    path: '/periods/{periodId}/kpi-actuals',
+    tag: TAGS.kpis,
+    summary: "A period's KPI readings",
+    description:
+      'Every KPI of the plan with its reading for this period, the previous verified reading and what the caller may do.',
+    access: 'member',
+    status: 200,
+    response: kpiActualsSheetSchema,
+  }),
+  recordKpiActuals: route({
+    method: 'put',
+    path: '/periods/{periodId}/kpi-actuals',
+    tag: TAGS.kpis,
+    summary: 'Record KPI readings for a period',
+    description:
+      'KPI owners record their own KPIs (unverified); the Strategy Office records any KPI, verified as it is saved. Verified readings update the latest value and trajectory of each KPI.',
+    access: 'member',
+    body: recordKpiActualsSchema,
+    status: 200,
+    response: kpiActualsSheetSchema,
+  }),
+  verifyKpiActuals: route({
+    method: 'post',
+    path: '/periods/{periodId}/kpi-actuals/verify',
+    tag: TAGS.kpis,
+    summary: 'Verify recorded KPI readings',
+    access: STRATEGY_EDITOR_ROLES,
+    body: verifyKpiActualsSchema,
+    status: 200,
+    response: kpiActualsSheetSchema,
   }),
 
   // ------------------------------------------------------- initiatives
@@ -947,6 +986,20 @@ export const API_ROUTES = {
     query: dashboardQuerySchema,
     status: 200,
     response: dashboardSchema,
+  }),
+
+  // ------------------------------------------------------- performance
+  getPerformance: route({
+    method: 'get',
+    path: '/performance',
+    tag: TAGS.performance,
+    summary: 'KPIs and benefits realisation',
+    description:
+      'Expected vs realised financial benefits by quarter, KPI trajectory counts, the strategic KPI scorecard and delivered work that is not creating value, for one calendar year (`year`).',
+    access: 'member',
+    query: performanceQuerySchema,
+    status: 200,
+    response: performanceSchema,
   }),
 } as const satisfies Record<string, ApiRoute>;
 

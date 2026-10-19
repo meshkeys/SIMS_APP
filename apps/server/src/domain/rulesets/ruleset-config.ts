@@ -210,10 +210,23 @@ const reportingCycleSchema = z
 // Strategic impact lens
 // ---------------------------------------------------------------------------
 
-const impactSchema = z.object({
-  /** Below this % of expected impact, a delivered initiative is "not creating value". */
-  lowValueThresholdPct: z.number().min(1).max(100),
-});
+const impactSchema = z
+  .object({
+    /** Below this % of expected impact, a delivered initiative is "not creating value". */
+    lowValueThresholdPct: z.number().min(1).max(100),
+    /**
+     * KPI trajectory bands, in % of the way from baseline to the KPI's current
+     * target: at or above `onTrajectoryMinPct` is on trajectory, at or above
+     * `slightlyBehindMinPct` slightly behind, below it off trajectory. Added
+     * after version 1 shipped, so stored rulesets without them get the defaults.
+     */
+    onTrajectoryMinPct: z.number().min(1).max(100).default(50),
+    slightlyBehindMinPct: z.number().min(0).max(100).default(40),
+  })
+  .refine((impact) => impact.onTrajectoryMinPct > impact.slightlyBehindMinPct, {
+    message: 'The on-trajectory level must be above the slightly-behind level',
+    path: ['onTrajectoryMinPct'],
+  });
 
 // ---------------------------------------------------------------------------
 
@@ -296,5 +309,9 @@ export const DEFAULT_RULESET_CONFIG: RulesetConfig = {
     reportIssueDay: 8,
     reminderDaysBeforeDue: [2, 0],
   },
-  impact: { lowValueThresholdPct: 50 },
+  impact: {
+    lowValueThresholdPct: 50,
+    onTrajectoryMinPct: 50,
+    slightlyBehindMinPct: 40,
+  },
 };

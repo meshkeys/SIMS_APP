@@ -169,7 +169,7 @@ describe('Strategy API (e2e)', () => {
         ),
       ).toEqual([
         ['Non-interest income share', 18, 'FY2026', 30, 23, 41.7],
-        ['Fee income growth (YoY)', 6, 'FY2026', 20, 14, 57.1],
+        ['Fee income growth (YoY)', 6, 'FY2026', 20, 12.5, 46.4],
       ]);
 
       const contributors = response.body.contributors as {

@@ -26,10 +26,13 @@ import {
   toPersonRef,
 } from '../people/person.js';
 import { PlansService } from '../strategy/plans.service.js';
-import { kpiTargetsInclude, toKpiSummary } from './kpi-view.js';
+import {
+  kpiTargetsInclude,
+  toKpiSummary,
+  topLevelResolver,
+} from './kpi-view.js';
 import type {
   CreateKpiInput,
-  ElementRef,
   KpiDetail,
   KpiListItem,
   KpiTargetInput,
@@ -83,13 +86,7 @@ export class KpisService {
       }),
     ]);
 
-    const byId = new Map(elements.map((element) => [element.id, element]));
-    const topLevelOf = (id: string): ElementRef => {
-      let node = byId.get(id)!;
-      while (node.parentId && byId.has(node.parentId))
-        node = byId.get(node.parentId)!;
-      return { id: node.id, code: node.code, title: node.title };
-    };
+    const topLevelOf = topLevelResolver(elements);
     const today = new Date();
     return kpis.map((kpi) => ({
       ...toKpiSummary(kpi, today),

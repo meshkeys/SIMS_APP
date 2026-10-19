@@ -21,6 +21,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { PeopleModule } from './modules/people/people.module.js';
 import { GovernanceModule } from './modules/governance/governance.module.js';
 import { KpisModule } from './modules/kpis/kpis.module.js';
+import { PerformanceModule } from './modules/performance/performance.module.js';
 import { ReportingModule } from './modules/reporting/reporting.module.js';
 import { StrategyModule } from './modules/strategy/strategy.module.js';
 
@@ -44,6 +45,7 @@ import { StrategyModule } from './modules/strategy/strategy.module.js';
     ReportingModule,
     GovernanceModule,
     DashboardModule,
+    PerformanceModule,
     PeopleModule,
   ],
   providers: [

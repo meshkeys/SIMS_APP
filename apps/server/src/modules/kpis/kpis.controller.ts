@@ -14,6 +14,7 @@ import {
 import { ZodValidationPipe } from '../../common/validation/zod-validation.pipe.js';
 import { STRATEGY_EDITOR_ROLES } from '../../domain/roles/roles.js';
 import { type AuthContext, CurrentAuth, Roles } from '../auth/index.js';
+import { KpiActualsService } from './kpi-actuals.service.js';
 import { KpisService } from './kpis.service.js';
 import {
   type CreateKpiInput,
@@ -23,10 +24,15 @@ import {
   type KpiListItem,
   type KpiListQuery,
   kpiListQuerySchema,
+  type KpiActualsSheet,
   type KpiTargetsInput,
   kpiTargetsSchema,
+  type RecordKpiActualsInput,
+  recordKpiActualsSchema,
   type UpdateKpiInput,
   updateKpiSchema,
+  type VerifyKpiActualsInput,
+  verifyKpiActualsSchema,
 } from '@sims/contracts';
 
 const id = new ZodValidationPipe(idSchema);
@@ -91,5 +97,42 @@ export class KpisController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', id) kpiId: string): Promise<void> {
     return this.kpis.remove(kpiId);
+  }
+}
+
+/** KPI readings per reporting period: record, verify, and the sheet to do it on. */
+@Controller('periods/:periodId/kpi-actuals')
+export class KpiActualsController {
+  constructor(private readonly actuals: KpiActualsService) {}
+
+  @Get()
+  sheet(
+    @CurrentAuth() caller: AuthContext,
+    @Param('periodId', id) periodId: string,
+  ): Promise<KpiActualsSheet> {
+    return this.actuals.sheet(caller, periodId);
+  }
+
+  /** KPI owners record their own; the Strategy Office records any (verified at once). */
+  @Put()
+  record(
+    @CurrentAuth() caller: AuthContext,
+    @Param('periodId', id) periodId: string,
+    @Body(new ZodValidationPipe(recordKpiActualsSchema))
+    input: RecordKpiActualsInput,
+  ): Promise<KpiActualsSheet> {
+    return this.actuals.record(caller, periodId, input);
+  }
+
+  @Roles(...STRATEGY_EDITOR_ROLES)
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  verify(
+    @CurrentAuth() caller: AuthContext,
+    @Param('periodId', id) periodId: string,
+    @Body(new ZodValidationPipe(verifyKpiActualsSchema))
+    input: VerifyKpiActualsInput,
+  ): Promise<KpiActualsSheet> {
+    return this.actuals.verify(caller, periodId, input);
   }
 }

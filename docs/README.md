@@ -23,6 +23,7 @@ Strategic Initiative Management System · Strategy Execution Command Centre
 | 17 | [API contracts](17-api-contracts.md) | Engineers (API and web) |
 | 18 | [Web app](18-web-app.md) | Engineers (web) |
 | 19 | [People and departments API](19-people-api.md) | Engineers (API and web) |
+| 20 | [Performance and KPI actuals API](20-performance-api.md) | Engineers (API and web) |
 | — | [Changelog](CHANGELOG.md) | Everyone |
 
 ## Downloadable copy

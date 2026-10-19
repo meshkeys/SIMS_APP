@@ -178,7 +178,7 @@ export const KPIS: KpiSpec[] = [
     direction: 'HIGHER_IS_BETTER',
     baseline: 6,
     target: 20,
-    latest: 14,
+    latest: 12.5,
     trajectory: 'SLIGHTLY_BEHIND',
   },
   {
@@ -277,7 +277,7 @@ export const KPIS: KpiSpec[] = [
     direction: 'LOWER_IS_BETTER',
     baseline: 5,
     target: 1,
-    latest: 2.8,
+    latest: 3.2,
     trajectory: 'SLIGHTLY_BEHIND',
   },
   {

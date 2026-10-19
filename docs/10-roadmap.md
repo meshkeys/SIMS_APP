@@ -24,7 +24,8 @@ with its tests and documentation.
 | 7 | Reporting cycle: periods and deadlines, My updates, verification and challenge, sponsor confirmation, lock and snapshots | Done |
 | 8a | Governance: risks and issues, decisions, change requests (maker-checker) | Done |
 | 8b | Governance: automatic escalation ladder, rulesets admin with impact preview | Planned |
-| 9 | Benefits realisation and KPI actuals | Planned |
+| 9a | KPI actuals (record, verify), trajectory from the rules, performance overview (benefits by quarter, scorecard, delivered-but-low-value) | Done |
+| 9b | Benefits management: benefits per initiative, expected profile and re-forecast, realised value and verification, benefits review requests | Planned |
 | 10 | Read models: Command Centre dashboard, pillar rollups, delivery-vs-value matrix | Done |
 | 11 | Background jobs (BullMQ), notifications, email | Planned |
 | 12 | Documents & evidence (object storage), report pack generation (PDF/PPTX/XLSX) | Planned |
@@ -41,7 +42,7 @@ with its tests and documentation.
 | 19c | Initiative detail: dependencies (with an initiative picker), **Request change** for active baselines, withdraw a pending request | Done |
 | 20a | Monthly progress update (owner): My updates, milestone claims, commentary, risks, live checklist, save and submit | Done |
 | 20b | Update review: Strategy Office queue, verify, challenge, sponsor approval, comments | Done |
-| 9 + 21 | KPI actuals and benefits realisation (API), then the KPIs & benefits screen (wireframe page 6) | Next |
+| 21 | KPIs & benefits screen (wireframe page 6): headline figures, expected vs realised chart, delivered-but-low-value, scorecard with trends, **Record KPI actuals** | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: KPIs & benefits (9), escalation centre (8b), monthly progress update, board pack builder (12), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups
