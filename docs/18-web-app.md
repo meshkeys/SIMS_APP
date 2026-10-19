@@ -389,3 +389,32 @@ packs only (Board members: the Board's packs).
   the list refreshes every 3 seconds.
 - Rows per page come from the contract (`PACK_ROWS_PER_PAGE`), shared with the server's
   estimates and renderers, so the preview always paginates like the files.
+
+### Administration (`/admin`)
+
+"Administration" in the sidebar, for the Strategy Office, administrators and the MD/CEO. The
+open section is in the URL (`?section=rules|escalation|cycle|versions`). The header shows
+the rules in force ("Ruleset v4 · approved 12 Jan 2026").
+
+- **One draft across sections.** Edits in any section build a single proposal, a copy of
+  the live rules. It is validated with the shared ruleset schema as it changes, so errors
+  (e.g. "The Amber limit must be greater than the Green limit") appear next to the field
+  before anything is sent.
+- **RAG & health rules:** the Green/Amber/Red band and two sliders (with the live values),
+  the four health modifiers (the blocked-dependency one with its days and critical-path
+  option), override expiry and who can override, and the impact and KPI thresholds.
+- **Escalation rules:** each level's name, description, who decides (initiative owner,
+  sponsor or a role) and its days, or "by decision only". Add and remove levels (1 to
+  10). Choose where critical items start.
+- **Reporting cycles:** cadence, the three stage windows (working days), report day and
+  reminder days.
+- **Rule versions:** every version with its status, reason, changes, who proposed and
+  approved it, and when it took effect.
+- **Proposed changes** (appears once something differs): the changes in plain words, the
+  **impact preview** on today's portfolio (live vs proposed counts, the initiatives that
+  would change status, KPI trajectory changes, low-value work; refreshed 0.4 s after edits
+  settle), a required reason, **Propose for approval** and **Discard changes**.
+- **While a proposal waits**, editing is locked and a banner shows it, with **Withdraw
+  proposal**. The MD/CEO sees everything read-only and approves in Decisions required. A newly
+  approved version starts a fresh draft.
+- Number fields keep their own text, so they can be cleared and retyped.

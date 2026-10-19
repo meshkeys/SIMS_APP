@@ -49,7 +49,8 @@ with its tests and documentation.
 | 22 | Escalation centre screen (wireframe page 7): ladder, risk heatmap, open escalations, blocked dependencies, decision log; raise, log risk, move and resolve | Done |
 | 20c | Evidence on the update form (upload, list, remove) and in the review panel (download); evidence becomes a blocking checklist item | Done |
 | 23 | Board pack builder screen (wireframe page 9): templates, snapshot and audience, sections, live preview, narrative, formats, issued packs with downloads | Done |
-| 24 | Administration screen (wireframe page 10): RAG & health rules with impact preview, escalation rules, reporting cycles, rule versions; then users and roles, departments, audit log | Next |
+| 24 | Administration screen, rules (wireframe page 10): RAG & health rules with impact preview, escalation rules, reporting cycles, rule versions, proposals | Done |
+| 25 | Administration, people and records: users and roles (invite, change roles, deactivate), departments (create, rename, nest), organisation settings, audit log (API and screens) | Next |
 | 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
 
 ## 10.3 Known follow-ups

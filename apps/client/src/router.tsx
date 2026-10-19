@@ -12,7 +12,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { ErrorState } from '@/components/ui/states';
 import { LoginPage } from '@/features/auth/login-page';
 import { registerSearchSchema } from '@/features/initiatives/register-search';
-import { ComingSoon, NotFound } from '@/features/placeholder/coming-soon';
+import { NotFound } from '@/features/placeholder/coming-soon';
 
 export interface RouterContext {
   auth: Auth;
@@ -56,17 +56,6 @@ const appRoute = createRoute({
   },
   component: AppShell,
 });
-
-const screen = <Path extends string>(
-  path: Path,
-  title: string,
-  eyebrow?: string,
-) =>
-  createRoute({
-    getParentRoute: () => appRoute,
-    path,
-    component: () => <ComingSoon title={title} eyebrow={eyebrow} />,
-  });
 
 /** Each screen loads on demand, so the first visit downloads only what it shows. */
 const dashboardRoute = createRoute({
@@ -209,6 +198,22 @@ const reportsRoute = createRoute({
   ),
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/admin',
+  // The open section is in the URL, so it can be linked to.
+  validateSearch: z.object({
+    section: z
+      .enum(['rules', 'escalation', 'cycle', 'versions'])
+      .optional()
+      .catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/admin/admin-page'),
+    'AdminPage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([
@@ -223,7 +228,7 @@ const routeTree = rootRoute.addChildren([
     reportsRoute,
     myUpdatesRoute,
     reviewsRoute,
-    screen('/admin', 'Administration', 'Settings'),
+    adminRoute,
   ]),
 ]);
 

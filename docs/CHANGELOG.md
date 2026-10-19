@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Administration: rules (slice 24)
+- **Administration** screen for the Strategy Office, administrators and the MD/CEO:
+  RAG thresholds with sliders, health modifiers, override policy, impact and KPI
+  thresholds, the escalation ladder, the reporting cycle, and every rule version.
+- Edits build one proposal, checked as you type with the server's own rules, with a live
+  **impact preview** on today's portfolio before **Propose for approval**.
+- Pending proposals lock editing and can be withdrawn; the MD/CEO sees the rules read-only.
+- Every placeholder screen is now replaced.
+
 ## 2026-10-19 — Rules API with impact preview and MD/CEO approval (slice 8c)
 - **Rules overview:** the active ruleset, any pending proposal and every version, each with
   what it changed in plain words.

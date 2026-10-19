@@ -31,5 +31,14 @@ export const NAV: { heading: string; items: NavItem[] }[] = [
       },
     ],
   },
-  { heading: 'Settings', items: [{ to: '/admin', label: 'Administration' }] },
+  {
+    heading: 'Settings',
+    items: [
+      {
+        to: '/admin',
+        label: 'Administration',
+        roles: ['STRATEGY_OFFICE', 'SYSTEM_ADMIN', 'CEO'],
+      },
+    ],
+  },
 ];
