@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Escalation centre screen (slice 22)
+- **Escalation centre** page: the organisation's ladder with counts (filters the list),
+  the portfolio risk heatmap (select a cell to see and escalate its risks), open
+  escalations oldest first, blocked dependencies and the decision log.
+- Open an escalation to see who must decide, when it moves up on its own and its history;
+  **escalate**, **move down**, **resolve** or **withdraw** with a reason.
+- **Raise escalation** and **Log risk or issue** from the page header; the risk dialog now
+  lets you choose the initiative (or none, for the Strategy Office).
+
 ## 2026-10-19 — Escalations API (slice 8b)
 - **Escalation centre API:** the organisation's ladder with open counts per level and items
   oldest first, each with who must decide and when it moves up on its own.

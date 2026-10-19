@@ -327,3 +327,33 @@ cycle in progress.
 - A locked period is read-only, with a note saying so.
 - After saving or verifying, the page shows the server's new sheet at once and refreshes the
   scorecard, dashboard and strategy map, whose figures may have moved.
+
+### Escalation centre (`/risks`)
+
+"Risks & escalations" in the sidebar, for everyone. The ladder level, the heatmap cell and
+the open escalation are in the URL (`?level=2`, `?likelihood=3&impact=4`,
+`?escalation=…`), so any view can be shared.
+
+- **Escalation ladder:** the organisation's own levels with their open counts and timing.
+  Selecting a level filters the open escalations; the level critical items start at is
+  tinted when it has items.
+- **Portfolio risk heatmap:** open risks on the 5×5 grid (impact up, likelihood across),
+  coloured on the same bands as risk severity. Every cell is a button named with its
+  position, band and count; selecting one lists its risks underneath, each with its
+  escalation or an **Escalate** button.
+- **Open escalations,** oldest first: level, the problem and its kind (issue · critical,
+  resource conflict, update overdue…), initiative, age (amber from 7 days, red from 14) and
+  who must decide. **Open** shows the escalation underneath: severity, level and decider,
+  how long it has waited, when it will move up on its own (or "only by decision"), the
+  description and the full history.
+- **Actions** follow the server's `can`: **Escalate to {next level}**, **Resolve**, **Move
+  down to {previous level}**, **Withdraw**, each asking for a reason or resolution
+  (10+ characters).
+- **Raise escalation** (header, or **Escalate** on a risk): initiative, what is blocking
+  execution, severity (critical items go straight to the MD/CEO level), kind and details.
+  The Strategy Office may leave the initiative empty for a portfolio-level problem.
+- **Log risk or issue:** the same dialog as on the update form, with an initiative picker.
+- **Blocked dependencies** (waiting on / at risk on, since when or needed by) and the
+  **decision log** (latest outcomes) complete the page.
+- Logging and raising are offered to owners, sponsors and the Strategy Office; the server
+  checks each initiative.

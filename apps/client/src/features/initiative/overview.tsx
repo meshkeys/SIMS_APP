@@ -11,15 +11,12 @@ import {
   formatInstantDay,
   formatPercent,
 } from '@/lib/format';
-import { HEALTH_DISPLAY, TRAJECTORY_DISPLAY } from '@/lib/health';
+import {
+  HEALTH_DISPLAY,
+  SEVERITY_DISPLAY,
+  TRAJECTORY_DISPLAY,
+} from '@/lib/health';
 import { ProgressChart } from './progress-chart';
-
-const SEVERITY_TONE = {
-  CRITICAL: 'danger',
-  HIGH: 'warning',
-  MEDIUM: 'neutral',
-  LOW: 'neutral',
-} as const;
 
 /** Execution against plan: verified progress, with the planned mark. */
 export function ExecutionCard({
@@ -421,7 +418,7 @@ export function RiskList({
       {shown.map((risk) => (
         <li key={risk.id} className="rounded-md border border-border p-3">
           <div className="flex items-center justify-between gap-2 text-xs">
-            <Badge tone={SEVERITY_TONE[risk.severity]}>
+            <Badge tone={SEVERITY_DISPLAY[risk.severity].tone}>
               {risk.severity.charAt(0) + risk.severity.slice(1).toLowerCase()}
             </Badge>
             <span className="text-ink-muted">

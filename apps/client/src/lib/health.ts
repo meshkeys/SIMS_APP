@@ -1,4 +1,4 @@
-import type { Health, Trajectory } from '@sims/contracts';
+import type { Health, Severity, Trajectory } from '@sims/contracts';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 
@@ -28,3 +28,12 @@ export const TRAJECTORY_DISPLAY: Record<
   OFF_TRAJECTORY: { label: 'Off trajectory', tone: 'danger' },
   NOT_MEASURABLE: { label: 'Not yet measurable', tone: 'neutral' },
 };
+
+/** How a risk, issue or escalation's severity reads and looks. */
+export const SEVERITY_DISPLAY: Record<Severity, { label: string; tone: Tone }> =
+  {
+    CRITICAL: { label: 'Critical', tone: 'danger' },
+    HIGH: { label: 'High', tone: 'warning' },
+    MEDIUM: { label: 'Medium', tone: 'neutral' },
+    LOW: { label: 'Low', tone: 'neutral' },
+  };

@@ -178,6 +178,28 @@ const kpiActualsRoute = createRoute({
   ),
 });
 
+const risksRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/risks',
+  // Filters and the open escalation are in the URL, so a view can be shared.
+  validateSearch: z.object({
+    level: z.coerce.number().int().min(1).max(10).optional().catch(undefined),
+    likelihood: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .optional()
+      .catch(undefined),
+    impact: z.coerce.number().int().min(1).max(5).optional().catch(undefined),
+    escalation: z.uuid().optional().catch(undefined),
+  }),
+  component: lazyRouteComponent(
+    () => import('@/features/escalations/escalation-centre-page'),
+    'EscalationCentrePage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([
@@ -188,7 +210,7 @@ const routeTree = rootRoute.addChildren([
     initiativeRoute,
     performanceRoute,
     kpiActualsRoute,
-    screen('/risks', 'Risks & escalations'),
+    risksRoute,
     screen('/reports', 'Reports'),
     myUpdatesRoute,
     reviewsRoute,
