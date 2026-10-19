@@ -51,8 +51,9 @@ with its tests and documentation.
 | 23 | Board pack builder screen (wireframe page 9): templates, snapshot and audience, sections, live preview, narrative, formats, issued packs with downloads | Done |
 | 24 | Administration screen, rules (wireframe page 10): RAG & health rules with impact preview, escalation rules, reporting cycles, rule versions, proposals | Done |
 | 25a | Administration API: members (roles, details, deactivate/reactivate with last-admin protection), departments (create, rename, nest, delete empty), organisation settings, audit log | Done |
-| 25b | Administration screens: users and roles (with invitations), departments, organisation, audit log | Next |
-| 20+ | Remaining screens in wireframe order, each with the backend it needs: benefits management and benefits review (9b), Administration — users and roles, **departments (create, rename, nest)**, rules — and workspace onboarding | Planned |
+| 25b | Administration screens: users and roles (with invitations), departments, organisation, audit log; sections shown by role | Done |
+| 26 | Workspace onboarding (wireframe page 11) | Next |
+| 20+ | Remaining work: benefits management and benefits review (9b), scheduled jobs and notifications (11) | Planned |
 
 ## 10.3 Known follow-ups
 

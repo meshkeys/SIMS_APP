@@ -392,9 +392,20 @@ packs only (Board members: the Board's packs).
 
 ### Administration (`/admin`)
 
-"Administration" in the sidebar, for the Strategy Office, administrators and the MD/CEO. The
-open section is in the URL (`?section=rules|escalation|cycle|versions`). The header shows
-the rules in force ("Ruleset v4 · approved 12 Jan 2026").
+"Administration" in the sidebar, for the Strategy Office, administrators, the MD/CEO and
+internal audit. The open section is in the URL
+(`?section=organisation|rules|escalation|cycle|versions|people|departments|audit`). Each
+person sees only the sections their roles allow; a section they cannot open falls back to
+the rules (or their first section):
+
+| Section | Who sees it |
+|---|---|
+| Organisation, the four rules sections | Strategy Office, administrators, MD/CEO |
+| Users & roles, Departments | Strategy Office, administrators (who may invite) |
+| Audit log | Administrators, Strategy Office, internal audit |
+
+**Rules.** Above the rules sections, a badge shows the rules in force ("Ruleset v4 ·
+approved 12 Jan 2026").
 
 - **One draft across sections.** Edits in any section build a single proposal, a copy of
   the live rules. It is validated with the shared ruleset schema as it changes, so errors
@@ -418,3 +429,33 @@ the rules in force ("Ruleset v4 · approved 12 Jan 2026").
   proposal**. The MD/CEO sees everything read-only and approves in Decisions required. A newly
   approved version starts a fresh draft.
 - Number fields keep their own text, so they can be cleared and retyped.
+
+**Organisation.** Name, workspace address (fixed), country, currency (every ISO code, with
+its name), time zone (every IANA zone), financial year start month and the four terms
+(what KPIs, initiatives, milestones and tasks are called). Only a system administrator
+edits; everyone else sees the form disabled with a note. **Save settings** sends only what
+changed; server field errors appear on their fields.
+
+**Users & roles.** Active, Invited and Deactivated, with counts; search by name, email or
+job title; 25 per page. Each person shows email, job title, department and manager, role
+badges, when they joined and what they are accountable for ("owns 3 live initiatives; has
+2 decisions waiting").
+- **Edit** (shown only where the server allows): roles as checkboxes, job title,
+  department and manager. The system administrator role is locked unless you are one. A
+  role change says it applies from the member's next session refresh.
+- **Deactivate** opens a confirmation listing their responsibilities, asking to hand them
+  over first. Refusals (the last administrator, yourself) are shown in the dialog.
+  **Reactivate** restores access with the same roles.
+- **Invite someone:** work email, roles, job title and department. If the email could not
+  be sent, a warning says so (the invitation exists; resend it later).
+- **Invitations waiting** lists pending and expired invitations with **Resend** (a new
+  link) and **Revoke**.
+
+**Departments.** A tree (sub-departments indented under their parent) with code and active
+members. **Add department** and **Edit** take a name, optional code and "Sits inside"; a
+department and those beneath it are never offered as its own parent. A taken name shows on
+the name field. **Delete** confirms, and explains what is left if the department is in use.
+
+**Audit log.** Newest first, 50 per page: when (organisation time), who (or "System"),
+what (label and record type), and **Show values** with the before and after values.
+Filter by action, record type and a date range; **Clear filters**.

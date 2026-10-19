@@ -37,7 +37,8 @@ export const NAV: { heading: string; items: NavItem[] }[] = [
       {
         to: '/admin',
         label: 'Administration',
-        roles: ['STRATEGY_OFFICE', 'SYSTEM_ADMIN', 'CEO'],
+        // Internal audit sees the audit log only.
+        roles: ['STRATEGY_OFFICE', 'SYSTEM_ADMIN', 'CEO', 'INTERNAL_AUDIT'],
       },
     ],
   },

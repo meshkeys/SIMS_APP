@@ -2,6 +2,16 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Administration screens: people, departments, organisation, audit (slice 25b)
+- **Sections by role:** Administration now shows each person only what their roles allow;
+  internal audit sees the audit log.
+- **Users & roles:** members by status with search, roles and responsibilities; edit roles,
+  job title, department and manager; deactivate (with a hand-over warning) and reactivate;
+  invite people and resend or revoke waiting invitations.
+- **Departments:** a tree with add, edit (rename, recode, move) and delete.
+- **Organisation:** settings form, editable by a system administrator.
+- **Audit log:** filterable list with before and after values.
+
 ## 2026-10-19 — Administration API: people, departments, organisation, audit (slice 25a)
 - **Members:** list with roles, status and responsibilities; change roles, job title,
   department and manager; deactivate and reactivate access. Only administrators manage the

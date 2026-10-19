@@ -204,7 +204,16 @@ const adminRoute = createRoute({
   // The open section is in the URL, so it can be linked to.
   validateSearch: z.object({
     section: z
-      .enum(['rules', 'escalation', 'cycle', 'versions'])
+      .enum([
+        'organisation',
+        'rules',
+        'escalation',
+        'cycle',
+        'versions',
+        'people',
+        'departments',
+        'audit',
+      ])
       .optional()
       .catch(undefined),
   }),
