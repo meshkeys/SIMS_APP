@@ -187,11 +187,35 @@ export const dependencyViewSchema = z.object({
 });
 export type DependencyView = z.infer<typeof dependencyViewSchema>;
 
+/** Every field PATCH /initiatives/:id can change. */
+export const INITIATIVE_FIELDS = [
+  'title',
+  'description',
+  'businessCase',
+  'scope',
+  'ownerId',
+  'sponsorId',
+  'benefitsOwnerId',
+  'departmentId',
+  'priority',
+  'isSensitive',
+  'baselineStart',
+  'baselineEnd',
+  'baselineBudget',
+  'forecastEnd',
+  'spentToDate',
+] as const;
+export type InitiativeField = (typeof INITIATIVE_FIELDS)[number];
+
 export const initiativeDetailSchema = z.object({
   id: z.uuid(),
   code: z.string(),
   title: z.string(),
   description: z.string().nullable(),
+  /** Why it is worth doing (from the proposal). */
+  businessCase: z.string().nullable(),
+  /** What is in and out. */
+  scope: z.string().nullable(),
   status: z.enum(InitiativeStatus),
   priority: z.int().min(1).max(5),
   isSensitive: z.boolean(),
@@ -287,6 +311,14 @@ export const initiativeDetailSchema = z.object({
     edit: z.boolean(),
     /** Ask for a change to the locked baseline (active initiatives). */
     requestChange: z.boolean(),
+    /** Detail fields the caller may change now (PATCH /initiatives/:id). */
+    editFields: z.array(z.enum(INITIATIVE_FIELDS)),
+    /** Replace the objectives it contributes to (Strategy Office). */
+    changeObjectives: z.boolean(),
+    /** Add or remove milestones, change weights and baseline dates (before activation). */
+    planMilestones: z.boolean(),
+    /** Tasks, forecasts, milestone titles and dependencies. */
+    manageWork: z.boolean(),
   }),
 });
 export type InitiativeDetail = z.infer<typeof initiativeDetailSchema>;

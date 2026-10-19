@@ -1,4 +1,4 @@
-import type { Member, Role } from '@sims/contracts';
+import type { Member, PersonRef, Role } from '@sims/contracts';
 import { useCombobox } from 'downshift';
 import { X } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -22,6 +22,7 @@ export function PeoplePicker({
   error,
   required,
   placeholder = 'Search by name or job title',
+  initialPerson,
 }: {
   label: string;
   /** The chosen membership id, or null. */
@@ -33,10 +34,23 @@ export function PeoplePicker({
   error?: string;
   required?: boolean;
   placeholder?: string;
+  /** Who is assigned now, so an edit form shows them before any search. */
+  initialPerson?: PersonRef | null;
 }) {
   const ids = useId();
-  const [inputValue, setInputValue] = useState('');
-  const [selected, setSelected] = useState<Member | null>(null);
+  const current =
+    initialPerson && initialPerson.membershipId === value
+      ? {
+          membershipId: initialPerson.membershipId,
+          name: initialPerson.name,
+          jobTitle: initialPerson.jobTitle,
+          email: '',
+          department: null,
+          roles: [],
+        }
+      : null;
+  const [inputValue, setInputValue] = useState(current?.name ?? '');
+  const [selected, setSelected] = useState<Member | null>(current);
   const query = useDebounced(inputValue.trim(), 250);
   // Searching for the chosen person's own name would hide everyone else.
   const searching = selected && inputValue === selected.name ? '' : query;

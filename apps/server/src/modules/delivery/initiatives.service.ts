@@ -15,7 +15,12 @@ import {
   allowedTransitions,
   isBaselineLocked,
 } from '../../domain/delivery/lifecycle.js';
-import { relationTo } from '../../domain/delivery/permissions.js';
+import {
+  canChangeMilestonePlan,
+  canWorkOnInitiative,
+  deniedFields,
+  relationTo,
+} from '../../domain/delivery/permissions.js';
 import { daysBetween } from '../../domain/delivery/progress.js';
 import type {
   DependencyStatus,
@@ -27,10 +32,11 @@ import type { AuthContext } from '../auth/index.js';
 import { personSelect, toPersonRef } from '../people/person.js';
 import { describeActivity } from './activity.js';
 import { HealthRecalculationService } from './health-recalculation.service.js';
-import type {
-  DependencyView,
-  InitiativeDetail,
-  OverrideInput,
+import {
+  type DependencyView,
+  INITIATIVE_FIELDS,
+  type InitiativeDetail,
+  type OverrideInput,
 } from '@sims/contracts';
 
 const SEVERITY_ORDER: Record<Severity, number> = {
@@ -207,6 +213,13 @@ export class InitiativesService {
         relation !== 'NONE' &&
         initiative.status !== 'CLOSED' &&
         initiative.status !== 'CANCELLED',
+      editFields: INITIATIVE_FIELDS.filter(
+        (field) =>
+          deniedFields(relation, initiative.status, [field]).length === 0,
+      ),
+      changeObjectives: relation === 'OFFICE',
+      planMilestones: canChangeMilestonePlan(relation, initiative.status),
+      manageWork: canWorkOnInitiative(relation),
     };
 
     return {
@@ -215,6 +228,8 @@ export class InitiativesService {
       code: initiative.code,
       title: initiative.title,
       description: initiative.description,
+      businessCase: initiative.businessCase,
+      scope: initiative.scope,
       status: initiative.status,
       priority: initiative.priority,
       isSensitive: initiative.isSensitive,

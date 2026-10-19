@@ -18,9 +18,13 @@ import { moveLabel, STATUS_LABELS } from './labels';
 export function InitiativeHeader({
   initiative,
   onMove,
+  onEdit,
+  onEditObjectives,
 }: {
   initiative: InitiativeDetail;
   onMove: (to: InitiativeStatus) => void;
+  onEdit: () => void;
+  onEditObjectives: () => void;
 }) {
   const health = initiative.health;
   const shown = HEALTH_DISPLAY[health.effective];
@@ -73,11 +77,22 @@ export function InitiativeHeader({
               </li>
             )}
             {initiative.contributesTo.length > 0 && (
-              <li>
+              <li className="flex items-center gap-1">
                 <Badge>
                   Contributes to{' '}
                   {[...primary, ...others].map((c) => c.code).join(' · ')}
                 </Badge>
+                {initiative.can.changeObjectives && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-xs"
+                    onClick={onEditObjectives}
+                    aria-label="Change what it contributes to"
+                  >
+                    Change
+                  </Button>
+                )}
               </li>
             )}
             {initiative.isSensitive && (
@@ -88,36 +103,43 @@ export function InitiativeHeader({
           </ul>
         </div>
 
-        {initiative.can.changeStatus.length > 0 && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="secondary">
-                Change status
-                <ChevronDown aria-hidden="true" />
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                align="end"
-                sideOffset={6}
-                className="z-50 min-w-52 rounded-md border border-border bg-surface p-1 text-sm shadow-lg"
-              >
-                {initiative.can.changeStatus.map((to) => (
-                  <DropdownMenu.Item
-                    key={to}
-                    onSelect={() => onMove(to)}
-                    className={cn(
-                      'cursor-pointer rounded px-3 py-2 outline-none select-none data-[highlighted]:bg-neutral-soft',
-                      to === 'CANCELLED' ? 'text-danger' : 'text-ink',
-                    )}
-                  >
-                    {moveLabel(initiative.status, to)}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {initiative.can.editFields.length > 0 && (
+            <Button variant="secondary" onClick={onEdit}>
+              Edit details
+            </Button>
+          )}
+          {initiative.can.changeStatus.length > 0 && (
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <Button variant="secondary">
+                  Change status
+                  <ChevronDown aria-hidden="true" />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  sideOffset={6}
+                  className="z-50 min-w-52 rounded-md border border-border bg-surface p-1 text-sm shadow-lg"
+                >
+                  {initiative.can.changeStatus.map((to) => (
+                    <DropdownMenu.Item
+                      key={to}
+                      onSelect={() => onMove(to)}
+                      className={cn(
+                        'cursor-pointer rounded px-3 py-2 outline-none select-none data-[highlighted]:bg-neutral-soft',
+                        to === 'CANCELLED' ? 'text-danger' : 'text-ink',
+                      )}
+                    >
+                      {moveLabel(initiative.status, to)}
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          )}
+        </div>
       </div>
     </header>
   );

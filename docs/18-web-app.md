@@ -207,7 +207,21 @@ planned") and the figures as a table for screen readers. A restricted initiative
 person may not see shows "This initiative cannot be shown" — the same as one that does not
 exist.
 
-Editing (milestones, tasks, dependencies, objectives, details) and **Request change**
-follow in slice 19b; **Documents**, **Updates** and **Escalate** arrive with their backend
-slices.
+**Editing** — every control appears only if the server's `can` says it will work:
+
+- **Edit details** shows just the fields this person may change now (an owner sees the
+  narrative, forecast end and spend; the sponsor also title, priority, department and
+  benefits owner; the Strategy Office also owner, sponsor and Restricted; baseline dates and
+  budget only before activation). Only fields actually changed are sent; the people pickers
+  show the current assignee before any search.
+- **Change** next to "Contributes to" (Strategy Office) relinks objectives and weights with
+  the same editor as the propose page.
+- **Milestones:** **Add milestone**, **Edit** and **Remove** while the plan is open; after
+  activation only the title and forecast date can change here (the rest needs a change
+  request).
+- **Tasks** (Milestones & tasks tab): add with assignee and due date, change status in
+  place (To do · In progress · Done · Blocked), remove.
+
+Dependencies, **Request change** and withdrawing a request follow in slice 19c;
+**Documents**, **Updates** and **Escalate** arrive with their backend slices.
 

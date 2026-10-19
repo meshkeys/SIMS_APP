@@ -33,6 +33,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Whole-screen tests run an accessibility scan (axe) of the full page,
+    // which is slow in jsdom under a parallel run.
+    testTimeout: 15_000,
     css: false,
   },
 });

@@ -9,11 +9,19 @@ import { useEffect, useState } from 'react';
 import { useSession } from '@/auth/use-auth';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardBody } from '@/components/ui/card';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/states';
 import { useApiQuery } from '@/lib/api/query';
-import { formatDate, formatInstantDate } from '@/lib/format';
+import { formatInstantDate } from '@/lib/format';
 import { ClearOverrideDialog, OverrideDialog, StatusDialog } from './dialogs';
+import {
+  DeleteMilestoneDialog,
+  EditDetailsDialog,
+  EditObjectivesDialog,
+  MilestoneDialog,
+} from './edit-dialogs';
+import { TaskBoard } from './task-board';
 import { FactsStrip, InitiativeHeader } from './initiative-header';
 import { INITIATIVE_TABS, type InitiativeTab, STATUS_LABELS } from './labels';
 import {
@@ -32,10 +40,15 @@ import {
 
 const route = getRouteApi('/app/initiatives/$id');
 
+type Milestone = InitiativeDetail['milestones'][number];
 type Dialog =
   | { kind: 'status'; to: InitiativeStatus }
   | { kind: 'override' }
   | { kind: 'clear-override' }
+  | { kind: 'edit-details' }
+  | { kind: 'edit-objectives' }
+  | { kind: 'milestone'; milestone?: Milestone }
+  | { kind: 'remove-milestone'; milestone: Milestone }
   | null;
 
 /** One initiative in full: status and why, delivery, risks, dependencies, history. */
@@ -80,6 +93,13 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
   const { tab = 'overview' } = route.useSearch();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const close = () => setDialog(null);
+  const milestoneActions = {
+    onEdit: (milestone: Milestone) =>
+      setDialog({ kind: 'milestone', milestone }),
+    onRemove: (milestone: Milestone) =>
+      setDialog({ kind: 'remove-milestone', milestone }),
+  };
 
   useEffect(() => {
     document.title = `${initiative.code} · ${initiative.title} · SIMS`;
@@ -90,6 +110,8 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
       <InitiativeHeader
         initiative={initiative}
         onMove={(to) => setDialog({ kind: 'status', to })}
+        onEdit={() => setDialog({ kind: 'edit-details' })}
+        onEditObjectives={() => setDialog({ kind: 'edit-objectives' })}
       />
       <FactsStrip
         initiative={initiative}
@@ -143,7 +165,11 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
                   onClearOverride={() => setDialog({ kind: 'clear-override' })}
                 />
               )}
-              <MilestonesCard initiative={initiative} />
+              <MilestonesCard
+                initiative={initiative}
+                actions={milestoneActions}
+                onAdd={() => setDialog({ kind: 'milestone' })}
+              />
               <ProgressCard initiative={initiative} />
             </div>
             <div className="flex min-w-0 flex-col gap-5">
@@ -156,9 +182,22 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
 
         <Tabs.Content value="milestones" className="mt-5 outline-none">
           <Card>
-            <MilestonesTable initiative={initiative} />
+            <MilestonesTable
+              initiative={initiative}
+              actions={milestoneActions}
+            />
           </Card>
-          <TasksList initiative={initiative} />
+          {initiative.can.planMilestones && (
+            <div className="mt-3 flex justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => setDialog({ kind: 'milestone' })}
+              >
+                Add milestone
+              </Button>
+            </div>
+          )}
+          <TaskBoard initiative={initiative} />
         </Tabs.Content>
 
         <Tabs.Content value="risks" className="mt-5 outline-none">
@@ -199,6 +238,26 @@ function Detail({ initiative }: { initiative: InitiativeDetail }) {
         <ClearOverrideDialog
           initiative={initiative}
           onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.kind === 'edit-details' && (
+        <EditDetailsDialog initiative={initiative} onClose={close} />
+      )}
+      {dialog?.kind === 'edit-objectives' && (
+        <EditObjectivesDialog initiative={initiative} onClose={close} />
+      )}
+      {dialog?.kind === 'milestone' && (
+        <MilestoneDialog
+          initiative={initiative}
+          milestone={dialog.milestone}
+          onClose={close}
+        />
+      )}
+      {dialog?.kind === 'remove-milestone' && (
+        <DeleteMilestoneDialog
+          initiative={initiative}
+          milestone={dialog.milestone}
+          onClose={close}
         />
       )}
     </div>
@@ -259,60 +318,6 @@ function Notices({ initiative }: { initiative: InitiativeDetail }) {
         </Alert>
       ))}
     </div>
-  );
-}
-
-function TasksList({ initiative }: { initiative: InitiativeDetail }) {
-  const withTasks = initiative.milestones.filter((m) => m.tasks.length > 0);
-  return (
-    <Card className="mt-5" aria-labelledby="tasks-title">
-      <CardHeader titleId="tasks-title" title="Tasks" />
-      <CardBody className="pt-3">
-        {withTasks.length === 0 ? (
-          <EmptyState className="py-6" title="No tasks yet" />
-        ) : (
-          <div className="flex flex-col gap-5">
-            {withTasks.map((m) => (
-              <section key={m.id} aria-label={m.title}>
-                <h3 className="text-sm font-semibold text-ink">{m.title}</h3>
-                <ul className="mt-2 divide-y divide-border rounded-md border border-border">
-                  {m.tasks.map((task) => (
-                    <li
-                      key={task.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
-                    >
-                      <span className="min-w-0">
-                        <span className="block text-ink">{task.title}</span>
-                        <span className="block text-xs text-ink-muted">
-                          {task.assignee?.jobTitle ??
-                            task.assignee?.name ??
-                            'Unassigned'}
-                          {task.dueDate && ` · due ${formatDate(task.dueDate)}`}
-                        </span>
-                      </span>
-                      <Badge
-                        tone={
-                          task.status === 'DONE'
-                            ? 'success'
-                            : task.status === 'BLOCKED'
-                              ? 'danger'
-                              : 'neutral'
-                        }
-                      >
-                        {task.status === 'IN_PROGRESS'
-                          ? 'In progress'
-                          : task.status.charAt(0) +
-                            task.status.slice(1).toLowerCase()}
-                      </Badge>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
-      </CardBody>
-    </Card>
   );
 }
 

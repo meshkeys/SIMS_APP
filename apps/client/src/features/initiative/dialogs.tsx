@@ -6,7 +6,6 @@ import {
   overrideSchema,
   STATUS_CHANGES_NEEDING_REASON,
 } from '@sims/contracts';
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -15,23 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field, Input, Select, Textarea } from '@/components/ui/form';
 import { errorMessage } from '@/lib/api/errors';
-import { apiKey, useApiMutation } from '@/lib/api/query';
+import { useApiMutation } from '@/lib/api/query';
 import { HEALTH_DISPLAY } from '@/lib/health';
 import { moveLabel } from './labels';
-
-/** After any change: show the new detail at once, and refresh lists that include it. */
-function useApplyDetail(initiativeId: string) {
-  const queryClient = useQueryClient();
-  return async (detail: InitiativeDetail) => {
-    queryClient.setQueryData(
-      apiKey('getInitiative', { params: { id: initiativeId } }),
-      detail,
-    );
-    await queryClient.invalidateQueries({
-      predicate: (query) => query.queryKey[0] !== 'getInitiative',
-    });
-  };
-}
+import { useApplyDetail } from './use-apply-detail';
 
 const CONSEQUENCES: Partial<Record<InitiativeStatus, string>> = {
   APPROVED: 'It can then be planned in detail and activated.',

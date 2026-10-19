@@ -62,6 +62,18 @@ function renderInitiative(
   return { ...api, sent, ...render(<App />), user: userEvent.setup() };
 }
 
+/** What someone unrelated to the initiative may do: nothing. */
+const READ_ONLY: InitiativeDetail['can'] = {
+  changeStatus: [],
+  override: false,
+  edit: false,
+  requestChange: false,
+  editFields: [],
+  changeObjectives: false,
+  planMilestones: false,
+  manageWork: false,
+};
+
 beforeEach(() => setSession(null));
 
 describe('Initiative detail', () => {
@@ -239,12 +251,7 @@ describe('Initiative detail', () => {
     renderInitiative({
       detail: {
         ...DIG_004,
-        can: {
-          changeStatus: [],
-          override: false,
-          edit: false,
-          requestChange: false,
-        },
+        can: READ_ONLY,
       },
     });
     await screen.findByRole('heading', { level: 1 });

@@ -94,12 +94,13 @@ restricted initiatives the caller may not see are never in the file.
 | KPIs | the KPIs it is expected to move |
 | History | planned vs verified over time (the chart) |
 | Activity | the 10 latest audit events for the initiative and its milestones, as sentences ("Status overridden Red → Amber with reason", "Forecast for Vendor contract signed moved 7 Oct → 22 Oct") with who did them |
-| `can` | what **the caller** may do now: `changeStatus` (lifecycle moves they may make — Strategy Office only), `override` (set/clear a health override, by the organisation's rule, active initiatives only), `edit` (owner, sponsor or Office), `requestChange` (baseline locked and still open) |
+| `can` | what **the caller** may do now: `changeStatus` (lifecycle moves they may make — Strategy Office only), `override` (set/clear a health override, by the organisation's rule, active initiatives only), `edit` (owner, sponsor or Office), `requestChange` (baseline locked and still open), `editFields` (exactly which detail fields `PATCH` will accept from them now — see 13.8), `changeObjectives` (Office), `planMilestones` (add/remove milestones, weights, baseline dates, critical, evidence — before activation), `manageWork` (tasks, forecasts, milestone titles, dependencies) |
 
 `can` is computed by the server with the same rules that enforce each action, so screens
 show exactly the buttons that will work (the organisation's override rule, for one, is
 configurable and not knowable by the client). Every write that returns the detail returns
-an up-to-date `can`.
+an up-to-date `can`. A unit test checks that every field `PATCH` accepts has a permission rule,
+so a new field cannot slip through without one.
 
 A sensitive initiative the caller may not see answers **404**, never 403, so its existence
 is not revealed.

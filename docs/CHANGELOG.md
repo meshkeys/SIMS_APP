@@ -2,6 +2,20 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Editing initiatives (slice 19b)
+- **Edit details**, showing only the fields the person may change now and sending only what
+  changed; people pickers show the current assignee.
+- **Relink objectives** (Strategy Office) with the shared objectives editor (also used by
+  Propose initiative).
+- **Milestones:** add, edit, remove while the plan is open; title and forecast after
+  activation.
+- **Tasks:** add with assignee and due date, change status in place, remove.
+- API: `can` now lists `editFields`, `changeObjectives`, `planMilestones` and `manageWork`;
+  the detail includes the business case and scope; a unit test keeps every editable field
+  covered by a permission rule.
+- Accessibility fix: some action buttons would have been announced as "EditTechnology
+  development" (a lost space in hidden text); they now carry explicit labels.
+
 ## 2026-10-19 — Initiative detail (slice 19a)
 - Initiative page: header chips and facts, notices, execution and impact, **Why this
   status?** with the override, milestones with contribution, planned-vs-actual chart, risks,

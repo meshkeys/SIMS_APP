@@ -1,3 +1,4 @@
+import { INITIATIVE_FIELDS } from '@sims/contracts';
 import { findDependencyCycle } from './dependencies.js';
 import {
   activationGaps,
@@ -8,6 +9,7 @@ import {
 import {
   canChangeMilestonePlan,
   deniedFields,
+  FIELD_GROUPS,
   relationTo,
   suggestInitiativeCode,
 } from './permissions.js';
@@ -161,5 +163,16 @@ describe('findDependencyCycle', () => {
 
   it('treats depending on itself as a loop', () => {
     expect(findDependencyCycle([], 'A', 'A')).toEqual(['A', 'A']);
+  });
+});
+
+describe('field permissions', () => {
+  it('give every editable initiative field a rule', () => {
+    const grouped = Object.values(FIELD_GROUPS)
+      .flat()
+      .toSorted((a, b) => a.localeCompare(b));
+    expect(grouped).toEqual(
+      [...INITIATIVE_FIELDS].toSorted((a, b) => a.localeCompare(b)),
+    );
   });
 });

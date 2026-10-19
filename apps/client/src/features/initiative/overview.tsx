@@ -194,12 +194,22 @@ export function WhyThisStatus({
 }
 
 /** Milestones with weights and verified completion; contribution adds up to the total. */
+export interface MilestoneActions {
+  onEdit: (milestone: InitiativeDetail['milestones'][number]) => void;
+  onRemove: (milestone: InitiativeDetail['milestones'][number]) => void;
+}
+
 export function MilestonesTable({
   initiative,
+  actions,
 }: {
   initiative: InitiativeDetail;
+  /** Edit/remove buttons, for people who may change milestones. */
+  actions?: MilestoneActions;
 }) {
   const milestones = initiative.milestones;
+  const canEdit = !!actions && initiative.can.manageWork;
+  const canRemove = !!actions && initiative.can.planMilestones;
   if (milestones.length === 0) {
     return (
       <EmptyState
@@ -238,9 +248,14 @@ export function MilestonesTable({
             <th scope="col" className={th}>
               Contribution
             </th>
-            <th scope="col" className={cn(th, 'pr-5')}>
+            <th scope="col" className={cn(th, !canEdit && 'pr-5')}>
               Evidence
             </th>
+            {canEdit && (
+              <th scope="col" className={cn(th, 'pr-5')}>
+                <span className="sr-only">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -304,6 +319,29 @@ export function MilestonesTable({
                     ? `${m.evidenceCount} file${m.evidenceCount === 1 ? '' : 's'}`
                     : '—'}
                 </td>
+                {canEdit && (
+                  <td className="px-3 py-3 pr-5 whitespace-nowrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => actions.onEdit(m)}
+                      aria-label={`Edit ${m.title}`}
+                    >
+                      Edit
+                    </Button>
+                    {canRemove && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-danger"
+                        onClick={() => actions.onRemove(m)}
+                        aria-label={`Remove ${m.title}`}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -325,7 +363,7 @@ export function MilestonesTable({
             <td className="tabular px-3 py-2.5 font-semibold">
               {formatPercent(totalContribution)}
             </td>
-            <td>
+            <td colSpan={canEdit ? 2 : 1}>
               <span className="sr-only">No total</span>
             </td>
           </tr>
@@ -337,8 +375,12 @@ export function MilestonesTable({
 
 export function MilestonesCard({
   initiative,
+  actions,
+  onAdd,
 }: {
   initiative: InitiativeDetail;
+  actions?: MilestoneActions;
+  onAdd?: () => void;
 }) {
   return (
     <Card aria-labelledby="milestones-title">
@@ -346,9 +388,16 @@ export function MilestonesCard({
         titleId="milestones-title"
         title="Milestones"
         description="Completion = Σ(weight × verified completion) ÷ Σ weight"
+        action={
+          onAdd && initiative.can.planMilestones ? (
+            <Button variant="secondary" size="sm" onClick={onAdd}>
+              Add milestone
+            </Button>
+          ) : undefined
+        }
       />
       <div className="mt-4 border-t border-border">
-        <MilestonesTable initiative={initiative} />
+        <MilestonesTable initiative={initiative} actions={actions} />
       </div>
     </Card>
   );

@@ -328,31 +328,62 @@ describe('Initiatives (e2e)', () => {
   describe('what the caller may do', () => {
     const can = async (as: string, code: string) =>
       (await call(as, 'get', `/initiatives/${ids[code]}`)).body.can;
+    const NARRATIVE = ['description', 'businessCase', 'scope'];
+    const RUNNING = ['forecastEnd', 'spentToDate'];
 
-    it('lets the Strategy Office move the lifecycle and override', async () => {
+    it('lets the Strategy Office move the lifecycle, override and edit all but the locked baseline', async () => {
       expect(await can(AMARA, 'DIG-004')).toEqual({
         changeStatus: ['ON_HOLD', 'CLOSED', 'CANCELLED'],
         override: true,
         edit: true,
         requestChange: true,
+        editFields: [
+          'title',
+          ...NARRATIVE,
+          'ownerId',
+          'sponsorId',
+          'benefitsOwnerId',
+          'departmentId',
+          'priority',
+          'isSensitive',
+          ...RUNNING,
+        ],
+        changeObjectives: true,
+        planMilestones: false,
+        manageWork: true,
       });
     });
 
-    it('lets the sponsor override, but not move the lifecycle', async () => {
+    it('lets the sponsor override and shape it, but not move the lifecycle', async () => {
       expect(await can(ED_BUSINESS, 'DIG-004')).toEqual({
         changeStatus: [],
         override: true,
         edit: true,
         requestChange: true,
+        editFields: [
+          'title',
+          ...NARRATIVE,
+          'benefitsOwnerId',
+          'departmentId',
+          'priority',
+          ...RUNNING,
+        ],
+        changeObjectives: false,
+        planMilestones: false,
+        manageWork: true,
       });
     });
 
-    it('lets the owner edit and request changes, not override', async () => {
+    it('lets the owner keep the narrative and work current, not override', async () => {
       expect(await can(HASSAN, 'DIG-004')).toEqual({
         changeStatus: [],
         override: false,
         edit: true,
         requestChange: true,
+        editFields: [...NARRATIVE, ...RUNNING],
+        changeObjectives: false,
+        planMilestones: false,
+        manageWork: true,
       });
     });
 
@@ -362,7 +393,32 @@ describe('Initiatives (e2e)', () => {
         override: false,
         edit: false,
         requestChange: false,
+        editFields: [],
+        changeObjectives: false,
+        planMilestones: false,
+        manageWork: false,
       });
+    });
+
+    it('keeps the baseline and milestone plan open before activation', async () => {
+      const pipeline = await register(AMARA, '?tab=pipeline&pageSize=1');
+      const { body } = await call(
+        AMARA,
+        'get',
+        `/initiatives/${pipeline.items[0].id}`,
+      );
+      expect(body.can).toMatchObject({
+        planMilestones: true,
+        requestChange: false,
+        override: false,
+      });
+      expect(body.can.editFields).toEqual(
+        expect.arrayContaining([
+          'baselineStart',
+          'baselineEnd',
+          'baselineBudget',
+        ]),
+      );
     });
   });
 
