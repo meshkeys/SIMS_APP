@@ -200,6 +200,15 @@ const risksRoute = createRoute({
   ),
 });
 
+const reportsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/reports',
+  component: lazyRouteComponent(
+    () => import('@/features/reports/reports-page'),
+    'ReportsPage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   appRoute.addChildren([
@@ -211,7 +220,7 @@ const routeTree = rootRoute.addChildren([
     performanceRoute,
     kpiActualsRoute,
     risksRoute,
-    screen('/reports', 'Reports'),
+    reportsRoute,
     myUpdatesRoute,
     reviewsRoute,
     screen('/admin', 'Administration', 'Settings'),

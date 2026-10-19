@@ -2,6 +2,15 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-19 — Board pack builder screen (slice 23)
+- **Board pack builder:** choose a template, a locked cycle, the audience (and pillar for a
+  deep dive), tick sections with their page counts, write the executive narrative and pick
+  formats; a page-by-page preview shows exactly what the files will contain.
+- **Issued packs** with downloads per format, live status while generating, and regenerate
+  or retry for the Strategy Office. Executives, sponsors, the Board and internal audit see
+  the issued packs; Reports is hidden from everyone else.
+- Rows per printed page are now shared by the server and the web app.
+
 ## 2026-10-19 — Board pack generation (slice 12c)
 - **Background jobs** on Redis (BullMQ) with retries; an inline mode for tests.
 - Requested packs are **generated**: PDF printed by headless Chrome from a self-contained

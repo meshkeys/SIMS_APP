@@ -97,6 +97,17 @@ export const REPORT_TEMPLATES: Record<
   },
 };
 
+/**
+ * Rows on one printed page, for list sections. Shared so the server's page
+ * estimates, the files and the builder's preview always paginate the same.
+ */
+export const PACK_ROWS_PER_PAGE = {
+  exceptions: 8,
+  register: 20,
+  kpis: 12,
+  initiatives: 12,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Requests
 // ---------------------------------------------------------------------------

@@ -6,17 +6,11 @@ import {
   REPORT_SECTIONS,
   REPORT_TEMPLATES,
   type ReportSectionKey,
+  PACK_ROWS_PER_PAGE,
 } from '@sims/contracts';
 import { valueQuadrant } from '../strategy/rollup.js';
 import type { SnapshotDataV2, SnapshotInitiative } from './snapshot-data.js';
 
-/** Rows per printed page, by kind of list. */
-const ROWS_PER_PAGE = {
-  exceptions: 8,
-  register: 20,
-  kpis: 12,
-  initiatives: 12,
-};
 const pagesFor = (rows: number, perPage: number) =>
   Math.max(1, Math.ceil(rows / perPage));
 
@@ -176,7 +170,7 @@ export function assemblePack(
         return {
           key,
           title,
-          pages: pagesFor(exceptions.length, ROWS_PER_PAGE.exceptions),
+          pages: pagesFor(exceptions.length, PACK_ROWS_PER_PAGE.exceptions),
           initiatives: exceptions,
         };
       }
@@ -226,7 +220,7 @@ export function assemblePack(
         return {
           key,
           title,
-          pages: pagesFor(rows.length, ROWS_PER_PAGE.register),
+          pages: pagesFor(rows.length, PACK_ROWS_PER_PAGE.register),
           initiatives: rows,
         };
       }
@@ -272,7 +266,7 @@ export function assemblePack(
         return {
           key,
           title,
-          pages: pagesFor(kpis.length, ROWS_PER_PAGE.kpis),
+          pages: pagesFor(kpis.length, PACK_ROWS_PER_PAGE.kpis),
           kpis,
         };
       }
@@ -282,7 +276,7 @@ export function assemblePack(
         return {
           key,
           title,
-          pages: pagesFor(rows.length, ROWS_PER_PAGE.initiatives),
+          pages: pagesFor(rows.length, PACK_ROWS_PER_PAGE.initiatives),
           initiatives: rows,
         };
       }

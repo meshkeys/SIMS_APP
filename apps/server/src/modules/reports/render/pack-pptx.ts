@@ -4,6 +4,7 @@ import {
   type PackSection,
   REPORT_AUDIENCES,
   ROLE_LABELS,
+  PACK_ROWS_PER_PAGE,
 } from '@sims/contracts';
 import PptxModule from 'pptxgenjs';
 import {
@@ -18,8 +19,6 @@ import {
   TRAJECTORY_LABEL,
 } from './formatting.js';
 
-/** Rows per slide; must match the page estimates in assemblePack. */
-const ROWS = { exceptions: 8, register: 20, kpis: 12, initiatives: 12 };
 const FONT = 'Calibri';
 
 // The package's types describe a CommonJS module, but Node loads its ES
@@ -380,17 +379,21 @@ function addSection(pptx: Pptx, section: PackSection, pack: PackContent) {
       return;
     }
     case 'exceptions':
-      paged(section.initiatives, ROWS.exceptions, (rows, suffix) => {
-        const slide = titled(pptx, section.title + suffix, pack);
-        if (rows.length)
-          addTable(
-            slide,
-            [...INITIATIVE_HEADINGS, 'Impact'],
-            initiativeRows(rows, true),
-            3,
-          );
-        else emptyNote(slide, 'No initiative is at risk or delayed.');
-      });
+      paged(
+        section.initiatives,
+        PACK_ROWS_PER_PAGE.exceptions,
+        (rows, suffix) => {
+          const slide = titled(pptx, section.title + suffix, pack);
+          if (rows.length)
+            addTable(
+              slide,
+              [...INITIATIVE_HEADINGS, 'Impact'],
+              initiativeRows(rows, true),
+              3,
+            );
+          else emptyNote(slide, 'No initiative is at risk or delayed.');
+        },
+      );
       return;
     case 'decisions': {
       const slide = titled(pptx, section.title, pack);
@@ -461,10 +464,14 @@ function addSection(pptx: Pptx, section: PackSection, pack: PackContent) {
       return;
     }
     case 'register':
-      paged(section.initiatives, ROWS.register, (rows, suffix) => {
-        const slide = titled(pptx, section.title + suffix, pack);
-        addTable(slide, INITIATIVE_HEADINGS, initiativeRows(rows, false), 3);
-      });
+      paged(
+        section.initiatives,
+        PACK_ROWS_PER_PAGE.register,
+        (rows, suffix) => {
+          const slide = titled(pptx, section.title + suffix, pack);
+          addTable(slide, INITIATIVE_HEADINGS, initiativeRows(rows, false), 3);
+        },
+      );
       return;
     case 'pillar_overview': {
       const slide = titled(pptx, section.title, pack);
@@ -513,7 +520,7 @@ function addSection(pptx: Pptx, section: PackSection, pack: PackContent) {
       return;
     }
     case 'pillar_kpis':
-      paged(section.kpis, ROWS.kpis, (rows, suffix) => {
+      paged(section.kpis, PACK_ROWS_PER_PAGE.kpis, (rows, suffix) => {
         const slide = titled(pptx, section.title + suffix, pack);
         addTable(
           slide,
@@ -530,15 +537,19 @@ function addSection(pptx: Pptx, section: PackSection, pack: PackContent) {
       });
       return;
     case 'pillar_initiatives':
-      paged(section.initiatives, ROWS.initiatives, (rows, suffix) => {
-        const slide = titled(pptx, section.title + suffix, pack);
-        addTable(
-          slide,
-          [...INITIATIVE_HEADINGS, 'Impact'],
-          initiativeRows(rows, true),
-          3,
-        );
-      });
+      paged(
+        section.initiatives,
+        PACK_ROWS_PER_PAGE.initiatives,
+        (rows, suffix) => {
+          const slide = titled(pptx, section.title + suffix, pack);
+          addTable(
+            slide,
+            [...INITIATIVE_HEADINGS, 'Impact'],
+            initiativeRows(rows, true),
+            3,
+          );
+        },
+      );
       return;
   }
 }

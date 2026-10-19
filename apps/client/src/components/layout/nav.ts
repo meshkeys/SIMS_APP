@@ -1,4 +1,4 @@
-import type { Role } from '@sims/contracts';
+import { REPORT_READER_ROLES, type Role } from '@sims/contracts';
 
 /** The sidebar, grouped as in the wireframes. */
 export interface NavItem {
@@ -17,7 +17,7 @@ export const NAV: { heading: string; items: NavItem[] }[] = [
       { to: '/initiatives', label: 'Initiatives' },
       { to: '/performance', label: 'Performance & benefits' },
       { to: '/risks', label: 'Risks & escalations' },
-      { to: '/reports', label: 'Reports' },
+      { to: '/reports', label: 'Reports', roles: REPORT_READER_ROLES },
     ],
   },
   {

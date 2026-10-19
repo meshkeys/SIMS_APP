@@ -363,3 +363,29 @@ the open escalation are in the URL (`?level=2`, `?likelihood=3&impact=4`,
   **decision log** (latest outcomes) complete the page.
 - Logging and raising are offered to owners, sponsors and the Strategy Office; the server
   checks each initiative.
+
+### Board pack builder (`/reports`)
+
+"Reports" in the sidebar, for the Strategy Office, administrators, the MD/CEO, sponsors, the
+Board and internal audit. The Strategy Office sees the builder; everyone else sees the issued
+packs only (Board members: the Board's packs).
+
+- **1 · Choose a template:** monthly management report, quarterly Board pack, pillar deep
+  dive (radio cards; the selected one shows its page count). Choosing one resets the
+  audience and sections to the template's defaults.
+- **2 · Snapshot & audience:** locked cycles only ("Q3 2026 · locked 8 Oct"), the audience
+  (Board or EXCO) and, for a deep dive, the pillar. For the Board, a note says how many
+  sensitive initiatives are summarised at pillar level.
+- **3 · Sections:** the template's sections with their page counts. The server is asked for
+  every offered section once, so ticking and unticking needs no new request.
+- **Preview:** the same pages the files will print (cover, then each section, long lists
+  over several pages), one at a time with **Previous page** / **Next page** and "Page 2 of
+  8". The executive narrative appears in it as it is typed.
+- **4 · Format:** PDF, PowerPoint and Excel data appendix as toggle buttons; **Generate pack**
+  queues it and says so.
+- **Issued packs:** newest first, with "Issued 22 Jul · PDF, PPTX · v1.1", a **Download**
+  button per ready format, Queued / Generating… / Failed (with the reason) badges, and
+  **Regenerate** / **Try again** for the Strategy Office. While any pack is being generated
+  the list refreshes every 3 seconds.
+- Rows per page come from the contract (`PACK_ROWS_PER_PAGE`), shared with the server's
+  estimates and renderers, so the preview always paginates like the files.

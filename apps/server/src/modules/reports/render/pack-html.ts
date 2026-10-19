@@ -4,6 +4,7 @@ import {
   type PackSection,
   REPORT_AUDIENCES,
   ROLE_LABELS,
+  PACK_ROWS_PER_PAGE,
 } from '@sims/contracts';
 import { escapeHtml as e } from '../../../infrastructure/mail/index.js';
 import {
@@ -17,9 +18,6 @@ import {
   pp,
   TRAJECTORY_LABEL,
 } from './formatting.js';
-
-/** Rows per printed page; must match the page estimates in assemblePack. */
-const ROWS = { exceptions: 8, register: 20, kpis: 12, initiatives: 12 };
 
 type Section<K extends PackSection['key']> = Extract<PackSection, { key: K }>;
 
@@ -81,7 +79,7 @@ function renderSection(section: PackSection, pack: PackContent): string[] {
     case 'exceptions':
       return paged(
         section.initiatives,
-        ROWS.exceptions,
+        PACK_ROWS_PER_PAGE.exceptions,
         (rows, more) =>
           `${h(more)}${rows.length ? initiativeTable(rows, true) : empty('No initiative is at risk or delayed.')}`,
       );
@@ -107,7 +105,7 @@ function renderSection(section: PackSection, pack: PackContent): string[] {
     case 'register':
       return paged(
         section.initiatives,
-        ROWS.register,
+        PACK_ROWS_PER_PAGE.register,
         (rows, more) => `${h(more)}${initiativeTable(rows, false)}`,
       );
     case 'pillar_overview':
@@ -125,7 +123,7 @@ function renderSection(section: PackSection, pack: PackContent): string[] {
     case 'pillar_kpis':
       return paged(
         section.kpis,
-        ROWS.kpis,
+        PACK_ROWS_PER_PAGE.kpis,
         (rows, more) =>
           `${h(more)}${table(
             ['KPI', 'Objective', 'Baseline', 'Target', 'Latest', 'Trajectory'],
@@ -142,7 +140,7 @@ function renderSection(section: PackSection, pack: PackContent): string[] {
     case 'pillar_initiatives':
       return paged(
         section.initiatives,
-        ROWS.initiatives,
+        PACK_ROWS_PER_PAGE.initiatives,
         (rows, more) => `${h(more)}${initiativeTable(rows, true)}`,
       );
   }
