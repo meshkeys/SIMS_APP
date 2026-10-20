@@ -7,7 +7,9 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
+import { ONBOARDING_ROLES } from '@sims/contracts';
 import { type Auth, safeRedirect } from '@/auth/use-auth';
+import { hasAnyRole } from '@/lib/access';
 import { AppShell } from '@/components/layout/app-shell';
 import { ErrorState } from '@/components/ui/states';
 import { LoginPage } from '@/features/auth/login-page';
@@ -65,6 +67,30 @@ const acceptInvitationRoute = createRoute({
   ),
 });
 
+/** True while the workspace is being set up by someone who can set it up. */
+const mustFinishSetup = (auth: Auth) =>
+  auth.session?.organisation.status === 'ONBOARDING' &&
+  hasAnyRole(auth.session, ONBOARDING_ROLES);
+
+/** Workspace set-up: its own full-screen layout, outside the shell. */
+const setupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/setup',
+  validateSearch: z.object({
+    step: z.coerce.number().int().min(1).max(5).optional().catch(undefined),
+  }),
+  beforeLoad: ({ context, location }) => {
+    if (context.auth.status !== 'authenticated') {
+      throw redirect({ to: '/login', search: { redirect: location.href } });
+    }
+    if (!mustFinishSetup(context.auth)) throw redirect({ to: '/' });
+  },
+  component: lazyRouteComponent(
+    () => import('@/features/setup/setup-page'),
+    'SetupPage',
+  ),
+});
+
 /** Everything behind sign-in shares the shell. */
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -76,6 +102,8 @@ const appRoute = createRoute({
         search: { redirect: location.href === '/' ? undefined : location.href },
       });
     }
+    // A new workspace opens the set-up wizard until set-up is finished.
+    if (mustFinishSetup(context.auth)) throw redirect({ to: '/setup' });
   },
   component: AppShell,
 });
@@ -250,6 +278,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   acceptInvitationRoute,
+  setupRoute,
   appRoute.addChildren([
     dashboardRoute,
     strategyRoute,

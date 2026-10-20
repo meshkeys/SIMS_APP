@@ -54,11 +54,17 @@ with its tests and documentation.
 | 25b | Administration screens: users and roles (with invitations), departments, organisation, audit log; sections shown by role | Done |
 | 26a | Workspace set-up API (wireframe page 11): progress and resume, one save per step, framework and terminology, starting rules applied directly, finish; custom field definitions | Done |
 | 26b | Sign-up and invitation acceptance screens | Done |
-| 26c | Workspace set-up wizard screen (wireframe page 11); new workspaces open it until set-up is finished | Next |
-| 20+ | Remaining work: benefits management and benefits review (9b), scheduled jobs and notifications (11) | Planned |
+| 26c | Workspace set-up wizard screen (wireframe page 11), including the first pillars and objectives; new workspaces open it until set-up is finished | Done |
+| 9b | Benefits management and benefits review | Next |
+| 11 | Scheduled jobs and notifications | Planned |
 
 ## 10.3 Known follow-ups
 
+- The organisation's terminology (what KPIs, initiatives, milestones and tasks are called) is
+  saved and editable, but screens still use the standard words. Strategy level names are
+  already used on the strategy map.
+- Custom field definitions are saved; entering their values on initiative (and other)
+  forms comes with those forms.
 - Rate-limit counters move to Redis (shared across instances) with the jobs module.
 - Email sending moves to a retrying background job (today: sent after commit; failures are reported and resendable).
 - Production email provider and sender domain (SPF, DKIM, DMARC).

@@ -2,6 +2,18 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-20 — Workspace set-up wizard (slice 26c)
+- **Set-up wizard:** after sign-up, the founder is taken through five steps: organisation,
+  strategy framework (with a live preview and custom fields), vision and mission with the
+  first pillars and objectives, governance defaults, and inviting the team. Progress is
+  saved at every step and resumes after "Save and finish later".
+- **Finish set-up** opens the workspace on the strategy map, with the pillars and
+  objectives already in place.
+- **Fixed:** on the strategy map, "Add" now offers existing pillars as parents, so
+  objectives can be added under them (the dialog miscounted framework levels).
+- The strategy map's banner says "Vision" when it shows the vision because no aspiration is
+  set.
+
 ## 2026-10-19 — Sign up and accept invitations (slice 26b)
 - **Sign up:** organisations create their own workspace from the sign-in page, with the
   founder as administrator.

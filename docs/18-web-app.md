@@ -126,6 +126,37 @@ scoped dashboard can be bookmarked or shared. Loading shows a skeleton of the la
 failures explain themselves and offer **Try again** (server errors are retried twice
 automatically first); every panel has an empty state.
 
+### Workspace set-up (`/setup`)
+
+Wireframe page 11, on its own full-screen layout (no sidebar): a header with "Step n of 5"
+and a progress bar, the five steps on the left, the open step on the right. While the
+organisation is `ONBOARDING`, the Strategy Office and administrators who open any page are
+taken here; other roles use the app as normal. The open step is in the URL (`?step=`), and
+only steps up to the one after the last saved can be opened, so a reload or sign-in
+returns to the same step.
+
+- **Footer.** Back, **Save and finish later** (saves the step, then signs out: signing in
+  again resumes at the next step) and **Continue** (saves and moves on). Enter in a field
+  continues. Every step is checked with its contract schema before it is sent; server field
+  errors show on their fields.
+- **1 · Organisation:** name, sector, country, currency, time zone, financial year start.
+- **2 · Strategy framework:** five starting frameworks as selectable cards (one marked as
+  recommended for the organisation's sector); **Name your levels** with a row per strategy
+  level (add up to the limit, remove down to one; plural and code prefix follow the name)
+  and one per term (what KPIs, initiatives, milestones and tasks are called); a **live
+  preview** of one thread from the vision down to a milestone; **custom fields** (add with a
+  name, answer type, choices and "required"; remove). Choosing another framework when the
+  plan already has items warns that they will be removed.
+- **3 · Vision & mission:** plan name and period, vision, mission, values (one per line) and
+  aspiration; then **Your strategic pillars** (named after the top level): add, rename and
+  remove top-level items and the items of the second level under each. Each is saved as it
+  is added. Deeper levels, owners and KPIs are added on the strategy map.
+- **4 · Governance defaults:** the RAG, escalation and reporting-cycle editors from
+  Administration, starting from the defaults. Continue is disabled while a rule is invalid.
+- **5 · Invite your team:** invite by work email and roles (one at a time), with the waiting
+  invitations (resend, revoke). **Finish set-up** makes the workspace active, refreshes the
+  session and opens the strategy map.
+
 ### Strategy map (`/strategy`)
 
 "From strategy to execution", from `GET /plans/current/map` and `GET /elements/:id`:

@@ -124,6 +124,9 @@ export function StrategyMapPage() {
 
 function AspirationBanner({ map }: { map: StrategyMap }) {
   const statement = map.plan.aspiration ?? map.plan.vision;
+  // Without an aspiration the vision is shown, under its own name.
+  const heading =
+    !map.plan.aspiration && map.plan.vision ? 'Vision' : 'Strategic aspiration';
   const totals = [
     ...map.levels.map((level) => ({
       value: level.elementCount,
@@ -137,12 +140,12 @@ function AspirationBanner({ map }: { map: StrategyMap }) {
   ];
   return (
     <section
-      aria-label="Strategic aspiration"
+      aria-label={heading}
       className="flex flex-col gap-5 rounded-card bg-sidebar px-6 py-5 text-sidebar-text lg:flex-row lg:items-center lg:justify-between"
     >
       <div className="max-w-2xl">
         <p className="text-[0.6875rem] font-medium tracking-wider text-sidebar-muted uppercase">
-          Strategic aspiration
+          {heading}
         </p>
         <p className="mt-1.5 text-lg leading-snug text-white">
           {statement ?? 'No aspiration recorded yet.'}
@@ -237,7 +240,12 @@ function StrategyTree({
                       element={child}
                       selected={child.id === selectedId}
                       grandchildren={childrenOf.get(child.id)?.length ?? 0}
-                      nextLabel={map.levels[child.depth + 1]?.pluralLabel}
+                      nextLabel={
+                        map.levels[
+                          map.levels.findIndex((l) => l.id === child.levelId) +
+                            1
+                        ]?.pluralLabel
+                      }
                     />
                   </li>
                 ))}

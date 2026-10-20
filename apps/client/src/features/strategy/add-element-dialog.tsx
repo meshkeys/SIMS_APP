@@ -35,8 +35,13 @@ export function AddElementDialog({
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const deepest = map.levels.length - 1;
-  const parents = map.elements.filter((e) => e.depth < deepest);
+  // Position of an element's level in the framework (0 = top). Found by id,
+  // so it does not matter where the API starts counting depth.
+  const levelIndex = (levelId: string) =>
+    map.levels.findIndex((level) => level.id === levelId);
+  const parents = map.elements.filter(
+    (e) => levelIndex(e.levelId) < map.levels.length - 1,
+  );
   const second = map.levels[1];
   const defaultParent = second ? (parents[0]?.id ?? '') : '';
 
@@ -67,7 +72,7 @@ export function AddElementDialog({
     }),
   );
 
-  const levelOf = (depth: number) => map.levels[depth]?.label ?? 'Element';
+  const levelOf = (index: number) => map.levels[index]?.label ?? 'Element';
 
   return (
     <Dialog
@@ -114,9 +119,9 @@ export function AddElementDialog({
               </option>
               {parents.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {'  '.repeat(p.depth)}
+                  {'  '.repeat(levelIndex(p.levelId))}
                   {p.code} · {p.title} (adds a{' '}
-                  {levelOf(p.depth + 1).toLowerCase()})
+                  {levelOf(levelIndex(p.levelId) + 1).toLowerCase()})
                 </option>
               ))}
             </Select>

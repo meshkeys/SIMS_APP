@@ -18,7 +18,8 @@ const element = (
 ): MapElement => ({
   parentId: null,
   levelId: IDS.pillarLevel,
-  depth: 0,
+  // Depth counts from 1 (the top level), as the API sends it.
+  depth: 1,
   sortOrder: 0,
   owner: null,
   sponsor: null,
@@ -37,7 +38,7 @@ const element = (
 const objective = (
   over: Partial<MapElement> &
     Pick<MapElement, 'id' | 'code' | 'title' | 'parentId'>,
-) => element({ levelId: IDS.objectiveLevel, depth: 1, ...over });
+) => element({ levelId: IDS.objectiveLevel, depth: 2, ...over });
 
 export const MAP: StrategyMap = {
   plan: {
@@ -57,7 +58,7 @@ export const MAP: StrategyMap = {
   levels: [
     {
       id: IDS.pillarLevel,
-      depth: 0,
+      depth: 1,
       label: 'Pillar',
       pluralLabel: 'Pillars',
       codePrefix: 'P',
@@ -66,7 +67,7 @@ export const MAP: StrategyMap = {
     },
     {
       id: IDS.objectiveLevel,
-      depth: 1,
+      depth: 2,
       label: 'Objective',
       pluralLabel: 'Objectives',
       codePrefix: 'O',
@@ -151,7 +152,7 @@ export const O11_DETAIL: ElementDetail = {
   code: 'O1.1',
   title: 'Grow non-interest income share',
   description: null,
-  depth: 1,
+  depth: 2,
   level: { id: IDS.objectiveLevel, label: 'Objective' },
   breadcrumb: [
     {
