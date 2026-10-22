@@ -7,7 +7,7 @@ explains its structure and conventions.
 
 | Group | Tables | Notes |
 |---|---|---|
-| Tenancy & identity | Organisation, Subscription, User, Membership, Invitation, Department, DeviceToken, RefreshToken | A **User** is global (one login); a **Membership** is that user inside one organisation, with roles. Owners/sponsors always point at Membership, never User |
+| Tenancy & identity | Organisation, Subscription, User, Membership, Invitation, Department, DeviceToken, RefreshToken, PasswordResetToken, EmailVerificationToken | A **User** is global (one login); a **Membership** is that user inside one organisation, with roles. Owners/sponsors always point at Membership, never User |
 | Strategy framework | StrategicPlan, FrameworkLevel, StrategyElement, CustomFieldDefinition | No "Pillar" table: levels and elements are data |
 | Measurement (impact) | Kpi, KpiTarget, KpiActual | Interim targets are typed rows, not JSON |
 | Delivery (execution) | Initiative, InitiativeObjectiveLink, InitiativeKpiLink, Milestone, Task, Dependency, ProgressSnapshot | An initiative can contribute to several objectives with weights |
@@ -77,3 +77,5 @@ complete; lower-case emails; valid workspace slugs. A partial unique index ensur
 | `…_auth_membership_lookup` | `sims_auth_memberships()` — the sign-in lookup (chapter 4) |
 | `…_refresh_token_not_tenant_scoped` | RefreshToken is user data: column renamed, RLS removed |
 | `…_invitation_token_lookup` | `sims_invitation_by_token_hash()` for the accept page; index for invitation lists |
+| `…_password_reset_tokens` | `PasswordResetToken` (user data, no RLS): hashed one-time links; used-after-created check |
+| `…_email_verification_tokens` | `EmailVerificationToken` (user data, no RLS): hashed "confirm your email" links |

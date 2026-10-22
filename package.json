@@ -21,6 +21,7 @@
     "db:generate": "npm run db:generate -w @sims/server",
     "db:studio": "npm run db:studio -w @sims/server",
     "db:seed": "npm run db:seed -w @sims/server",
+    "mail:test": "npm run mail:test -w @sims/server --",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build -w @sims/contracts && npm run build -w @sims/server && npm run build -w @sims/client",

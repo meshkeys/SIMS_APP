@@ -32,6 +32,7 @@
     "db:format": "prisma format",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed/run.ts",
+    "mail:test": "tsx scripts/send-test-email.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

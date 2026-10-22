@@ -10,6 +10,11 @@
 | `POST /api/v1/auth/switch-organisation` | access token + cookie | Open another workspace the user belongs to |
 | `POST /api/v1/auth/logout` | refresh cookie | Revoke the sign-in on every device sharing it |
 | `GET /api/v1/auth/me` | access token | Current user, organisation, roles, workspaces |
+| `POST /api/v1/auth/verify-email` | public, strict rate limit | Confirm an email address with the emailed link |
+| `POST /api/v1/auth/verify-email/resend` | access token, strict rate limit | Send the confirmation link again |
+| `POST /api/v1/auth/password-reset/request` | public, strict rate limit | Email a link to choose a new password (always `204`) |
+| `POST /api/v1/auth/password-reset/check` | public, strict rate limit | Whether a reset link still works, and for which email |
+| `POST /api/v1/auth/password-reset/complete` | public, strict rate limit | Set a new password with the link; signs out everywhere |
 
 Sign-in responses share one shape:
 
@@ -74,6 +79,38 @@ client ──cookie(T1)──▶ API: T1 valid & unused?
 The membership is re-checked on every refresh; a deactivated member is signed out
 (`MEMBERSHIP_INACTIVE`) and the cookie is cleared.
 
+### Confirming an email address
+
+1. **Sign-up** sends a welcome email (without holding up the answer; a mail failure never
+   fails sign-up) with a one-time link, `APP_URL/verify-email?token=…`, valid for **7 days**.
+   Only the SHA-256 hash is stored (`EmailVerificationToken`).
+2. The session carries `user.emailVerified`; until it is true the web app shows a reminder
+   with **Send the link again** (`/auth/verify-email/resend`: at most one link a minute,
+   `429` otherwise; a new link replaces earlier ones; `409 ALREADY_VERIFIED` once confirmed).
+3. **Opening the link** confirms the address, signed in or not. Opening it again, or a link
+   for an address already confirmed, answers `200` too. Unknown or replaced links answer
+   `404 VERIFY_LINK_INVALID`, old ones `410 VERIFY_LINK_EXPIRED`.
+4. Accepting an invitation and resetting a password also confirm the address, since the link
+   went to it. Unconfirmed accounts work normally; nothing is blocked.
+
+### Forgot password
+
+1. **Request** (`{ email }`). Always `204`, whether or not the email has an account, so the
+   form cannot reveal who uses SIMS; the email goes out after the answer, so timing does not
+   tell either. Nothing is sent for an unknown email or an account that signs in only with
+   single sign-on. At most one link per account per minute (on top of the per-IP limit).
+2. A random 256-bit secret is emailed as `APP_URL/reset-password?token=…`; only its
+   SHA-256 hash is stored (`PasswordResetToken`). The link works **once**, for **60
+   minutes**; asking again deletes earlier unused links.
+3. **Check** (`{ token }`) returns the account's email and the expiry, for the "choose a new
+   password" page.
+4. **Complete** (`{ token, password }`): the password must meet the sign-up rules (12+
+   characters). In one transaction the link is claimed (a second use fails), the password
+   hash replaced, the email marked verified (the link proves it), other unused links deleted
+   and **every refresh token of the account revoked**, so every device is signed out; an
+   access token already issued lapses within its 15 minutes. A "your password was changed"
+   email follows. The person then signs in with the new password.
+
 ## 5.4 Error codes
 
 | Code | Status | Meaning |
@@ -87,6 +124,11 @@ The membership is re-checked on every refresh; a deactivated member is signed ou
 | `NO_ACTIVE_MEMBERSHIP` | 403 | No access to the requested workspace |
 | `INSUFFICIENT_ROLE` | 403 | Role required by the route is missing |
 | `EMAIL_TAKEN` / `SLUG_TAKEN` | 409 | Sign-up conflicts |
+| `VERIFY_LINK_INVALID` | 404 | Unknown or replaced email confirmation link |
+| `VERIFY_LINK_EXPIRED` | 410 | Send a new confirmation link |
+| `ALREADY_VERIFIED` | 409 | The email address is already confirmed |
+| `RESET_LINK_INVALID` | 404 | Unknown or replaced password reset link |
+| `RESET_LINK_USED` / `RESET_LINK_EXPIRED` | 410 | Ask for a new password reset link |
 | `RATE_LIMITED` | 429 | Too many attempts; see `Retry-After` |
 
 ## 5.5 Client guidance (for the web app)
@@ -141,5 +183,5 @@ the token, remove it from the address bar (`history.replaceState`), call `lookup
 
 ## 5.7 Coming next
 
-Password reset, email verification for self sign-up, SSO (Microsoft Entra ID / Google
+Changing your password while signed in, SSO (Microsoft Entra ID / Google
 Workspace via OpenID Connect), and a non-cookie refresh path for the mobile app.

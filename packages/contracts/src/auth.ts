@@ -65,6 +65,59 @@ export const signupSchema = z.object({
 });
 export type SignupInput = z.output<typeof signupSchema>;
 
+// ---------------------------------------------------------------------------
+// Forgot password
+// ---------------------------------------------------------------------------
+
+/** Minutes a "forgot password" link stays valid. */
+export const PASSWORD_RESET_TTL_MINUTES = 60;
+
+export const passwordResetRequestSchema = z.object({ email: emailSchema });
+export type PasswordResetRequestInput = z.output<
+  typeof passwordResetRequestSchema
+>;
+
+/** Tokens travel in request bodies, never URLs, so they stay out of access logs. */
+export const passwordResetTokenSchema = z.object({
+  token: z.string().min(20).max(200),
+});
+export type PasswordResetTokenInput = z.output<typeof passwordResetTokenSchema>;
+
+export const passwordResetCompleteSchema = passwordResetTokenSchema.extend({
+  password: newPasswordSchema,
+});
+export type PasswordResetCompleteInput = z.output<
+  typeof passwordResetCompleteSchema
+>;
+
+/** What the "choose a new password" page shows before the password is set. */
+export const passwordResetPreviewSchema = z.object({
+  email: z.string(),
+  expiresAt: isoDateTime,
+});
+export type PasswordResetPreview = z.infer<typeof passwordResetPreviewSchema>;
+
+// ---------------------------------------------------------------------------
+// Confirming an email address
+// ---------------------------------------------------------------------------
+
+/** Days a "confirm your email" link stays valid. */
+export const EMAIL_VERIFICATION_TTL_DAYS = 7;
+
+export const emailVerificationTokenSchema = z.object({
+  token: z.string().min(20).max(200),
+});
+export type EmailVerificationTokenInput = z.output<
+  typeof emailVerificationTokenSchema
+>;
+
+export const emailVerificationResultSchema = z.object({
+  email: z.string(),
+});
+export type EmailVerificationResult = z.infer<
+  typeof emailVerificationResultSchema
+>;
+
 export const loginSchema = z.object({
   email: emailSchema,
   // No strength rules at login: they would reveal the policy to attackers
@@ -85,7 +138,13 @@ export type SwitchOrganisationInput = z.output<typeof switchOrganisationSchema>;
 // ---------------------------------------------------------------------------
 
 export const sessionViewSchema = z.object({
-  user: z.object({ id: z.uuid(), name: z.string(), email: z.string() }),
+  user: z.object({
+    id: z.uuid(),
+    name: z.string(),
+    email: z.string(),
+    /** False until the "confirm your email" link is opened. */
+    emailVerified: z.boolean(),
+  }),
   organisation: z.object({
     id: z.uuid(),
     name: z.string(),

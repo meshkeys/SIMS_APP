@@ -584,3 +584,24 @@ used to bypass maker-checker later.
 **Consequences.** New workspaces start with the rules they chose, as version 1, and the rule
 history begins clean. An organisation that finishes set-up and then changes its mind uses
 the normal proposal and approval route.
+
+## ADR-033 — Password reset never reveals accounts and signs out everywhere
+
+**Status:** Accepted · 2026-10-22
+
+**Context.** A "forgot password" form is a favourite way to find out who has an account,
+and a reset link is as powerful as the password itself. People also reset because they fear
+someone else knows their password.
+
+**Decision.** Asking for a reset always answers `204`, sends the email after answering, and
+sends nothing for unknown or single-sign-on-only accounts. Links are random 256-bit secrets
+stored only as SHA-256 hashes, valid once for 60 minutes, with at most one new link a
+minute per account and earlier links replaced. Setting the new password revokes every
+refresh token of the account in the same transaction and emails a confirmation. The person
+signs in afterwards rather than being signed in by the link.
+
+**Consequences.** Nothing about who uses SIMS leaks through the form, a leaked database row
+cannot be used as a link, and an intruder holding a session is signed out within the
+access-token lifetime (15 minutes). The one-a-minute limit lives in the database, so it holds
+across API instances. Email is sent in-process for now and moves to a retrying job with the
+jobs module.

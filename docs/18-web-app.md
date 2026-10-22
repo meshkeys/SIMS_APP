@@ -82,11 +82,21 @@ Each screen lives in `features/<screen>/` and loads on demand (its own small bun
 Formatting is shared (`lib/format.ts`): calendar dates are shown as written; deadlines and
 timestamps in the **organisation's** time zone, so everyone sees the same deadline.
 
-### Signed-out pages (`/login`, `/signup`, `/accept-invitation`)
+### Signed-out pages (`/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify-email`, `/accept-invitation`)
 
 All three share one layout: the brand panel on wide screens and a single form column.
 
-- **Sign in** links to sign-up ("Set up a workspace for your organisation").
+- **Sign in** links to sign-up ("Set up a workspace for your organisation") and to
+  **Forgot your password?**, carrying the email already typed. After a reset it shows "Your
+  password was changed".
+- **Forgot password** (`/forgot-password`, signed-out only): one email field, checked with
+  the contract schema. The answer is always "If an account uses this email, we have sent it a
+  link", whether or not it exists, with what to do if nothing arrives.
+- **Reset password** (`/reset-password?token=…`, where the email links; open whether signed
+  in or not) checks the link first and names the account, then asks for the new password
+  twice (12+ characters, matching). Success signs this browser out too and returns to sign-in.
+  An invalid, used or expired link (also one that expires while the page is open) gets its own
+  explanation with **Ask for a new link**.
 - **Sign up** (`/signup`, signed-out only) creates an organisation's workspace and its
   first administrator. *Your organisation:* name, optional workspace address, sector,
   country, currency and time zone (the browser's own zone when known). *Your account:* name,
@@ -94,6 +104,13 @@ All three share one layout: the brand panel on wide screens and a single form co
   the contract's sign-up schema before anything is sent. An email that already has an
   account shows on the email field with a "Sign in instead" link; a taken address shows on
   its field. Success signs the founder in.
+- **Confirm email** (`/verify-email?token=…`, where the welcome email links; open whether
+  signed in or not) confirms the address and says so, with **Continue to SIMS** (signed in;
+  the session is refreshed so the reminder goes away) or **Sign in**. An invalid or expired
+  link explains how to get a new one.
+- **Email reminder.** Until the address is confirmed, the app and the set-up wizard show "Confirm
+  your email address: we sent a link to …" with **Send the link again**; it says when a new
+  link is on its way or was sent too recently.
 - **Accept an invitation** (`/accept-invitation?token=…`, where invitation emails link;
   open whether signed in or not) looks the invitation up first and shows the organisation,
   who invited them, their roles, job title and expiry. Someone new gives their name and a

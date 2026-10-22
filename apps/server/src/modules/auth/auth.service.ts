@@ -15,6 +15,7 @@ import {
 } from '../../infrastructure/database/index.js';
 import type { AuthContext } from './auth-context.js';
 import { AuthDirectory, type WorkspaceMembership } from './auth-directory.js';
+import { EmailVerificationService } from './email-verification.service.js';
 import {
   burnPasswordCheck,
   hashPassword,
@@ -55,6 +56,7 @@ export class AuthService {
     private readonly directory: AuthDirectory,
     private readonly accessTokens: AccessTokenService,
     private readonly refreshTokens: RefreshTokenService,
+    private readonly verification: EmailVerificationService,
   ) {}
 
   /** Creates a person, their organisation (on a trial) and a session in one go. */
@@ -72,7 +74,17 @@ export class AuthService {
           passwordHash,
           meta,
         );
-        return this.startSession(membership.userId, membership.workspace, meta);
+        const session = await this.startSession(
+          membership.userId,
+          membership.workspace,
+          meta,
+        );
+        // Welcome and "confirm your email", without holding up sign-up.
+        void this.verification.sendWelcome(
+          membership.userId,
+          input.organisationName,
+        );
+        return session;
       } catch (error) {
         if (isUniqueViolation(error, 'email')) throw emailTaken();
         if (isUniqueViolation(error, 'slug')) {
@@ -364,7 +376,7 @@ export class AuthService {
     const [user, membership, all] = await Promise.all([
       this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, emailVerifiedAt: true },
       }),
       TenantContext.run({ organisationId: workspace.organisationId }, () =>
         this.db.client.membership.findUniqueOrThrow({
@@ -390,7 +402,12 @@ export class AuthService {
     ]);
 
     return {
-      user,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        emailVerified: user.emailVerifiedAt !== null,
+      },
       organisation: membership.organisation,
       membership: {
         id: workspace.membershipId,

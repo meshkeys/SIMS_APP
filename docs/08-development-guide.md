@@ -37,6 +37,7 @@ Postgres is published on **5433** so it never collides with a locally installed 
 | `npm run test:e2e -w @sims/server` | End-to-end tests against `sims_test` |
 | `npm run lint` / `npm run build` | All workspaces |
 | `npm run docs:build` | Build this documentation as PDF and HTML |
+| `npm run mail:test -- you@example.com` | Send one test email with the SMTP settings in `.env`, explaining any failure |
 
 ## 8.4 Environment variables
 
@@ -78,8 +79,47 @@ if anything is missing or invalid.
 
 ## 8.5 Email in development
 
-All email goes to **Mailpit**: open http://localhost:8025 to read what the API sent
-(invitations, later notifications). Nothing leaves your machine.
+By default all email goes to **Mailpit**: open http://localhost:8025 to read what the API
+sent (welcome and confirmation emails, invitations, password resets). Mailpit catches every
+message and **delivers none**, so nothing reaches real inboxes, which is what you want while
+developing.
+
+### Sending to real inboxes (Brevo)
+
+1. Create a free Brevo account (https://www.brevo.com; 300 emails a day on the free plan).
+2. **Verify a sender**: *Senders, Domains & Dedicated IPs → Senders → Add a sender*, using an
+   address you can receive at; confirm the email Brevo sends. For production, also
+   authenticate your domain there (it adds DKIM and SPF records), so mail is not marked as
+   spam.
+3. **Create an SMTP key**: *SMTP & API → SMTP → Generate a new SMTP key*. The same page shows
+   your SMTP login.
+4. In the root `.env`, replace the mail settings (keep the key out of git; `.env` is ignored):
+
+   ```
+   SMTP_HOST=smtp-relay.brevo.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=<your SMTP login>
+   SMTP_PASSWORD=<the SMTP key>
+   MAIL_FROM=SIMS <the sender you verified>
+   APP_URL=http://localhost:5173
+   ```
+
+   `APP_URL` is where links in emails point: the web app's public address in production.
+5. Check it: `npm run mail:test -- you@example.com`. It sends one email and, if it fails,
+   says why: a refused login (wrong login or key), an unreachable server (host, port or a
+   firewall blocking outgoing SMTP), or a refused sender (`MAIL_FROM` not verified).
+6. Restart the API (`npm run dev:server`) so it reads the new settings.
+
+To go back to Mailpit, restore the `localhost` / `1025` values. Any other SMTP provider
+(SendGrid, Mailgun, Postmark, Amazon SES) works the same way with its own host, port and
+credentials.
+
+### Running a second API for tests
+
+The web app proxies `/api` to `http://localhost:3000`; set `SIMS_API_URL` to use another API,
+e.g. `SIMS_API_URL=http://localhost:3100 npx vite preview --port 4174` with a second API on
+port 3100. Use this for browser checks while your own dev servers are running.
 
 ## 8.6 Testing strategy
 

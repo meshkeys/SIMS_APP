@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { sessionResponseSchema, sessionViewSchema } from './auth.js';
+import {
+  emailVerificationResultSchema,
+  passwordResetPreviewSchema,
+  sessionResponseSchema,
+  sessionViewSchema,
+} from './auth.js';
 import {
   elementRefSchema,
   initiativeRefSchema,
@@ -111,6 +116,8 @@ const named: [string, z.ZodType][] = [
   ['InitiativeRef', initiativeRefSchema],
   ['SessionView', sessionViewSchema],
   ['SessionResponse', sessionResponseSchema],
+  ['PasswordResetPreview', passwordResetPreviewSchema],
+  ['EmailVerificationResult', emailVerificationResultSchema],
   ['InvitationView', invitationViewSchema],
   ['SentInvitation', sentInvitationSchema],
   ['Member', memberSchema],

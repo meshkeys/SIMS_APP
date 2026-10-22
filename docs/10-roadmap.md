@@ -55,6 +55,8 @@ with its tests and documentation.
 | 26a | Workspace set-up API (wireframe page 11): progress and resume, one save per step, framework and terminology, starting rules applied directly, finish; custom field definitions | Done |
 | 26b | Sign-up and invitation acceptance screens | Done |
 | 26c | Workspace set-up wizard screen (wireframe page 11), including the first pillars and objectives; new workspaces open it until set-up is finished | Done |
+| 27 | Forgot password: emailed one-time reset link, new password, signed out everywhere, confirmation email (API and screens) | Done |
+| 28 | Email: welcome and "confirm your email" at sign-up, reminder and resend; real delivery through any SMTP provider (Brevo guide), `mail:test` check | Done |
 | 9b | Benefits management and benefits review | Next |
 | 11 | Scheduled jobs and notifications | Planned |
 

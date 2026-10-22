@@ -395,9 +395,11 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  memberships   Membership[]
-  devices       DeviceToken[]
-  refreshTokens RefreshToken[]
+  memberships        Membership[]
+  devices            DeviceToken[]
+  refreshTokens      RefreshToken[]
+  passwordResets     PasswordResetToken[]
+  emailVerifications EmailVerificationToken[]
 }
 
 /// Rotating refresh tokens. Only a hash is stored. Tokens issued from the same
@@ -496,6 +498,39 @@ model Invitation {
 
   @@index([organisationId, email])
   @@index([organisationId, createdAt(sort: Desc)])
+}
+
+/// A one-time "forgot password" link. Only the SHA-256 hash of the emailed
+/// secret is stored. User-scoped like RefreshToken (no RLS): reached only
+/// through the auth module, before anyone is signed in.
+model PasswordResetToken {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  userId      String    @db.Uuid
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  /// Set when the password is changed with it; a used link never works again.
+  usedAt      DateTime?
+  requestedIp String?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+/// A one-time "confirm your email" link, sent at sign-up (and on request).
+/// Only the SHA-256 hash of the emailed secret is stored. User-scoped, no RLS.
+model EmailVerificationToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 /// Push-notification tokens for the mobile app (Android / iOS).

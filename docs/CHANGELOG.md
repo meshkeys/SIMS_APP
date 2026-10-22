@@ -2,6 +2,20 @@
 
 All notable changes, newest first. Dates are when the slice was completed.
 
+## 2026-10-22 — Welcome email and confirming email addresses (slice 28)
+- **Sign-up now sends a welcome email** with a link to confirm the email address. Until it
+  is confirmed, a reminder offers to send the link again; everything else works as before.
+- **Real email delivery:** step-by-step set-up for Brevo (or any SMTP provider), and
+  `npm run mail:test -- you@example.com` to check the settings, explaining any failure.
+  Locally, email still goes to Mailpit (http://localhost:8025) until a provider is set.
+
+## 2026-10-22 — Forgot password (slice 27)
+- **Forgot your password?** on the sign-in page emails a link to choose a new password. The
+  answer is the same whether or not the email has an account.
+- The link works once, for 60 minutes; asking again replaces it.
+- Choosing a new password signs the account out on every device and sends a "your password
+  was changed" email.
+
 ## 2026-10-20 — Workspace set-up wizard (slice 26c)
 - **Set-up wizard:** after sign-up, the founder is taken through five steps: organisation,
   strategy framework (with a live preview and custom fields), vision and mission with the
