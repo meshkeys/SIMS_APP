@@ -10,6 +10,7 @@ import { refreshSession } from '@/lib/api/client';
 import { apiKey, useApiQuery } from '@/lib/api/query';
 import { cn } from '@/lib/cn';
 import { Brand } from '../auth/auth-layout';
+import { EmailReminder } from '../auth/email-reminder';
 import { FrameworkStep } from './framework-step';
 import { GovernanceStep } from './governance-step';
 import { OrganisationStep } from './organisation-step';
@@ -44,6 +45,7 @@ export function SetupPage() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-6 py-8">
+        <EmailReminder />
         {state.isPending ? (
           <>
             <output className="sr-only">Loading your set-up…</output>

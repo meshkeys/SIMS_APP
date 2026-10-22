@@ -35,7 +35,11 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  validateSearch: z.object({ redirect: z.string().optional() }),
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+    /** A message to show, e.g. after a password reset. */
+    notice: z.enum(['password-reset']).optional().catch(undefined),
+  }),
   beforeLoad: ({ context, search }) => {
     if (context.auth.status === 'authenticated') {
       throw redirect({ to: safeRedirect(search.redirect) });
@@ -53,6 +57,41 @@ const signupRoute = createRoute({
   component: lazyRouteComponent(
     () => import('@/features/auth/signup-page'),
     'SignupPage',
+  ),
+});
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot-password',
+  validateSearch: z.object({ email: z.string().optional().catch(undefined) }),
+  beforeLoad: ({ context }) => {
+    if (context.auth.status === 'authenticated') throw redirect({ to: '/' });
+  },
+  component: lazyRouteComponent(
+    () => import('@/features/auth/forgot-password-page'),
+    'ForgotPasswordPage',
+  ),
+});
+
+/** Where "forgot password" emails link. Open whether signed in or not. */
+const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reset-password',
+  validateSearch: z.object({ token: z.string().optional().catch(undefined) }),
+  component: lazyRouteComponent(
+    () => import('@/features/auth/reset-password-page'),
+    'ResetPasswordPage',
+  ),
+});
+
+/** Where "confirm your email" links point. Open whether signed in or not. */
+const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/verify-email',
+  validateSearch: z.object({ token: z.string().optional().catch(undefined) }),
+  component: lazyRouteComponent(
+    () => import('@/features/auth/verify-email-page'),
+    'VerifyEmailPage',
   ),
 });
 
@@ -277,6 +316,9 @@ const adminRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
+  verifyEmailRoute,
   acceptInvitationRoute,
   setupRoute,
   appRoute.addChildren([

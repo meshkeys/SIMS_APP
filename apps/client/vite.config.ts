@@ -27,7 +27,8 @@ export default defineConfig({
     port: 5173,
     // Same origin as the API in development, so the refresh cookie
     // (SameSite=Strict, path /api/v1/auth) just works.
-    proxy: { '/api': 'http://localhost:3000' },
+    // SIMS_API_URL points it at another API, e.g. a second one for tests.
+    proxy: { '/api': process.env.SIMS_API_URL ?? 'http://localhost:3000' },
   },
   test: {
     globals: true,

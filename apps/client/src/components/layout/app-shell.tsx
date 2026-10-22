@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useAuth, useSession } from '@/auth/use-auth';
 import { Button } from '@/components/ui/button';
 import { Brand } from '@/features/auth/auth-layout';
+import { EmailReminder } from '@/features/auth/email-reminder';
 import { hasAnyRole } from '@/lib/access';
 import { useApiQuery } from '@/lib/api/query';
 import { cn } from '@/lib/cn';
@@ -71,6 +72,7 @@ export function AppShell() {
         className="min-w-0 px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-8"
       >
         <div className="mx-auto max-w-[90rem]">
+          <EmailReminder />
           <Outlet />
         </div>
       </main>

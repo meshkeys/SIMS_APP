@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type LoginInput, loginSchema } from '@sims/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { safeRedirect, useAuth } from '@/auth/use-auth';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,17 +13,21 @@ import { AuthLayout } from './auth-layout';
 export function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const { redirect } = useSearch({ from: '/login' });
+  const { redirect, notice } = useSearch({ from: '/login' });
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     // The same rules the server applies (from @sims/contracts).
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
+
+  // Carried to "Forgot your password?" so it need not be typed twice.
+  const email = useWatch({ control, name: 'email' });
 
   const onSubmit = handleSubmit(async (input) => {
     setFormError(null);
@@ -45,6 +49,11 @@ export function LoginPage() {
       description="Use the email address your organisation invited."
     >
       <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5">
+        {notice === 'password-reset' && !formError && (
+          <Alert tone="success">
+            Your password was changed. Sign in with your new password.
+          </Alert>
+        )}
         {formError && <Alert tone="danger">{formError}</Alert>}
         <Field label="Email" error={errors.email?.message} required>
           {(control) => (
@@ -67,6 +76,13 @@ export function LoginPage() {
             />
           )}
         </Field>
+        <Link
+          to="/forgot-password"
+          search={{ email: email.trim() || undefined }}
+          className="-mt-2 self-start text-sm font-medium text-primary underline"
+        >
+          Forgot your password?
+        </Link>
         <Button type="submit" size="lg" loading={isSubmitting}>
           Sign in
         </Button>
